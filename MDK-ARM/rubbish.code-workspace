@@ -1,0 +1,16 @@
+{
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "files.associations": {
+            "watchdog2.h": "c",
+            "usbd_cdc_if.h": "c",
+            "mylist.h": "c",
+            "run.h": "c"
+        }
+    },
+    "extensions": {}
+}
