@@ -16,12 +16,27 @@ RS485_t go_rs485bus;
 
 LegPack_t leg_target[4]={{.id=FRONT_LEFT},{.id=FRONT_RIGHT},{.id=BACK_LEFT},{.id=BACK_RIGHT}};
 LegPack_t leg_state[4]={{.id=FRONT_LEFT},{.id=FRONT_RIGHT},{.id=BACK_LEFT},{.id=BACK_RIGHT}};
-Leg_t leg[4];
+Leg_t leg[4]={
+    {.joint1={.motor={.motor_id=0x01,.rs485=&go_rs485bus},.inv_motor=1,.pos_offset=0.0f},
+     .joint2={.motor={.motor_id=0x02,.rs485=&go_rs485bus},.inv_motor=-1,.pos_offset=0.0f},
+     .joint3={.motor={.motor_id=0x03,.rs485=&go_rs485bus},.inv_motor=1,.pos_offset=0.0f}},
+
+    {.joint1={.motor={.motor_id=0x04,.rs485=&go_rs485bus},.inv_motor=1,.pos_offset=0.0f},
+     .joint2={.motor={.motor_id=0x05,.rs485=&go_rs485bus},.inv_motor=-1,.pos_offset=0.0f},
+     .joint3={.motor={.motor_id=0x06,.rs485=&go_rs485bus},.inv_motor=1,.pos_offset=0.0f}},
+
+    {.joint1={.motor={.motor_id=0x01,.rs485=&go_rs485bus},.inv_motor=1,.pos_offset=0.0f},
+     .joint2={.motor={.motor_id=0x02,.rs485=&go_rs485bus},.inv_motor=-1,.pos_offset=0.0f},
+     .joint3={.motor={.motor_id=0x03,.rs485=&go_rs485bus},.inv_motor=1,.pos_offset=0.0f}},
+
+    {.joint1={.motor={.motor_id=0x0A,.rs485=&go_rs485bus},.inv_motor=1,.pos_offset=0.0f},
+     .joint2={.motor={.motor_id=0x0B,.rs485=&go_rs485bus},.inv_motor=-1,.pos_offset=0.0f},
+     .joint3={.motor={.motor_id=0x0C,.rs485=&go_rs485bus},.inv_motor=1,.pos_offset=0.0f}}
+};
 
 void MotorControlTask(void* param)  //将数据发送到电机，并从电机接收数据
 {
-    RS485Init(&go_rs485bus,&huart6,GPIOB,GPIO_PIN_0);       //初始化485总线管理器
-
+    RS485Init(&go_rs485bus,&huart1,GPIOB,GPIO_PIN_1);       //初始化485总线管理器
     TickType_t last_wake_time=xTaskGetTickCount();
     while(1)
     {
@@ -40,7 +55,7 @@ void MotorControlTask(void* param)  //将数据发送到电机，并从电机接
             leg[BACK_LEFT].joint3.exp_rad*6.33f*leg[BACK_LEFT].joint3.inv_motor+leg[BACK_LEFT].joint3.pos_offset,
             leg[BACK_LEFT].joint3.Kp, leg[BACK_LEFT].joint3.Kd);
         GoMotorRecv(&leg[BACK_LEFT].joint3.motor);
-        vTaskDelayUntil(&last_wake_time,pdMS_TO_TICKS(5));
+        vTaskDelayUntil(&last_wake_time,pdMS_TO_TICKS(3));
     }
 }
 
@@ -57,7 +72,7 @@ void MotorSendTask(void* param)     //将电机的数据发送到PC上
         {
             leg_state[i].leg.joint1.rad=leg[i].joint1.inv_motor*(leg[i].joint1.motor.state.rad-leg[i].joint1.pos_offset)/6.33f;
             leg_state[i].leg.joint2.rad=leg[i].joint2.inv_motor*(leg[i].joint2.motor.state.rad-leg[i].joint2.pos_offset)/6.33f;
-            leg_state[i].leg.joint3.rad=leg[i].joint3.inv_motor*(leg[i].joint3.motor.state.rad-leg[i].joint3.pos_offset)/6.33f;
+            leg_state[i].leg.joint3.rad=leg[i].joint3.inv_motor*	(leg[i].joint3.motor.state.rad-leg[i].joint3.pos_offset)/6.33f;
 
             leg_state[i].leg.joint1.omega=leg[i].joint1.inv_motor*(leg[i].joint1.motor.state.velocity)/6.33f;
             leg_state[i].leg.joint2.omega=leg[i].joint2.inv_motor*(leg[i].joint2.motor.state.velocity)/6.33f;
@@ -70,6 +85,7 @@ void MotorSendTask(void* param)     //将电机的数据发送到PC上
             CDC_Transmit_FS((uint8_t*)&leg_state[i],sizeof(LegPack_t));
             xSemaphoreTake(usb_send_semphr,pdMS_TO_TICKS(2));
         }
+				vTaskDelayUntil(&last_wake_time,pdMS_TO_TICKS(3));
     }
 }
 
@@ -121,16 +137,16 @@ void MotorRecvTask(void* param)     //从PC接收电机的期望值
     }
 }
 
-uint8_t CDC_TransmitCplt_FS(uint8_t *pbuf, uint32_t *Len, uint8_t epnum)
+uint8_t My_CDC_SendCb(uint8_t *pbuf, uint32_t *Len, uint8_t epnum)
 {
     BaseType_t temp;
-    xSemaphoreGiveFromISR(&usb_send_semphr,&temp);
+    xSemaphoreGiveFromISR(usb_send_semphr,&temp);
     portYIELD_FROM_ISR(temp);
 	return USBD_OK;
 }
 
 uint8_t recv_err_flag;
-uint8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)     //接收电机的期望并喂看门狗
+uint8_t My_CDC_RecvCb(uint8_t* Buf, uint32_t *Len)     //接收电机的期望并喂看门狗
 {
     if(*Len!=sizeof(LegPack_t))
     {
@@ -152,7 +168,22 @@ uint8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)     //接收电机的期望�
             break;
         }
     }
-    USBD_CDC_ReceivePacket(&hUsbDeviceFS);
     return USBD_OK;
+}
+
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if(huart->Instance==USART1)
+	{
+		RS485SendIRQ_Handler(&go_rs485bus,huart);
+	}
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if(huart->Instance==USART1)
+	{
+		RS485RecvIRQ_Handler(&go_rs485bus,huart,16);
+	}
 }
 

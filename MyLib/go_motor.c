@@ -12,7 +12,7 @@ uint32_t GoMotorSend(GO_MotorHandle_t *motor, float torque, float velocity, floa
     motor->send_pack_buffer.pos_k=((double)kp)*1280.0;
     motor->send_pack_buffer.vel_k=((double)kd)*1280.0;
     motor->send_pack_buffer.crc=crc_ccitt(0, (uint8_t *)(&motor->send_pack_buffer), sizeof(GOMotor_SendPack_t)-2);
-    return RS485Send(motor->rs485,(uint8_t*)&motor->send_pack_buffer,sizeof(GOMotor_SendPack_t),100);
+    return RS485Send(motor->rs485,(uint8_t*)&motor->send_pack_buffer,sizeof(GOMotor_SendPack_t),2);
 }
 
 uint32_t GoMotorRecv(GO_MotorHandle_t *motor)
@@ -23,7 +23,7 @@ uint32_t GoMotorRecv(GO_MotorHandle_t *motor)
         return pdFAIL;
     if(size!=sizeof(GOMotor_ReceivePack_t))     //数据包长度错误
         return 0;
-    if(crc_ccitt(0, buffer, sizeof(GOMotor_SendPack_t)-2)!=((GOMotor_ReceivePack_t*)buffer)->crc)     //校验错误
+    if(crc_ccitt(0, buffer, sizeof(GOMotor_ReceivePack_t)-2)!=((GOMotor_ReceivePack_t*)buffer)->crc)     //校验错误
         return 0;
     GOMotor_ReceivePack_t* p_buf=(GOMotor_ReceivePack_t*)buffer;
     if((p_buf->cmd&0x0F)!=motor->motor_id)  //检查电机ID

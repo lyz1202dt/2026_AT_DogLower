@@ -51,4 +51,8 @@ void MotorSendTask(void* param);
 void MotorRecvTask(void* param);
 
 
+uint8_t My_CDC_SendCb(uint8_t *pbuf, uint32_t *Len, uint8_t epnum);
+uint8_t My_CDC_RecvCb(uint8_t* Buf, uint32_t *Len);
+
+
 #endif
