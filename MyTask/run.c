@@ -179,11 +179,11 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 	}
 }
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t size)
 {
 	if(huart->Instance==USART1)
 	{
-		RS485RecvIRQ_Handler(&go_rs485bus,huart,16);
+		RS485RecvIRQ_Handler(&go_rs485bus,huart,size);
 	}
 }
 
