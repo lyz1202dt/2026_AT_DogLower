@@ -473,6 +473,16 @@
               <FileType>5</FileType>
               <FilePath>..\MyLib\WatchDog2.h</FilePath>
             </File>
+            <File>
+              <FileName>usb_trans.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyLib\usb_trans.c</FilePath>
+            </File>
+            <File>
+              <FileName>usb_trans.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\MyLib\usb_trans.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

@@ -62,6 +62,8 @@ virtualFolder:
         - path: ../MyLib/mylist.h
         - path: ../MyLib/WatchDog2.c
         - path: ../MyLib/WatchDog2.h
+        - path: ../MyLib/usb_trans.c
+        - path: ../MyLib/usb_trans.h
       folders: []
     - name: MyTask
       files:
