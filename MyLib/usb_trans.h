@@ -27,6 +27,15 @@ typedef struct{
 }USB_Recv_t;
 
 
+void USB_CDC_Recv_Handle(uint8_t *Buf, uint32_t *Len);
+void USB_VCP_Init(void);
+uint32_t USB_VCP_Send(uint8_t *Buf, uint16_t Len);
+uint32_t USB_VCP_Recv(uint8_t *data, uint16_t size, uint16_t timeout_ms);
+uint32_t USB_ResetSendBuffer(void);
+uint32_t USB_ResetRecvBuffer(void);
+uint32_t USB_Recv_Idel(uint8_t *data, uint16_t size);
+
+
 __weak void USB_VCP_ReceiveIdel(uint16_t size);
 
 

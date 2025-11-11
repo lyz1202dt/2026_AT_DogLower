@@ -21,6 +21,20 @@ void PID_Control2(float current, float expected, PID2 *parameter) {
     limit(parameter->pid_out,parameter->output_limit,-parameter->output_limit);
 }
 
+void PID_Control2_d(float current, float current_vel,float expected, PID2 *parameter) {
+    parameter->error_last = parameter->error_now;
+    parameter->error_now = expected - current;
+    parameter->error_inter += parameter->error_now;
+
+    if (parameter->error_inter > parameter->limit)
+        parameter->error_inter = parameter->limit;
+    if (parameter->error_inter < -parameter->limit)
+        parameter->error_inter = -parameter->limit;
+    parameter->pid_out = parameter->Kp * parameter->error_now + parameter->Ki * parameter->error_inter +
+                         parameter->Kd * (parameter->error_now - parameter->error_last);
+    limit(parameter->pid_out,parameter->output_limit,-parameter->output_limit);
+}
+
 float PID_Increment2(float current, float expect, PID_ADD2 *parameter) {
     parameter->error_now = expect - current;
 

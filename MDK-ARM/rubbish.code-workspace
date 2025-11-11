@@ -4,15 +4,6 @@
             "path": "."
         }
     ],
-    "settings": {
-        "files.associations": {
-            "usb_trans.h": "c",
-            "stm32f4xx_hal.h": "c",
-            "mylist.h": "c",
-            "usart.h": "c",
-            "semphr.h": "c",
-            "usbd_cdc_if.h": "c"
-        }
-    },
+    "settings": {},
     "extensions": {}
 }

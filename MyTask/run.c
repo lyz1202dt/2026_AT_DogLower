@@ -1,6 +1,7 @@
 #include "run.h"
 #include "usart.h"
 #include "mylist.h"
+#include "usb_trans.h"
 #include "usbd_cdc_if.h"
 #include "WatchDog2.h"
 #include <string.h>
@@ -59,10 +60,13 @@ void MotorControlTask(void* param)  //将数据发送到电机，并从电机接
     }
 }
 
-
+uint8_t recv_buf[128];
 QueueHandle_t usb_send_semphr;
 void MotorSendTask(void* param)     //将电机的数据发送到PC上
 {
+    USB_VCP_Init();                                 //初始化USB虚拟串口驱动
+    USB_Recv_Idel(recv_buf,sizeof(recv_buf));       //启用虚拟串口接收中断
+
     usb_send_semphr=xSemaphoreCreateBinary();
     xSemaphoreTake(usb_send_semphr,0);
     TickType_t last_wake_time=xTaskGetTickCount();
@@ -73,11 +77,11 @@ void MotorSendTask(void* param)     //将电机的数据发送到PC上
             leg_state[i].leg.joint1.rad=leg[i].joint1.inv_motor*(leg[i].joint1.motor.state.rad-leg[i].joint1.pos_offset)/6.33f;
             leg_state[i].leg.joint2.rad=leg[i].joint2.inv_motor*(leg[i].joint2.motor.state.rad-leg[i].joint2.pos_offset)/6.33f;
             leg_state[i].leg.joint3.rad=leg[i].joint3.inv_motor*	(leg[i].joint3.motor.state.rad-leg[i].joint3.pos_offset)/6.33f;
-
+						
             leg_state[i].leg.joint1.omega=leg[i].joint1.inv_motor*(leg[i].joint1.motor.state.velocity)/6.33f;
             leg_state[i].leg.joint2.omega=leg[i].joint2.inv_motor*(leg[i].joint2.motor.state.velocity)/6.33f;
             leg_state[i].leg.joint3.omega=leg[i].joint3.inv_motor*(leg[i].joint3.motor.state.velocity)/6.33f;
-            
+						
             leg_state[i].leg.joint1.torque=leg[i].joint1.inv_motor*(leg[i].joint1.motor.state.torque)*6.33f;
             leg_state[i].leg.joint2.torque=leg[i].joint2.inv_motor*(leg[i].joint2.motor.state.torque)*6.33f;
             leg_state[i].leg.joint3.torque=leg[i].joint3.inv_motor*(leg[i].joint3.motor.state.torque)*6.33f;
@@ -85,8 +89,16 @@ void MotorSendTask(void* param)     //将电机的数据发送到PC上
             CDC_Transmit_FS((uint8_t*)&leg_state[i],sizeof(LegPack_t));
             xSemaphoreTake(usb_send_semphr,pdMS_TO_TICKS(2));
         }
-				vTaskDelayUntil(&last_wake_time,pdMS_TO_TICKS(3));
+		vTaskDelayUntil(&last_wake_time,pdMS_TO_TICKS(3));
     }
+}
+
+
+//接收中断回调实现
+void USB_VCP_ReceiveIdel(uint16_t size)
+{
+    //TODO:通知应用层数据接收完成，需要进行处理，或者直接在这里进行接包处理
+    USB_Recv_Idel(recv_buf,sizeof(recv_buf));
 }
 
 
@@ -136,6 +148,7 @@ void MotorRecvTask(void* param)     //从PC接收电机的期望值
         leg[leg_id].joint3.Kd=leg_target[leg_id].leg.joint3.kd;
     }
 }
+
 
 uint8_t My_CDC_SendCb(uint8_t *pbuf, uint32_t *Len, uint8_t epnum)
 {
