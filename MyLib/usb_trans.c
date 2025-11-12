@@ -46,7 +46,8 @@ static void USB_RecvTask(void *param)
 
 static void USB_SendTask(void *param)
 {
-    CDC_SendReq_t req;
+    struct CDC_SendReq_t req;
+    Send_Timeout_cb_t sendTimeoutCb=(Send_Timeout_cb_t)param;
     while (1)
     {
         xQueueReceive(kUsbSendReqQueue, &req, portMAX_DELAY);
@@ -77,7 +78,8 @@ static void USB_SendTask(void *param)
             USBD_CDC_TransmitPacket(&hUsbDeviceFS);
             if(xSemaphoreTake(kUsbSendsemphr, pdMS_TO_TICKS(5))!=pdPASS)  //清空信号量
             {
-                USB_CDC_SendTimeout(&req,trans);
+                if(sendTimeoutCb)
+                    sendTimeoutCb(&req,trans);
                 break;
             }
         }
@@ -88,12 +90,12 @@ static void USB_SendTask(void *param)
 
 
 // 初始化USB CDC应用层
-void USB_CDC_Init(Recv_finished_cb_t recv_cb)
+void USB_CDC_Init(Recv_finished_cb_t recv_cb,Send_Timeout_cb_t send_timeout_cb)
 {
     kUsbRecvQueue = xQueueCreate(2, sizeof(uint32_t));
     kUsbSendsemphr = xSemaphoreCreateBinary();
-    kUsbSendReqQueue = xQueueCreate(8, sizeof(CDC_SendReq_t));
-    xTaskCreate(USB_SendTask,"usb_cdc_send",128,NULL,6,&kUsbSendTaskHandle);
+    kUsbSendReqQueue = xQueueCreate(8, sizeof(struct CDC_SendReq_t));
+    xTaskCreate(USB_SendTask,"usb_cdc_send",128,send_timeout_cb,6,&kUsbSendTaskHandle);
     xTaskCreate(USB_RecvTask,"usb_cdc_recv",128,recv_cb,6,&kUsbRecvTaskHandle);
 }
 
@@ -117,7 +119,3 @@ void CDC_RecvCplt_Handler(uint8_t* Buf, uint32_t *Len)
     portYIELD_FROM_ISR(pxHigherPriorityTaskWoken);
 }
 
-__weak void USB_CDC_SendTimeout(CDC_SendReq_t *req,CDC_Trans_t *trans)
-{
-
-}
