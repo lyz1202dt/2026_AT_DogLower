@@ -11,32 +11,52 @@
 #include "task.h"
 #include "semphr.h"
 
-#define USB_SEND_BUF_SIZE  256
-#define USB_RECV_BUF_SIZE  256
+typedef void(*Send_finished_cb_t)(void* user_data);                               //发送完成回调
+typedef void(*Recv_finished_cb_t)(uint8_t *src,uint16_t size);                    //数据包接收完成回调
+typedef uint32_t (*Recv_match_cb_t)(uint32_t cur_desc,uint32_t exp_desc);         //数据包描述匹配回调(返回1时说明匹配成功，进入对应的接收完成回调)
 
 typedef struct{
-    uint8_t* p_data;
-    uint16_t size;
-}USB_Trans_t;
+    uint16_t size;  //要发送的数据包长度
+    uint8_t* data;  //要发送的数据包内容
+    Send_finished_cb_t finished_cb;   //发送完成回调
+    void* user_data;    //用户参数
+}CDC_SendReq_t;
 
 typedef struct{
-    uint8_t* p_data;
-    uint16_t size;
-    uint16_t timeout_ms;
-    uint8_t use_idel_recv;
-}USB_Recv_t;
+    uint16_t size;  //要接收的数据包长度
+    Recv_match_cb_t match_cb;         //数据包匹配回调
+    Recv_finished_cb_t finished_cb;   //发送完成回调
+    void* finished_cb_param;    //用户参数
+}CDC_RecvReq_t;
 
 
-void USB_CDC_Recv_Handle(uint8_t *Buf, uint32_t *Len);
-void USB_VCP_Init(void);
-uint32_t USB_VCP_Send(uint8_t *Buf, uint16_t Len);
-uint32_t USB_VCP_Recv(uint8_t *data, uint16_t size, uint16_t timeout_ms);
-uint32_t USB_ResetSendBuffer(void);
-uint32_t USB_ResetRecvBuffer(void);
-uint32_t USB_Recv_Idel(uint8_t *data, uint16_t size);
+#pragma pack(1)
+
+typedef struct{
+    uint32_t pack_id;      //包ID，表示除当前包以外还有的数据包个数，当该值为0时，表示一个数据包接收完成，需要开始拼包并触发用户回调
+    uint8_t data[];
+}CDC_Trans_t;
+
+#pragma pack()
 
 
-__weak void USB_VCP_ReceiveIdel(uint16_t size);
+extern QueueHandle_t kUsbRecvQueue;
+extern QueueHandle_t kUsbSendsemphr;
+extern QueueHandle_t kUsbSendReqQueue;
+
+
+
+
+
+void USB_CDC_Init(Recv_finished_cb_t recv_cb);
+
+void USB_Send_Pack(CDC_SendReq_t *req,uint32_t time_out);
+
+void CDC_TransCplt_Handler(void);
+void CDC_RecvCplt_Handler(uint8_t* Buf, uint32_t *Len);
+
+
+__weak void USB_CDC_SendTimeout(CDC_SendReq_t *req,CDC_Trans_t *trans);
 
 
 #endif

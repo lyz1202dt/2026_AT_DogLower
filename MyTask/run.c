@@ -2,7 +2,6 @@
 #include "usart.h"
 #include "mylist.h"
 #include "usb_trans.h"
-#include "usbd_cdc_if.h"
 #include "WatchDog2.h"
 #include <string.h>
 
@@ -11,7 +10,6 @@
 #define BACK_LEFT   2
 #define BACK_RIGHT  3
 
-extern USBD_HandleTypeDef hUsbDeviceFS;
 
 RS485_t go_rs485bus;
 
@@ -60,15 +58,15 @@ void MotorControlTask(void* param)  //将数据发送到电机，并从电机接
     }
 }
 
-uint8_t recv_buf[128];
-QueueHandle_t usb_send_semphr;
+uint32_t cnt=0;
+void CDC_Recv_Cb(uint8_t *src,uint16_t size)
+{
+    cnt++;
+}
+
 void MotorSendTask(void* param)     //将电机的数据发送到PC上
 {
-    USB_VCP_Init();                                 //初始化USB虚拟串口驱动
-    USB_Recv_Idel(recv_buf,sizeof(recv_buf));       //启用虚拟串口接收中断
-
-    usb_send_semphr=xSemaphoreCreateBinary();
-    xSemaphoreTake(usb_send_semphr,0);
+    USB_CDC_Init(CDC_Recv_Cb);
     TickType_t last_wake_time=xTaskGetTickCount();
     while(1)
     {
@@ -76,8 +74,8 @@ void MotorSendTask(void* param)     //将电机的数据发送到PC上
         {
             leg_state[i].leg.joint1.rad=leg[i].joint1.inv_motor*(leg[i].joint1.motor.state.rad-leg[i].joint1.pos_offset)/6.33f;
             leg_state[i].leg.joint2.rad=leg[i].joint2.inv_motor*(leg[i].joint2.motor.state.rad-leg[i].joint2.pos_offset)/6.33f;
-            leg_state[i].leg.joint3.rad=leg[i].joint3.inv_motor*	(leg[i].joint3.motor.state.rad-leg[i].joint3.pos_offset)/6.33f;
-						
+            leg_state[i].leg.joint3.rad=leg[i].joint3.inv_motor*(leg[i].joint3.motor.state.rad-leg[i].joint3.pos_offset)/6.33f;
+            
             leg_state[i].leg.joint1.omega=leg[i].joint1.inv_motor*(leg[i].joint1.motor.state.velocity)/6.33f;
             leg_state[i].leg.joint2.omega=leg[i].joint2.inv_motor*(leg[i].joint2.motor.state.velocity)/6.33f;
             leg_state[i].leg.joint3.omega=leg[i].joint3.inv_motor*(leg[i].joint3.motor.state.velocity)/6.33f;
@@ -85,20 +83,11 @@ void MotorSendTask(void* param)     //将电机的数据发送到PC上
             leg_state[i].leg.joint1.torque=leg[i].joint1.inv_motor*(leg[i].joint1.motor.state.torque)*6.33f;
             leg_state[i].leg.joint2.torque=leg[i].joint2.inv_motor*(leg[i].joint2.motor.state.torque)*6.33f;
             leg_state[i].leg.joint3.torque=leg[i].joint3.inv_motor*(leg[i].joint3.motor.state.torque)*6.33f;
-
-            CDC_Transmit_FS((uint8_t*)&leg_state[i],sizeof(LegPack_t));
-            xSemaphoreTake(usb_send_semphr,pdMS_TO_TICKS(2));
+            
+           USB_Send_Pack(&((CDC_SendReq_t){.data=(uint8_t*)&leg_state[i],.size=sizeof(LegPack_t),.finished_cb=NULL}),1);
         }
 		vTaskDelayUntil(&last_wake_time,pdMS_TO_TICKS(3));
     }
-}
-
-
-//接收中断回调实现
-void USB_VCP_ReceiveIdel(uint16_t size)
-{
-    //TODO:通知应用层数据接收完成，需要进行处理，或者直接在这里进行接包处理
-    USB_Recv_Idel(recv_buf,sizeof(recv_buf));
 }
 
 
@@ -107,7 +96,6 @@ void MotorRecvTask(void* param)     //从PC接收电机的期望值
 {
     int leg_id=0;
     usb_recv_queue=xQueueCreate(8,sizeof(int));
-    USBD_CDC_ReceivePacket(&hUsbDeviceFS);
     while(1)
     {
         if(xQueueReceive(usb_recv_queue,&leg_id,pdMS_TO_TICKS(50))!=pdPASS)   //发生超时，说明通讯断开
@@ -147,41 +135,6 @@ void MotorRecvTask(void* param)     //从PC接收电机的期望值
         leg[leg_id].joint3.Kp=leg_target[leg_id].leg.joint3.kp;
         leg[leg_id].joint3.Kd=leg_target[leg_id].leg.joint3.kd;
     }
-}
-
-
-uint8_t My_CDC_SendCb(uint8_t *pbuf, uint32_t *Len, uint8_t epnum)
-{
-    BaseType_t temp;
-    xSemaphoreGiveFromISR(usb_send_semphr,&temp);
-    portYIELD_FROM_ISR(temp);
-	return USBD_OK;
-}
-
-uint8_t recv_err_flag;
-uint8_t My_CDC_RecvCb(uint8_t* Buf, uint32_t *Len)     //接收电机的期望并喂看门狗
-{
-    if(*Len!=sizeof(LegPack_t))
-    {
-        recv_err_flag=1;
-        USBD_CDC_ReceivePacket(&hUsbDeviceFS);
-        return USBD_OK;
-    }
-    recv_err_flag=0;
-    for(int i=0;i<4;i++)
-    {
-        if((*(uint32_t*)Buf)==leg_target[i].id)
-        {
-            memcpy(&leg_target[i],Buf+sizeof(uint32_t),sizeof(LegState_t));
-
-            BaseType_t higherPriorityTaskWoken;
-            xQueueSendFromISR(usb_recv_queue,&i,&higherPriorityTaskWoken);
-            portYIELD_FROM_ISR(higherPriorityTaskWoken);
-
-            break;
-        }
-    }
-    return USBD_OK;
 }
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)

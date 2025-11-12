@@ -258,13 +258,10 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
   * @param  Len: Number of data received (in bytes)
   * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
   */
-static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
+static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)   //给出信号零通知任务进行处理
 {
   /* USER CODE BEGIN 6 */
-	//My_CDC_RecvCb(Buf,Len);
-  USB_CDC_Recv_Handle(Buf, Len);
-  USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
-  USBD_CDC_ReceivePacket(&hUsbDeviceFS);
+  CDC_RecvCplt_Handler(Buf, Len);
   return (USBD_OK);
   /* USER CODE END 6 */
 }
@@ -310,7 +307,7 @@ static int8_t CDC_TransmitCplt_FS(uint8_t *Buf, uint32_t *Len, uint8_t epnum)
 {
   uint8_t result = USBD_OK;
   /* USER CODE BEGIN 13 */
-	//My_CDC_SendCb(Buf,Len,epnum);
+  CDC_TransCplt_Handler();
   /* USER CODE END 13 */
   return result;
 }
