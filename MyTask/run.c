@@ -67,7 +67,7 @@ void CDC_Recv_Cb(uint8_t *src,uint16_t size)
 void MotorSendTask(void* param)     //将电机的数据发送到PC上
 {
     USB_CDC_Init(CDC_Recv_Cb,NULL);
-		struct CDC_SendReq_t req={.finished_cb=NULL,.size=sizeof(LegPack_t),.finished_cb=NULL};
+		struct CDC_SendReq_t req={.finished_cb=NULL,.size=4*sizeof(LegPack_t),.finished_cb=NULL};
     TickType_t last_wake_time=xTaskGetTickCount();
     while(1)
     {
@@ -80,15 +80,14 @@ void MotorSendTask(void* param)     //将电机的数据发送到PC上
             leg_state[i].leg.joint1.omega=leg[i].joint1.inv_motor*(leg[i].joint1.motor.state.velocity)/6.33f;
             leg_state[i].leg.joint2.omega=leg[i].joint2.inv_motor*(leg[i].joint2.motor.state.velocity)/6.33f;
             leg_state[i].leg.joint3.omega=leg[i].joint3.inv_motor*(leg[i].joint3.motor.state.velocity)/6.33f;
-						
+			
             leg_state[i].leg.joint1.torque=leg[i].joint1.inv_motor*(leg[i].joint1.motor.state.torque)*6.33f;
             leg_state[i].leg.joint2.torque=leg[i].joint2.inv_motor*(leg[i].joint2.motor.state.torque)*6.33f;
             leg_state[i].leg.joint3.torque=leg[i].joint3.inv_motor*(leg[i].joint3.motor.state.torque)*6.33f;
-            
-						req.data=(uint8_t*)&leg_state[i];
-						USB_Send_Pack(&req,2);
         }
-		vTaskDelayUntil(&last_wake_time,pdMS_TO_TICKS(3));
+        req.data=(uint8_t*)leg_state;
+		USB_Send_Pack(&req,5);
+		vTaskDelayUntil(&last_wake_time,pdMS_TO_TICKS(1000));
     }
 }
 
