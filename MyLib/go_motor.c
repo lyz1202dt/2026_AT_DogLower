@@ -40,7 +40,7 @@ uint32_t GoMotorRecv(GO_MotorHandle_t *motor)
 static uint32_t list_match_cb(void* user,void* dst)
 {
     GO_MotorHandle_t *motor=(GO_MotorHandle_t*)dst;
-    if(motor->motor_id==(uint8_t)user)  //匹配成功，返回1
+    if(motor->motor_id==(uint8_t)(uintptr_t)user)  //匹配成功，返回1
         return 1;
     return 0;
 }

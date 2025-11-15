@@ -10,8 +10,8 @@
 #define USB_CDC_RECV_BUFFER_SIZE	512
 
 
-typedef struct CDC_SendReq CDC_SendReq_t;
-typedef struct CDC_RecvReq CDC_RecvReq_t;
+typedef struct CDC_SendReq_t CDC_SendReq_t;
+typedef struct CDC_RecvReq_t CDC_RecvReq_t;
 typedef struct CDC_Trans_t CDC_Trans_t;
 
 
@@ -49,7 +49,7 @@ extern QueueHandle_t kUsbSendsemphr;
 extern QueueHandle_t kUsbSendReqQueue;
 
 void USB_CDC_Init(Recv_finished_cb_t recv_cb,Send_Timeout_cb_t send_timeout_cb);
-void USB_Send_Pack(CDC_SendReq_t *req,uint32_t time_out);
+void USB_Send_Pack(CDC_SendReq_t *req, uint32_t time_out);
 void CDC_TransCplt_Handler(void);
 void CDC_RecvCplt_Handler(uint8_t* Buf, uint32_t *Len);
 

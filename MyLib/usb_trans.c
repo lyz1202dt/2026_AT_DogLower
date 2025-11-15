@@ -19,7 +19,7 @@ static void USB_RecvTask(void *param)
     Recv_finished_cb_t USB_CDC_Recv_Cb = (Recv_finished_cb_t)param;
     USBD_CDC_SetRxBuffer(&hUsbDeviceFS, UserRxBufferFS);
     USBD_CDC_ReceivePacket(&hUsbDeviceFS);
-
+		
     uint32_t current_cdc_pack_size;
     uint32_t last_pack_id = 0;
     uint32_t buffer_index = 0;
@@ -54,7 +54,7 @@ static void USB_RecvTask(void *param)
 
 static void USB_SendTask(void *param)
 {
-    struct CDC_SendReq_t req;
+    CDC_SendReq_t req;
     Send_Timeout_cb_t sendTimeoutCb = (Send_Timeout_cb_t)param;
     while (1)
     {
@@ -68,7 +68,7 @@ static void USB_SendTask(void *param)
 
             trans->pack_id = i;
             if (i == 0)
-                memcpy(UserTxBufferFS + index * 64, &trans->data[index * 64], req.size % (64 - sizeof(uint32_t)));
+                memcpy(UserTxBufferFS + index * 64, &req.data[index * 64], req.size % (64 - sizeof(uint32_t)));
             else
                 memcpy(UserTxBufferFS + index * 64, &trans->data[index * 64], 64);
             index++;
@@ -79,7 +79,7 @@ static void USB_SendTask(void *param)
             CDC_Trans_t *trans = (CDC_Trans_t *)(UserTxBufferFS + i * 64);
             trans->pack_id = i;
             if (i == 0)
-                USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS + i * 64, req.size % (64 - sizeof(uint32_t)));
+                USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS + i * 64, req.size % (64 - sizeof(uint32_t)) + sizeof(uint32_t));
             else
                 USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS + i * 64, 64);
 
@@ -106,7 +106,7 @@ void USB_CDC_Init(Recv_finished_cb_t recv_cb, Send_Timeout_cb_t send_timeout_cb)
     xTaskCreate(USB_RecvTask, "usb_cdc_recv", 128, recv_cb, 6, &kUsbRecvTaskHandle);
 }
 
-void USB_Send_Pack(CDC_SendReq_t *req, uint32_t time_out)
+void USB_Send_Pack(struct CDC_SendReq_t *req, uint32_t time_out)
 {
     xQueueSend(kUsbSendReqQueue, req, pdMS_TO_TICKS(time_out));
 }
