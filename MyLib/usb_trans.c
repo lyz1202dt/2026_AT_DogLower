@@ -61,6 +61,8 @@ static void USB_SendTask(void *param)
         xQueueReceive(kUsbSendReqQueue, &req, portMAX_DELAY);
 				
         int pack_index = req.size / (64 - sizeof(uint32_t)); // 计算需要发的包的数量
+		if(req.size % (64 - sizeof(uint32_t))==0)	//如果是整包，那么在当前包发完，不再发空包
+			pack_index=pack_index-1;
         int index = 0;
         for (int i = pack_index; i >= 0; i--) // 填写发送缓冲区
         {
@@ -77,7 +79,7 @@ static void USB_SendTask(void *param)
         for (int i = 0; i <= pack_index; i++) // 发送数据
         {
             if (i == pack_index)
-                USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS + i * 64, req.size % (64 - sizeof(uint32_t)) + sizeof(uint32_t));
+                USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS + i * 64, req.size % (64 - sizeof(uint32_t)) + sizeof(uint32_t));		//如果包大小恰好为64，会出问题，这里还需要改
             else
                 USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS + i * 64, 64);
 
