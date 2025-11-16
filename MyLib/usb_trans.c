@@ -35,7 +35,7 @@ static void USB_RecvTask(void *param)
             }
             if (buffer_index + current_cdc_pack_size - sizeof(uint32_t) < USB_CDC_RECV_BUFFER_SIZE)
             {
-                memcpy(_UserRxBufferFS + buffer_index, UserRxBufferFS + sizeof(uint32_t), current_cdc_pack_size - sizeof(uint32_t)); // 将接收的数据包拷贝到用户缓冲区
+                memcpy(_UserRxBufferFS + buffer_index,trans->data, current_cdc_pack_size - sizeof(uint32_t)); // 将接收的数据包拷贝到用户缓冲区
                 buffer_index = buffer_index + current_cdc_pack_size - sizeof(uint32_t);
             }
             else
@@ -43,7 +43,7 @@ static void USB_RecvTask(void *param)
         }
         else // 包ID为0，说明本次包传输任务正确完成
         {
-            memcpy(_UserRxBufferFS + buffer_index, UserRxBufferFS + sizeof(uint32_t), current_cdc_pack_size - sizeof(uint32_t));
+            memcpy(_UserRxBufferFS + buffer_index, trans->data, current_cdc_pack_size - sizeof(uint32_t));
             buffer_index = buffer_index + current_cdc_pack_size - sizeof(uint32_t);
             USB_CDC_Recv_Cb(_UserRxBufferFS, buffer_index + 1); // 调用用户的数据接收中断函数
             buffer_index = 0;
