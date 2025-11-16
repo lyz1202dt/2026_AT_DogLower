@@ -65,14 +65,14 @@ void CDC_Recv_Cb(uint8_t *src,uint16_t size)
 }
 
 
-//uint8_t send_buf[100];
+uint8_t send_buf[100];
 
 void MotorSendTask(void* param)     //将电机的数据发送到PC上
 {
-    //for(int i=0;i<100;i++)
-    //    send_buf[i]=i;
+    for(int i=0;i<100;i++)
+        send_buf[i]=i;
     USB_CDC_Init(CDC_Recv_Cb,NULL);
-		CDC_SendReq_t req={.finished_cb=NULL,.size=4*sizeof(LegPack_t)};
+		CDC_SendReq_t req={.finished_cb=NULL,.size=100};
     TickType_t last_wake_time=xTaskGetTickCount();
     while(1)
     {
@@ -90,7 +90,7 @@ void MotorSendTask(void* param)     //将电机的数据发送到PC上
             leg_state[i].leg.joint2.torque=leg[i].joint2.inv_motor*(leg[i].joint2.motor.state.torque)*6.33f;
             leg_state[i].leg.joint3.torque=leg[i].joint3.inv_motor*(leg[i].joint3.motor.state.torque)*6.33f;
         }
-        req.data=(uint8_t*)leg_state;
+        req.data=send_buf;//(uint8_t*)leg_state;
 		USB_Send_Pack(&req,5);
 		vTaskDelayUntil(&last_wake_time,pdMS_TO_TICKS(1000));
     }

@@ -68,15 +68,15 @@ static void USB_SendTask(void *param)
 
 					trans->pack_id = i;	//向缓冲区写ID
 					if (i == 0)				  //填写缓冲区数据
-                memcpy(trans->data, &req.data[index * 64], req.size % (64 - sizeof(uint32_t)));
+                memcpy(trans->data, &req.data[index * 60], req.size % (64 - sizeof(uint32_t)));
             else
-                memcpy(trans->data, &req.data[index * 64], 64);
+                memcpy(trans->data, &req.data[index * 60], 64);
             index++;
         }
         xSemaphoreTake(kUsbSendsemphr, 0);    // 清空信号量
         for (int i = 0; i <= pack_index; i++) // 发送数据
         {
-            if (i == 0)
+            if (i == pack_index)
                 USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS + i * 64, req.size % (64 - sizeof(uint32_t)) + sizeof(uint32_t));
             else
                 USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS + i * 64, 64);
