@@ -15,8 +15,8 @@ typedef struct CDC_RecvReq_t CDC_RecvReq_t;
 typedef struct CDC_Trans_t CDC_Trans_t;
 
 
+typedef void(*Send_Timeout_cb_t)(CDC_Trans_t* cdc_trans,void* user_data);                               //发送完成回调
 typedef void(*Send_finished_cb_t)(void* user_data);                               //发送完成回调
-typedef void(*Send_Timeout_cb_t)(CDC_SendReq_t *req,CDC_Trans_t *trans);          //发送超时回调
 typedef void(*Recv_finished_cb_t)(uint8_t *src,uint16_t size);                    //数据包接收完成回调
 
 
@@ -24,6 +24,7 @@ struct CDC_SendReq_t{
     uint16_t size;  //要发送的数据包长度
     uint8_t* data;  //要发送的数据包内容
     Send_finished_cb_t finished_cb;   //发送完成回调
+    Send_Timeout_cb_t timeout_cb;
     void* user_data;    //用户参数
 };
 

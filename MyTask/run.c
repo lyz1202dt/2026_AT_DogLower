@@ -62,6 +62,7 @@ uint32_t cnt=0;
 void CDC_Recv_Cb(uint8_t *src,uint16_t size)
 {
     cnt++;
+    HAL_UART_Transmit_DMA(&huart3,src,size);
 }
 
 
@@ -72,7 +73,7 @@ void MotorSendTask(void* param)     //将电机的数据发送到PC上
     for(int i=0;i<100;i++)
         send_buf[i]=i;
     USB_CDC_Init(CDC_Recv_Cb,NULL);
-		CDC_SendReq_t req={.finished_cb=NULL,.size=100};
+		CDC_SendReq_t req={.finished_cb=NULL,.size=60};
     TickType_t last_wake_time=xTaskGetTickCount();
     while(1)
     {

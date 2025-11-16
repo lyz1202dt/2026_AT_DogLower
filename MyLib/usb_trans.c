@@ -19,7 +19,7 @@ static void USB_RecvTask(void *param)
     Recv_finished_cb_t USB_CDC_Recv_Cb = (Recv_finished_cb_t)param;
     USBD_CDC_SetRxBuffer(&hUsbDeviceFS, UserRxBufferFS);
     USBD_CDC_ReceivePacket(&hUsbDeviceFS);
-		
+
     uint32_t current_cdc_pack_size;
     uint32_t last_pack_id = 0;
     uint32_t buffer_index = 0;
@@ -35,7 +35,7 @@ static void USB_RecvTask(void *param)
             }
             if (buffer_index + current_cdc_pack_size - sizeof(uint32_t) < USB_CDC_RECV_BUFFER_SIZE)
             {
-                memcpy(_UserRxBufferFS + buffer_index,trans->data, current_cdc_pack_size - sizeof(uint32_t)); // 将接收的数据包拷贝到用户缓冲区
+                memcpy(_UserRxBufferFS + buffer_index, trans->data, current_cdc_pack_size - sizeof(uint32_t)); // 将接收的数据包拷贝到用户缓冲区
                 buffer_index = buffer_index + current_cdc_pack_size - sizeof(uint32_t);
             }
             else
@@ -45,7 +45,7 @@ static void USB_RecvTask(void *param)
         {
             memcpy(_UserRxBufferFS + buffer_index, trans->data, current_cdc_pack_size - sizeof(uint32_t));
             buffer_index = buffer_index + current_cdc_pack_size - sizeof(uint32_t);
-            USB_CDC_Recv_Cb(_UserRxBufferFS, buffer_index + 1); // 调用用户的数据接收中断函数
+            USB_CDC_Recv_Cb(_UserRxBufferFS, buffer_index); // 调用用户的数据接收中断函数
             buffer_index = 0;
         }
         last_pack_id = trans->pack_id;
@@ -55,37 +55,44 @@ static void USB_RecvTask(void *param)
 static void USB_SendTask(void *param)
 {
     CDC_SendReq_t req;
-    Send_Timeout_cb_t sendTimeoutCb = (Send_Timeout_cb_t)param;
     while (1)
     {
         xQueueReceive(kUsbSendReqQueue, &req, portMAX_DELAY);
-				
-        int pack_index = req.size / (64 - sizeof(uint32_t)); // 计算需要发的包的数量
-        int index = 0;
-        for (int i = pack_index; i >= 0; i--) // 填写发送缓冲区
+
+        int max_pack_index = req.size / (64 - sizeof(uint32_t)); // 计算需要发的包的数量
+        if ((req.size % (64 - sizeof(uint32_t))) == 0)
+            max_pack_index--;
+
+        int remain_size=req.size;
+        int index=0;
+        for (int i = max_pack_index; i >= 0; i--) // 填写发送缓冲区
         {
             CDC_Trans_t *trans = (CDC_Trans_t *)(UserTxBufferFS + index * 64);
 
-					trans->pack_id = i;	//向缓冲区写ID
-					if (i == 0)				  //填写缓冲区数据
-                memcpy(trans->data, &req.data[index * 60], req.size % (64 - sizeof(uint32_t)));
+            trans->pack_id = i; // 向缓冲区写ID
+            if (i == 0)         // 填写缓冲区数据
+                memcpy(trans->data, &req.data[index * 60], remain_size);
             else
-                memcpy(trans->data, &req.data[index * 60], 64);
+            {
+                memcpy(trans->data, &req.data[index * 60], 60);
+                remain_size=remain_size-60;
+            }
+                
             index++;
         }
-        xSemaphoreTake(kUsbSendsemphr, 0);    // 清空信号量
-        for (int i = 0; i <= pack_index; i++) // 发送数据
+        xSemaphoreTake(kUsbSendsemphr, 0);        // 清空信号量
+        for (int i = 0; i <= max_pack_index; i++) // 发送数据
         {
-            if (i == pack_index)
-                USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS + i * 64, req.size % (64 - sizeof(uint32_t)) + sizeof(uint32_t));
+            if (i == max_pack_index)
+                USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS + i * 64, remain_size+sizeof(uint32_t));
             else
                 USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS + i * 64, 64);
 
             USBD_CDC_TransmitPacket(&hUsbDeviceFS);
             if (xSemaphoreTake(kUsbSendsemphr, pdMS_TO_TICKS(10)) != pdPASS) // 清空信号量
             {
-                if (sendTimeoutCb)
-                    sendTimeoutCb(&req, (CDC_Trans_t *)(UserTxBufferFS + i * 64));
+                if (req.timeout_cb)
+                    req.timeout_cb((CDC_Trans_t *)(UserTxBufferFS + i * 64),req.user_data);
                 break;
             }
         }
