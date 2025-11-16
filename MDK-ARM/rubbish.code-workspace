@@ -4,18 +4,6 @@
             "path": "."
         }
     ],
-    "settings": {
-        "files.associations": {
-            "usbd_cdc_if.h": "c",
-            "usb_device.h": "c",
-            "usb_trans.h": "c",
-            "stm32f4xx_hal.h": "c",
-            "mylist.h": "c",
-            "initializer_list": "c",
-            "list": "c",
-            "utility": "c",
-            "xutility": "c"
-        }
-    },
+    "settings": {},
     "extensions": {}
 }

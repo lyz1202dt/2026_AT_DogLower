@@ -64,8 +64,13 @@ void CDC_Recv_Cb(uint8_t *src,uint16_t size)
     cnt++;
 }
 
+
+//uint8_t send_buf[100];
+
 void MotorSendTask(void* param)     //将电机的数据发送到PC上
 {
+    //for(int i=0;i<100;i++)
+    //    send_buf[i]=i;
     USB_CDC_Init(CDC_Recv_Cb,NULL);
 		CDC_SendReq_t req={.finished_cb=NULL,.size=4*sizeof(LegPack_t)};
     TickType_t last_wake_time=xTaskGetTickCount();
