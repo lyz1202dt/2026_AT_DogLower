@@ -21,10 +21,10 @@ typedef struct{
 }Joint_t;
 
 typedef struct{
-    Joint_t joint1;
-    Joint_t joint2;
-    Joint_t joint3;
+    Joint_t joint[3];
 }Leg_t;
+
+#pragma pack(1)
 
 typedef struct{
     float rad;
@@ -35,15 +35,15 @@ typedef struct{
 }MotorState_t;
 
 typedef struct{
-    MotorState_t joint1;
-    MotorState_t joint2;
-    MotorState_t joint3;
+    MotorState_t joint[3];
 }LegState_t;
 
 typedef struct{
-    int id;
-    LegState_t leg;
+    uint32_t pack_type;
+    LegState_t leg[4];
 }LegPack_t;
+
+#pragma pack()
 
 
 void MotorControlTask(void* param);

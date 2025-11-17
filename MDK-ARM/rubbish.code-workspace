@@ -4,6 +4,17 @@
             "path": "."
         }
     ],
-    "settings": {},
+    "settings": {
+        "files.associations": {
+            "initializer_list": "c",
+            "list": "c",
+            "utility": "c",
+            "xutility": "c",
+            "usb_device.h": "c",
+            "usbd_cdc_if.h": "c",
+            "usb_trans.h": "c",
+            "freertos.h": "c"
+        }
+    },
     "extensions": {}
 }
