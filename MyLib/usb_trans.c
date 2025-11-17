@@ -63,8 +63,8 @@ static void USB_SendTask(void *param)
         if ((req.size % (64 - sizeof(uint32_t))) == 0)
             max_pack_index--;
 
-        int remain_size=req.size;
-        int index=0;
+        int remain_size = req.size;
+        int index = 0;
         for (int i = max_pack_index; i >= 0; i--) // 填写发送缓冲区
         {
             CDC_Trans_t *trans = (CDC_Trans_t *)(UserTxBufferFS + index * 64);
@@ -75,29 +75,23 @@ static void USB_SendTask(void *param)
             else
             {
                 memcpy(trans->data, &req.data[index * 60], 60);
-                remain_size=remain_size-60;
+                remain_size = remain_size - 60;
             }
-                
+
             index++;
         }
-        xSemaphoreTake(kUsbSendsemphr, 0);        // 清空信号量
-        for (int i = 0; i <= max_pack_index; i++) // 发送数据
+        xSemaphoreTake(kUsbSendsemphr, 0); // 清空信号量
+        CDC_Transmit_FS(UserTxBufferFS, max_pack_index * 64 + remain_size + sizeof(uint32_t));
+        if (xSemaphoreTake(kUsbSendsemphr, pdMS_TO_TICKS(10)) != pdPASS)//等待发送完成或超时
         {
-            if (i == max_pack_index)
-                USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS + i * 64, remain_size+sizeof(uint32_t));
-            else
-                USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS + i * 64, 64);
-
-            USBD_CDC_TransmitPacket(&hUsbDeviceFS);
-            if (xSemaphoreTake(kUsbSendsemphr, pdMS_TO_TICKS(10)) != pdPASS) // 清空信号量
-            {
-                if (req.timeout_cb)
-                    req.timeout_cb((CDC_Trans_t *)(UserTxBufferFS + i * 64),req.user_data);
-                break;
-            }
+            if (req.timeout_cb)
+                req.timeout_cb(req.user_data);
         }
-        if (req.finished_cb) // 如果有定义回调函数，那么执行发送完成回调
-            req.finished_cb(req.user_data);
+        else
+        {
+            if (req.finished_cb) // 如果有定义回调函数，那么执行发送完成回调
+                req.finished_cb(req.user_data);
+        }
     }
 }
 

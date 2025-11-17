@@ -7,6 +7,8 @@
 #include "task.h"
 #include "semphr.h"
 
+#define USB_CDC_MAX_PACK_SIZE	60          //一次传输发送的字节数
+
 #define USB_CDC_RECV_BUFFER_SIZE	512
 
 
@@ -15,7 +17,7 @@ typedef struct CDC_RecvReq_t CDC_RecvReq_t;
 typedef struct CDC_Trans_t CDC_Trans_t;
 
 
-typedef void(*Send_Timeout_cb_t)(CDC_Trans_t* cdc_trans,void* user_data);                               //发送完成回调
+typedef void(*Send_Timeout_cb_t)(void* user_data);                               //发送完成回调
 typedef void(*Send_finished_cb_t)(void* user_data);                               //发送完成回调
 typedef void(*Recv_finished_cb_t)(uint8_t *src,uint16_t size);                    //数据包接收完成回调
 
