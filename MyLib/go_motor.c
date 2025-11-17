@@ -19,8 +19,7 @@ uint32_t GoMotorRecv(GO_MotorHandle_t *motor)
 {
     uint8_t buffer[sizeof(GOMotor_ReceivePack_t)];
     uint32_t size=0;
-    if(RS485Recv(motor->rs485,buffer,sizeof(GOMotor_ReceivePack_t),2,&size)!=pdPASS)
-        return pdFAIL;
+    RS485Recv(motor->rs485,buffer,sizeof(GOMotor_ReceivePack_t),2,&size);
     if(size!=sizeof(GOMotor_ReceivePack_t))     //数据包长度错误
         return 0;
     if(crc_ccitt(0, buffer, sizeof(GOMotor_ReceivePack_t)-2)!=((GOMotor_ReceivePack_t*)buffer)->crc)     //校验错误

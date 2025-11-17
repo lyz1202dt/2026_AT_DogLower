@@ -112,7 +112,7 @@ void MX_FREERTOS_Init(void) {
   /* add threads, ... */
   xTaskCreate(MotorControlTask,"MotorControl",128,NULL,5,&motor_control_task_handle);
   xTaskCreate(MotorSendTask,"MotorSend",256,NULL,4,&usb_send_task_handle);
-  //xTaskCreate(MotorRecvTask,"MotorRecv",128,NULL,4,&usb_recv_task_handle);
+  xTaskCreate(MotorRecvTask,"MotorRecv",128,NULL,4,&usb_recv_task_handle);
   /* USER CODE END RTOS_THREADS */
 
 }

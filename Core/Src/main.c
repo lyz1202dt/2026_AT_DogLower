@@ -48,7 +48,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+extern DMA_HandleTypeDef hdma_usart6_rx;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -104,6 +104,8 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 	MX_USB_DEVICE_Init();
+	
+	__HAL_DMA_DISABLE_IT(&hdma_usart6_rx, DMA_IT_HT);
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in freertos.c) */
