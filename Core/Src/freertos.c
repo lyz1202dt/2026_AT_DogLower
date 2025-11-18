@@ -105,12 +105,12 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  //osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
-  //defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-  xTaskCreate(MotorControlTask,"MotorControl",128,NULL,5,&motor_control_task_handle);
+  xTaskCreate(MotorControlTask,"MotorControl",128,NULL,6,&motor_control_task_handle);
   xTaskCreate(MotorSendTask,"MotorSend",256,NULL,5,&usb_send_task_handle);
   xTaskCreate(MotorRecvTask,"MotorRecv",128,NULL,5,&usb_recv_task_handle);
   /* USER CODE END RTOS_THREADS */

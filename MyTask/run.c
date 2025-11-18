@@ -10,6 +10,8 @@
 #define BACK_LEFT 2
 #define BACK_RIGHT 3
 
+uint32_t err_timer_cnt=0;
+
 RS485_t go_rs485bus;
 
 QueueHandle_t cdc_recv_semphr;
@@ -26,7 +28,7 @@ Leg_t leg[4] = {
      .joint[2] = {.motor = {.motor_id = 0x06, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f}},
 
     {.joint[0] = {.motor = {.motor_id = 0x01, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = -6.75066614f},
-     .joint[1] = {.motor = {.motor_id = 0x02, .rs485 = &go_rs485bus}, .inv_motor = -1, .pos_offset = -1.0258497f},
+     .joint[1] = {.motor = {.motor_id = 0x02, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = -1.0258497f},
      .joint[2] = {.motor = {.motor_id = 0x03, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 18.6955833f}},
 
     {.joint[0] = {.motor = {.motor_id = 0x0A, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
@@ -48,7 +50,7 @@ void MotorControlTask(void *param) // 将数据发送到电机，并从电机接
             GoMotorRecv(&leg[BACK_LEFT].joint[j].motor);
         }
 
-        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(4));
+        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(5));
     }
 }
 
@@ -81,7 +83,7 @@ void MotorSendTask(void *param) // 将电机的数据发送到PC上
             }
         }
         CDC_Transmit_FS((uint8_t*)&legs_state, sizeof(legs_state));
-        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(4));
+        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(8));
     }
 }
 
@@ -135,5 +137,28 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t size)
     if (huart->Instance == USART6)
     {
         RS485RecvIRQ_Handler(&go_rs485bus, huart, size);
+				err_timer_cnt=0;	//每接收一次，就清零
+    }
+}
+
+uint32_t error_cnt=0;
+
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART6)
+    {
+			HAL_UART_DMAStop(huart);
+        // 清除错误标志（HAL 已处理大部分，但 ORE 仍需要手动清）
+      __HAL_UART_CLEAR_FEFLAG(huart);
+        __HAL_UART_CLEAR_NEFLAG(huart);
+        __HAL_UART_CLEAR_OREFLAG(huart);
+
+        // 3. 清除 huart->ErrorCode，否则 HAL 会认为错误仍然存在
+        huart->ErrorCode = HAL_UART_ERROR_NONE;
+			
+			huart->RxState = HAL_UART_STATE_READY;
+			
+			RS485RecvIRQ_Handler(&go_rs485bus, huart, 0);
+			error_cnt++;
     }
 }

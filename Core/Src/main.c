@@ -102,10 +102,12 @@ int main(void)
   MX_UART4_Init();
   MX_USART6_UART_Init();
   MX_USART1_UART_Init();
+  MX_TIM10_Init();
   /* USER CODE BEGIN 2 */
 	MX_USB_DEVICE_Init();
 	
 	__HAL_DMA_DISABLE_IT(&hdma_usart6_rx, DMA_IT_HT);
+	HAL_TIM_Base_Start_IT(&htim10);
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in freertos.c) */
@@ -120,7 +122,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-    
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -172,7 +174,7 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+extern uint32_t err_timer_cnt;
 /* USER CODE END 4 */
 
 /**
@@ -186,7 +188,40 @@ void SystemClock_Config(void)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
+	if(htim->Instance==TIM10)
+	{
+		err_timer_cnt++;
+		if(err_timer_cnt>40)
+		{
+			err_timer_cnt=0;
+			HAL_UART_DMAStop(&huart6);            // 停止 DMA
+			for(int i=0;i<1000;i++);
+    //HAL_Delay(1);                         // 硬延时（短）以确保 DMA 停下
 
+    // 读 DR/SR 或使用宏清标（具体宏支持视 HAL 版本）
+    __IO uint32_t tmp;
+    tmp = huart6.Instance->SR;
+    tmp = huart6.Instance->DR;
+    (void)tmp;
+
+    __HAL_UART_CLEAR_OREFLAG(&huart6);
+    __HAL_UART_CLEAR_NEFLAG(&huart6);
+    __HAL_UART_CLEAR_FEFLAG(&huart6);
+
+    // 完全解除/清理 HAL 状态与 DMA
+    HAL_UART_DeInit(&huart6);
+
+    // 清 HAL 内部错误标志与状态
+    huart6.ErrorCode = HAL_UART_ERROR_NONE;
+    huart6.RxState = HAL_UART_STATE_READY;
+
+    // 硬件复位（可选）
+    __HAL_RCC_USART6_FORCE_RESET();
+    __HAL_RCC_USART6_RELEASE_RESET();
+		
+		HAL_UART_Init(&huart6);
+		}
+	}
   /* USER CODE END Callback 0 */
   if (htim->Instance == TIM2) {
     HAL_IncTick();
