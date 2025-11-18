@@ -48,7 +48,7 @@ void MotorControlTask(void *param) // 将数据发送到电机，并从电机接
             GoMotorRecv(&leg[BACK_LEFT].joint[j].motor);
         }
 
-        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(2));
+        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(4));
     }
 }
 
@@ -62,15 +62,11 @@ void CDC_Recv_Cb(uint8_t *src, uint16_t size)
         xSemaphoreGive(cdc_recv_semphr);
     }
     cnt++;
-    HAL_UART_Transmit_DMA(&huart3, src, size);
+    //HAL_UART_Transmit_DMA(&huart3, src, size);
 }
-
-uint8_t send_buf[100];
 
 void MotorSendTask(void *param) // 将电机的数据发送到PC上
 {
-    for (int i = 0; i < 100; i++)
-        send_buf[i] = i;
     USB_CDC_Init(CDC_Recv_Cb, NULL, NULL);
     TickType_t last_wake_time = xTaskGetTickCount();
     while (1)
@@ -85,7 +81,7 @@ void MotorSendTask(void *param) // 将电机的数据发送到PC上
             }
         }
         CDC_Transmit_FS((uint8_t*)&legs_state, sizeof(legs_state));
-        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(2));
+        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(4));
     }
 }
 

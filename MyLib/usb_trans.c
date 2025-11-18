@@ -25,7 +25,7 @@ static void USB_RecvTask(void *param)
     {
         buffer_index=0;
         do{
-			xQueueReceive(kUsbRecvQueue, &current_cdc_pack_size, portMAX_DELAY);
+						xQueueReceive(kUsbRecvQueue, &current_cdc_pack_size, portMAX_DELAY);
             buffer_index=buffer_index+current_cdc_pack_size;
             if(buffer_index+64>USB_CDC_RECV_BUFFER_SIZE)        //如果下一次接收可能溢出，那么通知应用层
             {
@@ -51,12 +51,11 @@ void USB_CDC_Init(Recv_finished_cb_t recv_cb,RecvBufferOverflow_cb_t recv_overfl
     kUserData = user_data;
 
     kUsbRecvQueue = xQueueCreate(2, sizeof(uint32_t));
-    xTaskCreate(USB_RecvTask, "usb_cdc_recv", 128, recv_cb, 6, &kUsbRecvTaskHandle);
+    xTaskCreate(USB_RecvTask, "usb_cdc_recv", 128, NULL, 6, &kUsbRecvTaskHandle);
 }
 
 void CDC_RecvCplt_Handler(uint8_t *Buf, uint32_t *Len)
 {
-    USBD_CDC_ReceivePacket(&hUsbDeviceFS);
     BaseType_t pxHigherPriorityTaskWoken;
     xQueueSendFromISR(kUsbRecvQueue, Len, &pxHigherPriorityTaskWoken);
     portYIELD_FROM_ISR(pxHigherPriorityTaskWoken);
