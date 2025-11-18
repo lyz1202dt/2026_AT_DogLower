@@ -25,9 +25,9 @@ Leg_t leg[4] = {
      .joint[1] = {.motor = {.motor_id = 0x05, .rs485 = &go_rs485bus}, .inv_motor = -1, .pos_offset = 0.0f},
      .joint[2] = {.motor = {.motor_id = 0x06, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f}},
 
-    {.joint[0] = {.motor = {.motor_id = 0x01, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
-     .joint[1] = {.motor = {.motor_id = 0x02, .rs485 = &go_rs485bus}, .inv_motor = -1, .pos_offset = 0.0f},
-     .joint[2] = {.motor = {.motor_id = 0x03, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f}},
+    {.joint[0] = {.motor = {.motor_id = 0x01, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = -6.75066614f},
+     .joint[1] = {.motor = {.motor_id = 0x02, .rs485 = &go_rs485bus}, .inv_motor = -1, .pos_offset = -1.0258497f},
+     .joint[2] = {.motor = {.motor_id = 0x03, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 18.6955833f}},
 
     {.joint[0] = {.motor = {.motor_id = 0x0A, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
      .joint[1] = {.motor = {.motor_id = 0x0B, .rs485 = &go_rs485bus}, .inv_motor = -1, .pos_offset = 0.0f},
@@ -48,7 +48,7 @@ void MotorControlTask(void *param) // 将数据发送到电机，并从电机接
             GoMotorRecv(&leg[BACK_LEFT].joint[j].motor);
         }
 
-        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(3));
+        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(2));
     }
 }
 
@@ -85,7 +85,7 @@ void MotorSendTask(void *param) // 将电机的数据发送到PC上
             }
         }
         CDC_Transmit_FS((uint8_t*)&legs_state, sizeof(legs_state));
-        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(1000));
+        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(2));
     }
 }
 
