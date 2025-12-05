@@ -54,6 +54,7 @@ void MotorControlTask(void *param) // 将数据发送到电机，并从电机接
     }
 }
 
+uint32_t current_size=0;
 uint32_t cnt = 0;
 void CDC_Recv_Cb(uint8_t *src, uint16_t size)
 {
@@ -64,6 +65,7 @@ void CDC_Recv_Cb(uint8_t *src, uint16_t size)
         xSemaphoreGive(cdc_recv_semphr);
     }
     cnt++;
+		current_size=size;
     //HAL_UART_Transmit_DMA(&huart3, src, size);
 }
 
