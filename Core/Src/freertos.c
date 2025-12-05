@@ -43,6 +43,7 @@
 TaskHandle_t usb_send_task_handle;
 TaskHandle_t usb_recv_task_handle;
 TaskHandle_t motor_control_task_handle;
+TaskHandle_t motor_3508_control_task_handle;
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -113,6 +114,7 @@ void MX_FREERTOS_Init(void) {
   xTaskCreate(MotorControlTask,"MotorControl",128,NULL,6,&motor_control_task_handle);
   xTaskCreate(MotorSendTask,"MotorSend",256,NULL,5,&usb_send_task_handle);
   xTaskCreate(MotorRecvTask,"MotorRecv",128,NULL,5,&usb_recv_task_handle);
+  xTaskCreate(Motor3508Control,"Motor3508Control",128,NULL,5,&motor_3508_control_task_handle);
   /* USER CODE END RTOS_THREADS */
 
 }

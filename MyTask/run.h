@@ -7,6 +7,8 @@
 
 #include "go_motor.h"
 
+#include "motorEx.h"
+
 typedef struct{
     GO_MotorHandle_t motor;
     float pos_offset;
@@ -22,6 +24,7 @@ typedef struct{
 
 typedef struct{
     Joint_t joint[3];
+    Motor3508Ex_t joint4;
 }Leg_t;
 
 #pragma pack(1)
@@ -35,7 +38,13 @@ typedef struct{
 }MotorState_t;
 
 typedef struct{
+    float velocity;
+    float torque;
+}Motor3508State_t; 
+
+typedef struct{
     MotorState_t joint[3];
+    Motor3508State_t joint4; 
 }LegState_t;
 
 typedef struct{
@@ -49,5 +58,6 @@ typedef struct{
 void MotorControlTask(void* param);
 void MotorSendTask(void* param);
 void MotorRecvTask(void* param);
+void Motor3508Control(void *param);
 
 #endif

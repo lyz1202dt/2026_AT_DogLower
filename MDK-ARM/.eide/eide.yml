@@ -64,6 +64,14 @@ virtualFolder:
         - path: ../MyLib/WatchDog2.h
         - path: ../MyLib/usb_trans.c
         - path: ../MyLib/usb_trans.h
+        - path: ../MyLib/Canbuffer.c
+        - path: ../MyLib/CANDrive.c
+        - path: ../MyLib/motor.c
+        - path: ../MyLib/motorEx.c
+        - path: ../MyLib/Canbuffer.h
+        - path: ../MyLib/CANDrive.h
+        - path: ../MyLib/motor.h
+        - path: ../MyLib/motorEx.h
       folders: []
     - name: MyTask
       files:
@@ -264,7 +272,7 @@ targets:
             language-cpp: c++11
             link-time-optimization: false
             one-elf-section-per-function: true
-            optimization: level-1
+            optimization: level-0
             short-enums#wchar: true
             warnings: ac5-like-warnings
           global:

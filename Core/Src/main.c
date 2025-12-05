@@ -193,7 +193,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		err_timer_cnt++;
 		if(err_timer_cnt>40)
 		{
-			//HAL_NVIC_SystemReset();
+			HAL_NVIC_SystemReset();
 		}
 	}
   /* USER CODE END Callback 0 */
