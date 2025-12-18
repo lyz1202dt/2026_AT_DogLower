@@ -4,11 +4,17 @@
 #include "usb_trans.h"
 #include "WatchDog2.h"
 #include <string.h>
+#include "motorEx.h"
+
+extern int8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);  
 
 #define FRONT_LEFT 0
 #define FRONT_RIGHT 1
 #define BACK_LEFT 2
 #define BACK_RIGHT 3
+
+
+int16_t can2_send_buf[4];
 
 uint32_t err_timer_cnt=0;
 
@@ -21,19 +27,23 @@ LegPack_t legs_state = {.pack_type = 0x00};
 Leg_t leg[4] = {
     {.joint[0] = {.motor = {.motor_id = 0x01, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
      .joint[1] = {.motor = {.motor_id = 0x02, .rs485 = &go_rs485bus}, .inv_motor = -1, .pos_offset = 0.0f},
-     .joint[2] = {.motor = {.motor_id = 0x03, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f}},
+     .joint[2] = {.motor = {.motor_id = 0x03, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
+     .joint4   = {.hcan = &hcan2 , .ID = 0x201}                                                           },
 
     {.joint[0] = {.motor = {.motor_id = 0x04, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
      .joint[1] = {.motor = {.motor_id = 0x05, .rs485 = &go_rs485bus}, .inv_motor = -1, .pos_offset = 0.0f},
-     .joint[2] = {.motor = {.motor_id = 0x06, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f}},
+     .joint[2] = {.motor = {.motor_id = 0x06, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
+     .joint4   = {.hcan = &hcan2 , .ID = 0x202}                                                           },
 
     {.joint[0] = {.motor = {.motor_id = 0x01, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = -6.75066614f},
      .joint[1] = {.motor = {.motor_id = 0x02, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = -1.0258497f},
-     .joint[2] = {.motor = {.motor_id = 0x03, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 20.6975861f}},
+     .joint[2] = {.motor = {.motor_id = 0x03, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 20.6975861f},
+     .joint4   = {.hcan = &hcan2 , .ID = 0x203}                                                           },
 
     {.joint[0] = {.motor = {.motor_id = 0x0A, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
      .joint[1] = {.motor = {.motor_id = 0x0B, .rs485 = &go_rs485bus}, .inv_motor = -1, .pos_offset = 0.0f},
-     .joint[2] = {.motor = {.motor_id = 0x0C, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f}}};
+     .joint[2] = {.motor = {.motor_id = 0x0C, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
+     .joint4   = {.hcan = &hcan2 , .ID = 0x204}                                                           }}; 
 
 void MotorControlTask(void *param) // 将数据发送到电机，并从电机接收数据
 {
@@ -43,12 +53,30 @@ void MotorControlTask(void *param) // 将数据发送到电机，并从电机接
     {
         for (int j = 0; j < 3; j++)
         {
-            GoMotorSend(&leg[BACK_LEFT].joint[j].motor, leg[BACK_LEFT].joint[j].exp_torque / 6.33f * leg[BACK_LEFT].joint[j].inv_motor,
+            GoMotorSend(&leg[FRONT_LEFT].joint[j].motor, leg[FRONT_LEFT].joint[j].exp_torque / 6.33f * leg[FRONT_LEFT].joint[j].inv_motor,
+                        leg[FRONT_LEFT].joint[j].exp_omega * 6.33f * leg[FRONT_LEFT].joint[j].inv_motor,
+                        leg[FRONT_LEFT].joint[j].exp_rad * 6.33f * leg[FRONT_LEFT].joint[j].inv_motor + leg[FRONT_LEFT].joint[j].pos_offset,
+                        leg[FRONT_LEFT].joint[j].Kp, leg[FRONT_LEFT].joint[j].Kd);
+            GoMotorRecv(&leg[FRONT_LEFT].joint[j].motor);
+
+             GoMotorSend(&leg[FRONT_RIGHT].joint[j].motor, leg[FRONT_RIGHT].joint[j].exp_torque / 6.33f * leg[FRONT_RIGHT].joint[j].inv_motor,
+                        leg[FRONT_RIGHT].joint[j].exp_omega * 6.33f * leg[FRONT_RIGHT].joint[j].inv_motor,
+                        leg[FRONT_RIGHT].joint[j].exp_rad * 6.33f * leg[FRONT_RIGHT].joint[j].inv_motor + leg[FRONT_RIGHT].joint[j].pos_offset,
+                        leg[FRONT_RIGHT].joint[j].Kp, leg[FRONT_RIGHT].joint[j].Kd);
+            GoMotorRecv(&leg[FRONT_RIGHT].joint[j].motor);
+
+             GoMotorSend(&leg[BACK_LEFT].joint[j].motor, leg[BACK_LEFT].joint[j].exp_torque / 6.33f * leg[BACK_LEFT].joint[j].inv_motor,
                         leg[BACK_LEFT].joint[j].exp_omega * 6.33f * leg[BACK_LEFT].joint[j].inv_motor,
                         leg[BACK_LEFT].joint[j].exp_rad * 6.33f * leg[BACK_LEFT].joint[j].inv_motor + leg[BACK_LEFT].joint[j].pos_offset,
                         leg[BACK_LEFT].joint[j].Kp, leg[BACK_LEFT].joint[j].Kd);
             GoMotorRecv(&leg[BACK_LEFT].joint[j].motor);
-        }
+
+             GoMotorSend(&leg[BACK_RIGHT].joint[j].motor, leg[BACK_RIGHT].joint[j].exp_torque / 6.33f * leg[BACK_RIGHT].joint[j].inv_motor,
+                        leg[BACK_RIGHT].joint[j].exp_omega * 6.33f * leg[BACK_RIGHT].joint[j].inv_motor,
+                        leg[BACK_RIGHT].joint[j].exp_rad * 6.33f * leg[BACK_RIGHT].joint[j].inv_motor + leg[BACK_RIGHT].joint[j].pos_offset,
+                        leg[BACK_RIGHT].joint[j].Kp, leg[BACK_RIGHT].joint[j].Kd);
+            GoMotorRecv(&leg[BACK_RIGHT].joint[j].motor);
+        }   
 
         vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(5));
     }
@@ -79,8 +107,10 @@ void MotorSendTask(void *param) // 将电机的数据发送到PC上
                 legs_state.leg[i].joint[j].omega = leg[i].joint[j].inv_motor * (leg[i].joint[j].motor.state.velocity) / 6.33f;
                 legs_state.leg[i].joint[j].torque = leg[i].joint[j].inv_motor * (leg[i].joint[j].motor.state.torque) * 6.33f;
             }
+            legs_state.leg[i].joint4.velocity = leg[i].joint4.velocity;      
+            legs_state.leg[i].joint4.torque = leg[i].joint4.torque;
         }
-        CDC_Transmit_FS((uint8_t*)&legs_state, sizeof(legs_state));
+        CDC_Transmit_FS((uint8_t*)&legs_state, sizeof(legs_state));     
         vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(8));
     }
 }
@@ -102,7 +132,18 @@ void MotorRecvTask(void *param) // 从PC接收电机的期望值
                     leg[i].joint[j].exp_torque = 0.0f;
                     leg[i].joint[j].Kp = 0.0f;
                     leg[i].joint[j].Kd = 0.0f;
+                    
                 }
+                
+                    leg[i].joint4.ex_velocity = 0.0f;
+                    leg[i].joint4.vel_pid.Kp = 0.0f;
+                    leg[i].joint4.vel_pid.Ki = 0.0f;
+                    leg[i].joint4.vel_pid.Kd = 0.0f;
+
+                    leg[i].joint4.ex_torque = 0.0f;
+                    leg[i].joint4.torque_pid.Kp = 0.0f;
+                    leg[i].joint4.torque_pid.Ki = 0.0f;
+                    leg[i].joint4.torque_pid.Kd = 0.0f;
             }
             continue;
         }
@@ -118,9 +159,50 @@ void MotorRecvTask(void *param) // 从PC接收电机的期望值
                 leg[i].joint[j].Kp = legs_target.leg[i].joint[j].kp;
                 leg[i].joint[j].Kd = legs_target.leg[i].joint[j].kd;
             }
+            
+                leg[i].joint4.ex_torque = legs_target.leg[i].joint4.torque;
+                leg[i].joint4.ex_velocity = legs_target.leg[i].joint4.velocity;
         }
     }
 }
+
+void Motor3508Control(void *param)
+{
+    for (int i = 0; i < 4; i++)
+        {
+            leg[i].joint4.vel_pid.Kp = 0.0f;
+	        leg[i].joint4.vel_pid.Ki = 0.0f;
+	        leg[i].joint4.vel_pid.Kd = 0.0f;
+	        leg[i].joint4.vel_pid.limit = 10000.0f;
+	        leg[i].joint4.vel_pid.output_limit = 10000.0f;
+
+            leg[i].joint4.torque_pid.Kp = 0.0f;
+	        leg[i].joint4.torque_pid.Ki = 0.0f;
+	        leg[i].joint4.torque_pid.Kd = 0.0f;
+	        leg[i].joint4.torque_pid.limit = 10000.0f;
+	        leg[i].joint4.torque_pid.output_limit = 10000.0f;
+        }
+    TickType_t last_wake_time=xTaskGetTickCount();
+    while (1)
+    { 
+        for (int i = 0; i < 4; i++)
+        {
+         PID_Control2(leg[i].joint4.velocity  ,   leg[i].joint4.ex_velocity   ,   &leg[i].joint4.vel_pid);
+         PID_Control2(leg[i].joint4.torque    ,   leg[i].joint4.ex_velocity   ,   &leg[i].joint4.torque_pid);
+         leg[i].joint4.output = leg[i].joint4.vel_pid.pid_out + leg[i].joint4.torque_pid.pid_out;
+
+         if ( leg[i].joint4.output < -RM3508_LIMIT)           
+            leg[i].joint4.output = -RM3508_LIMIT;           
+         if (leg[i].joint4.output > RM3508_LIMIT)           
+            leg[i].joint4.output = RM3508_LIMIT;
+
+            can2_send_buf[i] = leg[i].joint4.output;
+        }
+         MotorSend(&hcan2,0x200,can2_send_buf);
+        vTaskDelayUntil(&last_wake_time,pdMS_TO_TICKS(2));
+    }
+}
+
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
@@ -159,4 +241,24 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 			RS485RecvIRQ_Handler(&go_rs485bus, huart, 0);
 			error_cnt++;
     }
+}
+
+
+void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
+{
+	if (hcan->Instance == CAN2)
+	{
+		uint8_t buf[8];
+		uint16_t ID = CAN_Receive_DataFrame(&hcan2, buf);
+        for (int i = 0; i < 4; i++)
+        {
+            if (leg[i].joint4.ID == ID)
+            {
+                Motor3508Recv(&leg[i].joint4,hcan,ID,buf);
+                leg[i].joint4.velocity = (float)leg[i].joint4.motor.Speed * 6.283185307f;
+                leg[i].joint4.torque   = (float)leg[i].joint4.motor.TorqueCurrent/2.9f + 8.0f/29.0f;
+                break;
+            }
+        }
+	}
 }
