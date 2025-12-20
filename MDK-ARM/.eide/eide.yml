@@ -64,6 +64,14 @@ virtualFolder:
         - path: ../MyLib/WatchDog2.h
         - path: ../MyLib/usb_trans.c
         - path: ../MyLib/usb_trans.h
+        - path: ../MyLib/Canbuffer.c
+        - path: ../MyLib/Canbuffer.h
+        - path: ../MyLib/CANDrive.c
+        - path: ../MyLib/CANDrive.h
+        - path: ../MyLib/motor.c
+        - path: ../MyLib/motor.h
+        - path: ../MyLib/motorEx.c
+        - path: ../MyLib/motorEx.h
       folders: []
     - name: MyTask
       files:

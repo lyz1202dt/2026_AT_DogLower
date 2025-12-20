@@ -483,6 +483,46 @@
               <FileType>5</FileType>
               <FilePath>..\MyLib\usb_trans.h</FilePath>
             </File>
+            <File>
+              <FileName>Canbuffer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyLib\Canbuffer.c</FilePath>
+            </File>
+            <File>
+              <FileName>CANDrive.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyLib\CANDrive.c</FilePath>
+            </File>
+            <File>
+              <FileName>motor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyLib\motor.c</FilePath>
+            </File>
+            <File>
+              <FileName>motorEx.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyLib\motorEx.c</FilePath>
+            </File>
+            <File>
+              <FileName>Canbuffer.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\MyLib\Canbuffer.h</FilePath>
+            </File>
+            <File>
+              <FileName>CANDrive.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\MyLib\CANDrive.h</FilePath>
+            </File>
+            <File>
+              <FileName>motor.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\MyLib\motor.h</FilePath>
+            </File>
+            <File>
+              <FileName>motorEx.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\MyLib\motorEx.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
