@@ -65,6 +65,14 @@ virtualFolder:
         - path: ../MyLib/usb_trans.c
         - path: ../MyLib/usb_trans.h
         - path: ../MyLib/Canbuffer.c
+        - path: ../MyLib/Canbuffer.h
+        - path: ../MyLib/CANDrive.c
+        - path: ../MyLib/CANDrive.h
+        - path: ../MyLib/motor.c
+        - path: ../MyLib/motor.h
+        - path: ../MyLib/motorEx.c
+        - path: ../MyLib/motorEx.h
+        - path: ../MyLib/Canbuffer.c
         - path: ../MyLib/CANDrive.c
         - path: ../MyLib/motor.c
         - path: ../MyLib/motorEx.c
