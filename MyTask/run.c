@@ -45,7 +45,17 @@ Leg_t leg[4] = {
      .joint[2] = {.motor = {.motor_id = 0x0C, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
      .joint4   = {.hcan = &hcan2 , .ID = 0x204}                                                           }}; 
 
-void MotorControlTask(void *param) // 将数据发送到电机，并从电机接收数据
+
+
+void LegsResetTask()
+{
+    
+    while(1)
+    {
+
+    }
+}
+     void MotorControlTask(void *param) // 将数据发送到电机，并从电机接收数据
 {
     RS485Init(&go_rs485bus, &huart6, GPIOA, GPIO_PIN_4); // 初始化485总线管理器
     TickType_t last_wake_time = xTaskGetTickCount();
