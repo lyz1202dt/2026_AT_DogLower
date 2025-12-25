@@ -120,9 +120,9 @@ Leg_t leg[4] = {
      .joint[2] = {.motor = {.motor_id = 0x03, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 20.6975861f},
      .joint4   = {.hcan = &hcan2 , .ID = 0x203}                                                           },
 
-    {.joint[0] = {.motor = {.motor_id = 0x0A, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
-     .joint[1] = {.motor = {.motor_id = 0x0B, .rs485 = &go_rs485bus}, .inv_motor = -1, .pos_offset = 0.0f},
-     .joint[2] = {.motor = {.motor_id = 0x0C, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
+    {.joint[0] = {.motor = {.motor_id = 0x04, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
+     .joint[1] = {.motor = {.motor_id = 0x05, .rs485 = &go_rs485bus}, .inv_motor = -1, .pos_offset = 0.0f},
+     .joint[2] = {.motor = {.motor_id = 0x06, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
      .joint4   = {.hcan = &hcan2 , .ID = 0x204}                                                           }}; 
 
 void MotorControlTask(void *param) // 将数据发送到电机，并从电机接收数据
