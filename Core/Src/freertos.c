@@ -119,7 +119,7 @@ void MX_FREERTOS_Init(void) {
   xTaskCreate(Motor3508Control,"Motor3508Control",128,NULL,6,&motor_3508_control_task_handle);
   vTaskSuspend(motor_3508_control_task_handle);
   vTaskSuspend(usb_recv_task_handle);
-  xTaskCreate(MotorContol_start_setup,"MotorContol_start_setup",256,NULL,6,&MotorContol_start_setup_task_handle);
+  xTaskCreate(MotorContol_start_setup,"MotorContol_start_setup",256,NULL,4,&MotorContol_start_setup_task_handle);
   xTaskCreate(Motor3508_setup_seed,"Motor3508_setup_seed",256,NULL,6,&Motor3508_setup_seed_task_handle);
   /* USER CODE END RTOS_THREADS */
 

@@ -109,9 +109,9 @@ Leg_t leg[4] = {
      .joint[2] = {.motor = {.motor_id = 0x06, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
      .joint4   = {.hcan = &hcan2 , .ID = 0x202}                                                           },
 
-    {.joint[0] = {.motor = {.motor_id = 0x07, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = -6.75066614f},
-     .joint[1] = {.motor = {.motor_id = 0x08, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = -1.0258497f},
-     .joint[2] = {.motor = {.motor_id = 0x09, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 20.6975861f},
+    {.joint[0] = {.motor = {.motor_id = 0x07, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
+     .joint[1] = {.motor = {.motor_id = 0x08, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
+     .joint[2] = {.motor = {.motor_id = 0x09, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
      .joint4   = {.hcan = &hcan2 , .ID = 0x203}                                                           },
 
     {.joint[0] = {.motor = {.motor_id = 0x0A, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
@@ -428,7 +428,7 @@ for(uint8_t i=0;i<4;i++)
     }
     leg[i].joint4.ex_rad =  SimpleRamp_GetValue(&leg_ramp[i].joint_ramp_t[3].ramp_start[ex_rad_ramp]);
 }
-vTaskDelayUntil(&last_wake_time,pdMS_TO_TICKS(5));
+vTaskDelayUntil(&last_wake_time,pdMS_TO_TICKS(2));
 }
     vTaskResume(usb_recv_task_handle);
     vTaskResume(motor_3508_control_task_handle);
@@ -489,7 +489,7 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
             {
                 Motor3508Recv(&leg[i].joint4,hcan,ID,buf);
                 leg[i].joint4.velocity = (float)leg[i].joint4.motor.Speed * 6.283185307f / 60.0f / 19.0f;
-                leg[i].joint4.torque   = ((float)leg[i].joint4.motor.TorqueCurrent/2.9f + 8.0f/29.0f) * 19.0f;
+                leg[i].joint4.torque   = (float)leg[i].joint4.motor.TorqueCurrent *0.3f;
                 break;
             }
         }
