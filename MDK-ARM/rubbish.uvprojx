@@ -523,6 +523,16 @@
               <FileType>5</FileType>
               <FilePath>..\MyLib\motorEx.h</FilePath>
             </File>
+            <File>
+              <FileName>ramp_simple.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyLib\ramp_simple.c</FilePath>
+            </File>
+            <File>
+              <FileName>ramp_simple.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\MyLib\ramp_simple.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

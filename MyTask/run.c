@@ -6,12 +6,17 @@
 #include <string.h>
 #include "motorEx.h"
 
-extern int8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);  
 
+extern int8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);  
+extern QueueHandle_t start_setup_semphr;
 #define FRONT_LEFT 0
 #define FRONT_RIGHT 1
 #define BACK_LEFT 2
 #define BACK_RIGHT 3
+
+#define ex_omega_ramp 0    //ramp的期望速度
+#define ex_rad_ramp 1    //ramp的期望角度
+#define ex_torque_ramp 2   //ramp的期望力矩
 
 
 int16_t can2_send_buf[4];
@@ -21,6 +26,81 @@ uint32_t err_timer_cnt=0;
 RS485_t go_rs485bus;
 
 QueueHandle_t cdc_recv_semphr;
+
+
+//斜坡法调参
+leg_ramp_t leg_ramp[4] = {
+        {.joint_ramp_t[0] = {.ramp_start[ex_omega_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}},
+
+        .joint_ramp_t[1] = {.ramp_start[ex_omega_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}},
+
+        .joint_ramp_t[2] = {.ramp_start[ex_omega_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}},
+
+        .joint_ramp_t[3] = {.ramp_start[ex_omega_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}}
+    }, 
+
+
+            {.joint_ramp_t[0] = {.ramp_start[ex_omega_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}},
+
+        .joint_ramp_t[1] = {.ramp_start[ex_omega_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}},
+
+        .joint_ramp_t[2] = {.ramp_start[ex_omega_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}},
+
+        .joint_ramp_t[3] = {.ramp_start[ex_omega_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}}
+    }, 
+
+
+            {.joint_ramp_t[0] = {.ramp_start[ex_omega_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}},
+
+        .joint_ramp_t[1] = {.ramp_start[ex_omega_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}},
+
+        .joint_ramp_t[2] = {.ramp_start[ex_omega_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}},
+
+        .joint_ramp_t[3] = {.ramp_start[ex_omega_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}}
+    }, 
+
+
+            {.joint_ramp_t[0] = {.ramp_start[ex_omega_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}},
+
+        .joint_ramp_t[1] = {.ramp_start[ex_omega_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}},
+
+        .joint_ramp_t[2] = {.ramp_start[ex_omega_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}},
+
+        .joint_ramp_t[3] = {.ramp_start[ex_omega_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
+                             ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}}
+    }
+};
 
 LegPack_t legs_target = {.pack_type = 0x00};
 LegPack_t legs_state = {.pack_type = 0x00};
@@ -117,6 +197,7 @@ void MotorSendTask(void *param) // 将电机的数据发送到PC上
 
 void MotorRecvTask(void *param) // 从PC接收电机的期望值
 {
+    xSemaphoreTake(start_setup_semphr,portMAX_DELAY);
     cdc_recv_semphr = xSemaphoreCreateBinary();
     xSemaphoreTake(cdc_recv_semphr, 0);
     while (1)
@@ -201,6 +282,98 @@ void Motor3508Control(void *param)
          MotorSend(&hcan2,0x200,can2_send_buf);
         vTaskDelayUntil(&last_wake_time,pdMS_TO_TICKS(2));
     }
+}
+
+
+void MotorContol_start_setup(void *param)
+{
+    TickType_t last_wake_time=xTaskGetTickCount();
+    uint8_t flash = 1;
+while(flash)
+{
+   flash  = (SimpleRamp_Update(&leg_ramp[FRONT_LEFT].joint_ramp_t[0].ramp_start[ex_omega_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[FRONT_LEFT].joint_ramp_t[0].ramp_start[ex_rad_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[FRONT_LEFT].joint_ramp_t[0].ramp_start[ex_torque_ramp])
+            |
+            SimpleRamp_Update(&leg_ramp[FRONT_LEFT].joint_ramp_t[1].ramp_start[ex_omega_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[FRONT_LEFT].joint_ramp_t[1].ramp_start[ex_rad_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[FRONT_LEFT].joint_ramp_t[1].ramp_start[ex_torque_ramp])
+            |
+            SimpleRamp_Update(&leg_ramp[FRONT_LEFT].joint_ramp_t[2].ramp_start[ex_omega_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[FRONT_LEFT].joint_ramp_t[2].ramp_start[ex_rad_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[FRONT_LEFT].joint_ramp_t[2].ramp_start[ex_torque_ramp])
+            |
+            SimpleRamp_Update(&leg_ramp[FRONT_LEFT].joint_ramp_t[3].ramp_start[ex_omega_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[FRONT_LEFT].joint_ramp_t[3].ramp_start[ex_rad_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[FRONT_LEFT].joint_ramp_t[3].ramp_start[ex_torque_ramp])|
+
+/*****************************************************************************************************************/
+            SimpleRamp_Update(&leg_ramp[FRONT_RIGHT].joint_ramp_t[0].ramp_start[ex_omega_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[FRONT_RIGHT].joint_ramp_t[0].ramp_start[ex_rad_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[FRONT_RIGHT].joint_ramp_t[0].ramp_start[ex_torque_ramp])
+            |
+            SimpleRamp_Update(&leg_ramp[FRONT_RIGHT].joint_ramp_t[1].ramp_start[ex_omega_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[FRONT_RIGHT].joint_ramp_t[1].ramp_start[ex_rad_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[FRONT_RIGHT].joint_ramp_t[1].ramp_start[ex_torque_ramp])
+            |
+            SimpleRamp_Update(&leg_ramp[FRONT_RIGHT].joint_ramp_t[2].ramp_start[ex_omega_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[FRONT_RIGHT].joint_ramp_t[2].ramp_start[ex_rad_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[FRONT_RIGHT].joint_ramp_t[2].ramp_start[ex_torque_ramp])
+            |
+            SimpleRamp_Update(&leg_ramp[FRONT_RIGHT].joint_ramp_t[3].ramp_start[ex_omega_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[FRONT_RIGHT].joint_ramp_t[3].ramp_start[ex_rad_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[FRONT_RIGHT].joint_ramp_t[3].ramp_start[ex_torque_ramp])|
+
+/*****************************************************************************************************************/
+            SimpleRamp_Update(&leg_ramp[BACK_LEFT].joint_ramp_t[0].ramp_start[ex_omega_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[BACK_LEFT].joint_ramp_t[0].ramp_start[ex_rad_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[BACK_LEFT].joint_ramp_t[0].ramp_start[ex_torque_ramp])
+            |
+            SimpleRamp_Update(&leg_ramp[BACK_LEFT].joint_ramp_t[1].ramp_start[ex_omega_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[BACK_LEFT].joint_ramp_t[1].ramp_start[ex_rad_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[BACK_LEFT].joint_ramp_t[1].ramp_start[ex_torque_ramp])
+            |
+            SimpleRamp_Update(&leg_ramp[BACK_LEFT].joint_ramp_t[2].ramp_start[ex_omega_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[BACK_LEFT].joint_ramp_t[2].ramp_start[ex_rad_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[BACK_LEFT].joint_ramp_t[2].ramp_start[ex_torque_ramp])
+            |
+            SimpleRamp_Update(&leg_ramp[BACK_LEFT].joint_ramp_t[3].ramp_start[ex_omega_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[BACK_LEFT].joint_ramp_t[3].ramp_start[ex_rad_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[BACK_LEFT].joint_ramp_t[3].ramp_start[ex_torque_ramp])|
+
+/*****************************************************************************************************************/
+            SimpleRamp_Update(&leg_ramp[BACK_RIGHT].joint_ramp_t[0].ramp_start[ex_omega_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[BACK_RIGHT].joint_ramp_t[0].ramp_start[ex_rad_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[BACK_RIGHT].joint_ramp_t[0].ramp_start[ex_torque_ramp])
+            |
+            SimpleRamp_Update(&leg_ramp[BACK_RIGHT].joint_ramp_t[1].ramp_start[ex_omega_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[BACK_RIGHT].joint_ramp_t[1].ramp_start[ex_rad_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[BACK_RIGHT].joint_ramp_t[1].ramp_start[ex_torque_ramp])
+            |
+            SimpleRamp_Update(&leg_ramp[BACK_RIGHT].joint_ramp_t[2].ramp_start[ex_omega_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[BACK_RIGHT].joint_ramp_t[2].ramp_start[ex_rad_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[BACK_RIGHT].joint_ramp_t[2].ramp_start[ex_torque_ramp])
+            |
+            SimpleRamp_Update(&leg_ramp[BACK_RIGHT].joint_ramp_t[3].ramp_start[ex_omega_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[BACK_RIGHT].joint_ramp_t[3].ramp_start[ex_rad_ramp]) | 
+                SimpleRamp_Update(&leg_ramp[BACK_RIGHT].joint_ramp_t[3].ramp_start[ex_torque_ramp])
+            );
+for(uint8_t i=0;i<4;i++)
+{
+    for(uint8_t j=0;j<3;j++)
+    {
+        leg[i].joint[j].exp_omega = SimpleRamp_GetValue(&leg_ramp[i].joint_ramp_t[j].ramp_start[ex_omega_ramp]);
+        leg[i].joint[j].exp_rad = SimpleRamp_Update(&leg_ramp[i].joint_ramp_t[j].ramp_start[ex_rad_ramp]);
+        leg[i].joint[j].exp_torque = SimpleRamp_Update(&leg_ramp[i].joint_ramp_t[j].ramp_start[ex_torque_ramp]);
+    }
+    leg[i].joint4.ex_velocity =  SimpleRamp_GetValue(&leg_ramp[i].joint_ramp_t[3].ramp_start[ex_omega_ramp]);
+    leg[i].joint4.ex_rad =  SimpleRamp_GetValue(&leg_ramp[i].joint_ramp_t[3].ramp_start[ex_rad_ramp]);
+    leg[i].joint4.ex_torque =  SimpleRamp_GetValue(&leg_ramp[i].joint_ramp_t[3].ramp_start[ex_torque_ramp]);
+}
+vTaskDelayUntil(&last_wake_time,pdMS_TO_TICKS(5));
+}
+    xSemaphoreGive(start_setup_semphr);
+    vTaskDelete(NULL);
 }
 
 

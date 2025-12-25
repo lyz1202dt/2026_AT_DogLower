@@ -9,6 +9,8 @@
 
 #include "motorEx.h"
 
+#include "ramp_simple.h"
+
 typedef struct{
     GO_MotorHandle_t motor;
     float pos_offset;
@@ -59,5 +61,6 @@ void MotorControlTask(void* param);
 void MotorSendTask(void* param);
 void MotorRecvTask(void* param);
 void Motor3508Control(void *param);
+void MotorContol_start_setup(void *param);
 
 #endif

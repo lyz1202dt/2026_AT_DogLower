@@ -11,6 +11,7 @@ typedef struct
     uint32_t ID;
     float ex_velocity;
     float ex_torque;
+    float ex_rad;
     float velocity;
     float torque;
     float output;
