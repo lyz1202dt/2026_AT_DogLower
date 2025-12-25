@@ -8,7 +8,9 @@
 
 
 extern int8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);  
-extern QueueHandle_t start_setup_semphr;
+extern TaskHandle_t motor_3508_control_task_handle;
+extern TaskHandle_t Motor3508_setup_seed_task_handle;
+extern TaskHandle_t usb_recv_task_handle;
 #define FRONT_LEFT 0
 #define FRONT_RIGHT 1
 #define BACK_LEFT 2
@@ -28,7 +30,7 @@ RS485_t go_rs485bus;
 QueueHandle_t cdc_recv_semphr;
 
 
-//斜坡法调参
+//斜坡法调参        关节3轴的角度值        其余关节国际单位  rad/s   弧度制   牛米
 leg_ramp_t leg_ramp[4] = {
         {.joint_ramp_t[0] = {.ramp_start[ex_omega_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
                              ,.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
@@ -41,10 +43,7 @@ leg_ramp_t leg_ramp[4] = {
         .joint_ramp_t[2] = {.ramp_start[ex_omega_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
                              ,.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
                              ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}},
-
-        .joint_ramp_t[3] = {.ramp_start[ex_omega_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
-                             ,.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
-                             ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}}
+.joint_ramp_t[3] = {.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}}
     }, 
 
 
@@ -60,9 +59,7 @@ leg_ramp_t leg_ramp[4] = {
                              ,.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
                              ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}},
 
-        .joint_ramp_t[3] = {.ramp_start[ex_omega_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
-                             ,.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
-                             ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}}
+        .joint_ramp_t[3] = {.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}}
     }, 
 
 
@@ -78,9 +75,7 @@ leg_ramp_t leg_ramp[4] = {
                              ,.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
                              ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}},
 
-        .joint_ramp_t[3] = {.ramp_start[ex_omega_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
-                             ,.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
-                             ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}}
+.joint_ramp_t[3] = {.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}}
     }, 
 
 
@@ -96,9 +91,7 @@ leg_ramp_t leg_ramp[4] = {
                              ,.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
                              ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}},
 
-        .joint_ramp_t[3] = {.ramp_start[ex_omega_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
-                             ,.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
-                             ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}}
+.joint_ramp_t[3] = {.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}}
     }
 };
 
@@ -197,7 +190,6 @@ void MotorSendTask(void *param) // 将电机的数据发送到PC上
 
 void MotorRecvTask(void *param) // 从PC接收电机的期望值
 {
-    xSemaphoreTake(start_setup_semphr,portMAX_DELAY);
     cdc_recv_semphr = xSemaphoreCreateBinary();
     xSemaphoreTake(cdc_recv_semphr, 0);
     while (1)
@@ -222,9 +214,7 @@ void MotorRecvTask(void *param) // 从PC接收电机的期望值
                     leg[i].joint4.vel_pid.Kd = 0.0f;
 
                     leg[i].joint4.ex_torque = 0.0f;
-                    leg[i].joint4.torque_pid.Kp = 0.0f;
-                    leg[i].joint4.torque_pid.Ki = 0.0f;
-                    leg[i].joint4.torque_pid.Kd = 0.0f;
+
             }
             continue;
         }
@@ -247,30 +237,40 @@ void MotorRecvTask(void *param) // 从PC接收电机的期望值
     }
 }
 
-void Motor3508Control(void *param)
-{
-    for (int i = 0; i < 4; i++)
-        {
-            leg[i].joint4.vel_pid.Kp = 0.0f;
-	        leg[i].joint4.vel_pid.Ki = 0.0f;
-	        leg[i].joint4.vel_pid.Kd = 0.0f;
-	        leg[i].joint4.vel_pid.limit = 10000.0f;
-	        leg[i].joint4.vel_pid.output_limit = 10000.0f;
 
-            leg[i].joint4.torque_pid.Kp = 0.0f;
-	        leg[i].joint4.torque_pid.Ki = 0.0f;
-	        leg[i].joint4.torque_pid.Kd = 0.0f;
-	        leg[i].joint4.torque_pid.limit = 10000.0f;
-	        leg[i].joint4.torque_pid.output_limit = 10000.0f;
-        }
+
+void Motor3508Control(void *param)  //改这里
+{
+    leg[FRONT_LEFT].joint4.vel_pid.Kp = 0.0f;
+    leg[FRONT_LEFT].joint4.vel_pid.Ki = 0.0f;
+    leg[FRONT_LEFT].joint4.vel_pid.Kd = 0.0f;
+    leg[FRONT_LEFT].joint4.vel_pid.limit = 10000.0f;
+    leg[FRONT_LEFT].joint4.vel_pid.output_limit = 10000.0f;
+    
+    leg[FRONT_RIGHT].joint4.vel_pid.Kp = 0.0f;
+    leg[FRONT_RIGHT].joint4.vel_pid.Ki = 0.0f;
+    leg[FRONT_RIGHT].joint4.vel_pid.Kd = 0.0f;
+    leg[FRONT_RIGHT].joint4.vel_pid.limit = 10000.0f;
+    leg[FRONT_RIGHT].joint4.vel_pid.output_limit = 10000.0f;
+    
+    leg[BACK_LEFT].joint4.vel_pid.Kp = 0.0f;
+    leg[BACK_LEFT].joint4.vel_pid.Ki = 0.0f;
+    leg[BACK_LEFT].joint4.vel_pid.Kd = 0.0f;
+    leg[BACK_LEFT].joint4.vel_pid.limit = 10000.0f;
+    leg[BACK_LEFT].joint4.vel_pid.output_limit = 10000.0f;
+    
+    leg[BACK_RIGHT].joint4.vel_pid.Kp = 0.0f;
+    leg[BACK_RIGHT].joint4.vel_pid.Ki = 0.0f;
+    leg[BACK_RIGHT].joint4.vel_pid.Kd = 0.0f;
+    leg[BACK_RIGHT].joint4.vel_pid.output_limit = 10000.0f;
+
     TickType_t last_wake_time=xTaskGetTickCount();
     while (1)
     { 
         for (int i = 0; i < 4; i++)
         {
          PID_Control2(leg[i].joint4.velocity  ,   leg[i].joint4.ex_velocity   ,   &leg[i].joint4.vel_pid);
-         PID_Control2(leg[i].joint4.torque    ,   leg[i].joint4.ex_velocity   ,   &leg[i].joint4.torque_pid);
-         leg[i].joint4.output = leg[i].joint4.vel_pid.pid_out + leg[i].joint4.torque_pid.pid_out;
+         leg[i].joint4.output = leg[i].joint4.vel_pid.pid_out + leg[i].joint4.ex_torque;
 
          if ( leg[i].joint4.output < -RM3508_LIMIT)           
             leg[i].joint4.output = -RM3508_LIMIT;           
@@ -278,6 +278,70 @@ void Motor3508Control(void *param)
             leg[i].joint4.output = RM3508_LIMIT;
 
             can2_send_buf[i] = leg[i].joint4.output;
+        }
+         MotorSend(&hcan2,0x200,can2_send_buf);
+        vTaskDelayUntil(&last_wake_time,pdMS_TO_TICKS(2));
+    }
+}
+
+void Motor3508_setup_seed(void *param)
+{
+    leg[FRONT_LEFT].joint4.vel_pid.Kp = 0.0f;
+    leg[FRONT_LEFT].joint4.vel_pid.Ki = 0.0f;
+    leg[FRONT_LEFT].joint4.vel_pid.Kd = 0.0f;
+    leg[FRONT_LEFT].joint4.vel_pid.limit = 10000.0f;
+    leg[FRONT_LEFT].joint4.vel_pid.output_limit = 10000.0f;
+    
+    leg[FRONT_RIGHT].joint4.vel_pid.Kp = 0.0f;
+    leg[FRONT_RIGHT].joint4.vel_pid.Ki = 0.0f;
+    leg[FRONT_RIGHT].joint4.vel_pid.Kd = 0.0f;
+    leg[FRONT_RIGHT].joint4.vel_pid.limit = 10000.0f;
+    leg[FRONT_RIGHT].joint4.vel_pid.output_limit = 10000.0f;
+    
+    leg[BACK_LEFT].joint4.vel_pid.Kp = 0.0f;
+    leg[BACK_LEFT].joint4.vel_pid.Ki = 0.0f;
+    leg[BACK_LEFT].joint4.vel_pid.Kd = 0.0f;
+    leg[BACK_LEFT].joint4.vel_pid.limit = 10000.0f;
+    leg[BACK_LEFT].joint4.vel_pid.output_limit = 10000.0f;
+    
+    leg[BACK_RIGHT].joint4.vel_pid.Kp = 0.0f;
+    leg[BACK_RIGHT].joint4.vel_pid.Ki = 0.0f;
+    leg[BACK_RIGHT].joint4.vel_pid.Kd = 0.0f;
+    leg[BACK_RIGHT].joint4.vel_pid.output_limit = 10000.0f;
+
+
+/**********************************************************/
+    leg[FRONT_LEFT].joint4.pos_pid.Kp = 0.0f;
+    leg[FRONT_LEFT].joint4.pos_pid.Ki = 0.0f;
+    leg[FRONT_LEFT].joint4.pos_pid.Kd = 0.0f;
+    leg[FRONT_LEFT].joint4.pos_pid.limit = 10000.0f;
+    leg[FRONT_LEFT].joint4.pos_pid.output_limit = 10000.0f;
+    
+    leg[FRONT_RIGHT].joint4.pos_pid.Kp = 0.0f;
+    leg[FRONT_RIGHT].joint4.pos_pid.Ki = 0.0f;
+    leg[FRONT_RIGHT].joint4.pos_pid.Kd = 0.0f;
+    leg[FRONT_RIGHT].joint4.pos_pid.limit = 10000.0f;
+    leg[FRONT_RIGHT].joint4.pos_pid.output_limit = 10000.0f;
+    
+    leg[BACK_LEFT].joint4.pos_pid.Kp = 0.0f;
+    leg[BACK_LEFT].joint4.pos_pid.Ki = 0.0f;
+    leg[BACK_LEFT].joint4.pos_pid.Kd = 0.0f;
+    leg[BACK_LEFT].joint4.pos_pid.limit = 10000.0f;
+    leg[BACK_LEFT].joint4.pos_pid.output_limit = 10000.0f;
+    
+    leg[BACK_RIGHT].joint4.pos_pid.Kp = 0.0f;
+    leg[BACK_RIGHT].joint4.pos_pid.Ki = 0.0f;
+    leg[BACK_RIGHT].joint4.pos_pid.Kd = 0.0f;
+    leg[BACK_RIGHT].joint4.pos_pid.output_limit = 10000.0f;
+
+    TickType_t last_wake_time=xTaskGetTickCount();
+    while (1)
+    { 
+        for (int i = 0; i < 4; i++)
+        {
+		PID_Control2(leg[i].joint4.motor.Angle_DEG,(leg[i].joint4.ex_rad)*19.0f*180.0f/3.14159265f,&leg[i].joint4.pos_pid);
+		PID_Control2(leg[i].joint4.motor.Speed,leg[i].joint4.pos_pid.pid_out,&leg[i].joint4.vel_pid);
+            can2_send_buf[i] = leg[i].joint4.vel_pid.pid_out;
         }
          MotorSend(&hcan2,0x200,can2_send_buf);
         vTaskDelayUntil(&last_wake_time,pdMS_TO_TICKS(2));
@@ -303,9 +367,8 @@ while(flash)
                 SimpleRamp_Update(&leg_ramp[FRONT_LEFT].joint_ramp_t[2].ramp_start[ex_rad_ramp]) | 
                 SimpleRamp_Update(&leg_ramp[FRONT_LEFT].joint_ramp_t[2].ramp_start[ex_torque_ramp])
             |
-            SimpleRamp_Update(&leg_ramp[FRONT_LEFT].joint_ramp_t[3].ramp_start[ex_omega_ramp]) | 
                 SimpleRamp_Update(&leg_ramp[FRONT_LEFT].joint_ramp_t[3].ramp_start[ex_rad_ramp]) | 
-                SimpleRamp_Update(&leg_ramp[FRONT_LEFT].joint_ramp_t[3].ramp_start[ex_torque_ramp])|
+
 
 /*****************************************************************************************************************/
             SimpleRamp_Update(&leg_ramp[FRONT_RIGHT].joint_ramp_t[0].ramp_start[ex_omega_ramp]) | 
@@ -320,9 +383,8 @@ while(flash)
                 SimpleRamp_Update(&leg_ramp[FRONT_RIGHT].joint_ramp_t[2].ramp_start[ex_rad_ramp]) | 
                 SimpleRamp_Update(&leg_ramp[FRONT_RIGHT].joint_ramp_t[2].ramp_start[ex_torque_ramp])
             |
-            SimpleRamp_Update(&leg_ramp[FRONT_RIGHT].joint_ramp_t[3].ramp_start[ex_omega_ramp]) | 
                 SimpleRamp_Update(&leg_ramp[FRONT_RIGHT].joint_ramp_t[3].ramp_start[ex_rad_ramp]) | 
-                SimpleRamp_Update(&leg_ramp[FRONT_RIGHT].joint_ramp_t[3].ramp_start[ex_torque_ramp])|
+                
 
 /*****************************************************************************************************************/
             SimpleRamp_Update(&leg_ramp[BACK_LEFT].joint_ramp_t[0].ramp_start[ex_omega_ramp]) | 
@@ -337,9 +399,8 @@ while(flash)
                 SimpleRamp_Update(&leg_ramp[BACK_LEFT].joint_ramp_t[2].ramp_start[ex_rad_ramp]) | 
                 SimpleRamp_Update(&leg_ramp[BACK_LEFT].joint_ramp_t[2].ramp_start[ex_torque_ramp])
             |
-            SimpleRamp_Update(&leg_ramp[BACK_LEFT].joint_ramp_t[3].ramp_start[ex_omega_ramp]) | 
                 SimpleRamp_Update(&leg_ramp[BACK_LEFT].joint_ramp_t[3].ramp_start[ex_rad_ramp]) | 
-                SimpleRamp_Update(&leg_ramp[BACK_LEFT].joint_ramp_t[3].ramp_start[ex_torque_ramp])|
+               
 
 /*****************************************************************************************************************/
             SimpleRamp_Update(&leg_ramp[BACK_RIGHT].joint_ramp_t[0].ramp_start[ex_omega_ramp]) | 
@@ -354,9 +415,7 @@ while(flash)
                 SimpleRamp_Update(&leg_ramp[BACK_RIGHT].joint_ramp_t[2].ramp_start[ex_rad_ramp]) | 
                 SimpleRamp_Update(&leg_ramp[BACK_RIGHT].joint_ramp_t[2].ramp_start[ex_torque_ramp])
             |
-            SimpleRamp_Update(&leg_ramp[BACK_RIGHT].joint_ramp_t[3].ramp_start[ex_omega_ramp]) | 
-                SimpleRamp_Update(&leg_ramp[BACK_RIGHT].joint_ramp_t[3].ramp_start[ex_rad_ramp]) | 
-                SimpleRamp_Update(&leg_ramp[BACK_RIGHT].joint_ramp_t[3].ramp_start[ex_torque_ramp])
+                SimpleRamp_Update(&leg_ramp[BACK_RIGHT].joint_ramp_t[3].ramp_start[ex_rad_ramp])
             );
 for(uint8_t i=0;i<4;i++)
 {
@@ -366,13 +425,13 @@ for(uint8_t i=0;i<4;i++)
         leg[i].joint[j].exp_rad = SimpleRamp_Update(&leg_ramp[i].joint_ramp_t[j].ramp_start[ex_rad_ramp]);
         leg[i].joint[j].exp_torque = SimpleRamp_Update(&leg_ramp[i].joint_ramp_t[j].ramp_start[ex_torque_ramp]);
     }
-    leg[i].joint4.ex_velocity =  SimpleRamp_GetValue(&leg_ramp[i].joint_ramp_t[3].ramp_start[ex_omega_ramp]);
     leg[i].joint4.ex_rad =  SimpleRamp_GetValue(&leg_ramp[i].joint_ramp_t[3].ramp_start[ex_rad_ramp]);
-    leg[i].joint4.ex_torque =  SimpleRamp_GetValue(&leg_ramp[i].joint_ramp_t[3].ramp_start[ex_torque_ramp]);
 }
 vTaskDelayUntil(&last_wake_time,pdMS_TO_TICKS(5));
 }
-    xSemaphoreGive(start_setup_semphr);
+    vTaskResume(usb_recv_task_handle);
+    vTaskResume(motor_3508_control_task_handle);
+    vTaskDelete(Motor3508_setup_seed_task_handle);
     vTaskDelete(NULL);
 }
 
@@ -428,8 +487,8 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
             if (leg[i].joint4.ID == ID)
             {
                 Motor3508Recv(&leg[i].joint4,hcan,ID,buf);
-                leg[i].joint4.velocity = (float)leg[i].joint4.motor.Speed * 6.283185307f;
-                leg[i].joint4.torque   = (float)leg[i].joint4.motor.TorqueCurrent/2.9f + 8.0f/29.0f;
+                leg[i].joint4.velocity = (float)leg[i].joint4.motor.Speed * 6.283185307f / 60.0f / 19.0f;
+                leg[i].joint4.torque   = ((float)leg[i].joint4.motor.TorqueCurrent/2.9f + 8.0f/29.0f) * 19.0f;
                 break;
             }
         }

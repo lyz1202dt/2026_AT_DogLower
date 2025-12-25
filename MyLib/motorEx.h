@@ -4,6 +4,7 @@
 #include "motor.h"
 #include "pid_old.h"
 
+
 typedef struct
 {
     RM3508_TypeDef motor;
@@ -13,10 +14,13 @@ typedef struct
     float ex_torque;
     float ex_rad;
     float velocity;
+    float rad;
     float torque;
     float output;
+    int32_t offset;
+    int32_t actual_pos;
+    PID2 pos_pid;
     PID2 vel_pid;
-    PID2 torque_pid;
     uint8_t ready;
 }Motor3508Ex_t;
 

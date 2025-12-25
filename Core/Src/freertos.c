@@ -45,7 +45,7 @@ TaskHandle_t usb_recv_task_handle;
 TaskHandle_t motor_control_task_handle;
 TaskHandle_t motor_3508_control_task_handle;
 TaskHandle_t MotorContol_start_setup_task_handle;
-QueueHandle_t start_setup_semphr;
+TaskHandle_t Motor3508_setup_seed_task_handle;
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -96,8 +96,6 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
-    start_setup_semphr = xSemaphoreCreateBinary();
-    xSemaphoreTake(start_setup_semphr, 0);
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
@@ -119,7 +117,10 @@ void MX_FREERTOS_Init(void) {
   xTaskCreate(MotorSendTask,"MotorSend",256,NULL,5,&usb_send_task_handle);
   xTaskCreate(MotorRecvTask,"MotorRecv",128,NULL,5,&usb_recv_task_handle);
   xTaskCreate(Motor3508Control,"Motor3508Control",128,NULL,6,&motor_3508_control_task_handle);
+  vTaskSuspend(motor_3508_control_task_handle);
+  vTaskSuspend(usb_recv_task_handle);
   xTaskCreate(MotorContol_start_setup,"MotorContol_start_setup",256,NULL,6,&MotorContol_start_setup_task_handle);
+  xTaskCreate(Motor3508_setup_seed,"Motor3508_setup_seed",256,NULL,6,&Motor3508_setup_seed_task_handle);
   /* USER CODE END RTOS_THREADS */
 
 }
