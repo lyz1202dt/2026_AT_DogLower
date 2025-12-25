@@ -11,10 +11,11 @@ extern int8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);
 extern TaskHandle_t motor_3508_control_task_handle;
 extern TaskHandle_t Motor3508_setup_seed_task_handle;
 extern TaskHandle_t usb_recv_task_handle;
-#define FRONT_LEFT 0
-#define FRONT_RIGHT 1
-#define BACK_LEFT 2
-#define BACK_RIGHT 3
+
+#define FRONT_LEFT 0     // 前左腿
+#define FRONT_RIGHT 1    // 前右腿
+#define BACK_LEFT 2      // 后左腿
+#define BACK_RIGHT 3     // 后右腿
 
 #define ex_omega_ramp 0    //ramp的期望速度
 #define ex_rad_ramp 1    //ramp的期望角度
@@ -108,14 +109,14 @@ Leg_t leg[4] = {
      .joint[2] = {.motor = {.motor_id = 0x06, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
      .joint4   = {.hcan = &hcan2 , .ID = 0x202}                                                           },
 
-    {.joint[0] = {.motor = {.motor_id = 0x01, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = -6.75066614f},
-     .joint[1] = {.motor = {.motor_id = 0x02, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = -1.0258497f},
-     .joint[2] = {.motor = {.motor_id = 0x03, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 20.6975861f},
+    {.joint[0] = {.motor = {.motor_id = 0x07, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = -6.75066614f},
+     .joint[1] = {.motor = {.motor_id = 0x08, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = -1.0258497f},
+     .joint[2] = {.motor = {.motor_id = 0x09, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 20.6975861f},
      .joint4   = {.hcan = &hcan2 , .ID = 0x203}                                                           },
 
-    {.joint[0] = {.motor = {.motor_id = 0x04, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
-     .joint[1] = {.motor = {.motor_id = 0x05, .rs485 = &go_rs485bus}, .inv_motor = -1, .pos_offset = 0.0f},
-     .joint[2] = {.motor = {.motor_id = 0x06, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
+    {.joint[0] = {.motor = {.motor_id = 0x0A, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
+     .joint[1] = {.motor = {.motor_id = 0x0B, .rs485 = &go_rs485bus}, .inv_motor = -1, .pos_offset = 0.0f},
+     .joint[2] = {.motor = {.motor_id = 0x0C, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
      .joint4   = {.hcan = &hcan2 , .ID = 0x204}                                                           }}; 
 
 void MotorControlTask(void *param) // 将数据发送到电机，并从电机接收数据
@@ -239,7 +240,7 @@ void MotorRecvTask(void *param) // 从PC接收电机的期望值
 
 
 
-void Motor3508Control(void *param)  //改这里
+void Motor3508Control(void *param)  
 {
     leg[FRONT_LEFT].joint4.vel_pid.Kp = 0.0f;
     leg[FRONT_LEFT].joint4.vel_pid.Ki = 0.0f;
