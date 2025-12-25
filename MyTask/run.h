@@ -5,6 +5,7 @@
 #include "task.h"
 #include "semphr.h"
 
+#include "motorEx.h"
 #include "go_motor.h"
 
 typedef struct{
@@ -22,6 +23,7 @@ typedef struct{
 
 typedef struct{
     Joint_t joint[3];
+    Motor3508Ex_t wheel;
 }Leg_t;
 
 #pragma pack(1)
@@ -36,6 +38,10 @@ typedef struct{
 
 typedef struct{
     MotorState_t joint[3];
+    struct WheelState_t{
+        float omega;
+        float torque;
+    } wheel;
 }LegState_t;
 
 typedef struct{
@@ -49,5 +55,6 @@ typedef struct{
 void MotorControlTask(void* param);
 void MotorSendTask(void* param);
 void MotorRecvTask(void* param);
+void WheelControlTask(void* param);
 
 #endif

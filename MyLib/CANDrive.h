@@ -11,11 +11,6 @@
 #ifndef _CANDrive_H_
 #define _CANDrive_H_
 
-#include "RMLibHead.h"
-
-#ifdef HAL_CAN_MODULE_ENABLED
-
-RMLIB_CPP_BEGIN
 
 #include "can.h"
 
@@ -52,8 +47,4 @@ HAL_StatusTypeDef CAN_Send_StdDataFrame(CAN_HandleTypeDef *hcan, uint32_t StdId,
  */
 uint32_t CAN_Receive_DataFrame(CAN_HandleTypeDef *hcan, uint8_t *buf);
 
-RMLIB_CPP_END
-
-#endif //HAL_CAN_MODULE_ENABLED
-
-#endif //_CANDrive_H_
+#endif

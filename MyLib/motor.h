@@ -7,8 +7,7 @@
 
 #ifndef _MOTOR_H_
 #define _MOTOR_H_
-
-#include "RMLibHead.h"
+#include <stdint.h>
 
 //RMLIB_CPP_BEGIN
 

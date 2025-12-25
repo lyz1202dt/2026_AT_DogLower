@@ -2,7 +2,7 @@
 #define __MOTOREX_H__
 
 #include "motor.h"
-#include "pid.h"
+#include "pid_old.h"
 
 typedef struct
 {
@@ -11,8 +11,8 @@ typedef struct
     uint32_t ID;
     int32_t offset;
     int32_t actual_pos;
-    PID pos_pid;
-    PID vel_pid;
+    PID2 pos_pid;
+    PID2 vel_pid;
     uint8_t ready;
 }Motor3508Ex_t;
 
@@ -23,8 +23,8 @@ typedef struct
     uint32_t ID;
     int32_t offset;
     int32_t actual_pos;
-    PID pos_pid;
-    PID vel_pid;
+    PID2 pos_pid;
+    PID2 vel_pid;
     uint8_t ready;
 }Motor2006Ex_t;
 
