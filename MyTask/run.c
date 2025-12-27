@@ -271,7 +271,7 @@ void Motor3508Control(void *param)
         for (int i = 0; i < 4; i++)
         {
          PID_Control2(leg[i].joint4.velocity  ,   leg[i].joint4.ex_velocity   ,   &leg[i].joint4.vel_pid);
-         leg[i].joint4.output = leg[i].joint4.vel_pid.pid_out + leg[i].joint4.ex_torque;
+         leg[i].joint4.output = leg[i].joint4.vel_pid.pid_out + leg[i].joint4.ex_torque/0.3f*16384.0f/20.0f;
 
          if ( leg[i].joint4.output < -RM3508_LIMIT)           
             leg[i].joint4.output = -RM3508_LIMIT;           
