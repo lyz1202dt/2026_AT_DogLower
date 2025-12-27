@@ -19,24 +19,24 @@ QueueHandle_t cdc_recv_semphr;
 LegPack_t legs_target = {.pack_type = 0x00};
 LegPack_t legs_state = {.pack_type = 0x00};
 Leg_t leg[4] = {
-    {.joint[0] = {.motor = {.motor_id = 0x01, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
-     .joint[1] = {.motor = {.motor_id = 0x02, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
-     .joint[2] = {.motor = {.motor_id = 0x03, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
+    {.joint[0] = {.motor = {.motor_id = 0x01, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 0.0882038921f},
+     .joint[1] = {.motor = {.motor_id = 0x02, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = -6.12652731f},
+     .joint[2] = {.motor = {.motor_id = 0x03, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 7.86280203f},
      .wheel={.hcan=&hcan1,.ID=0x201}},
 
-    {.joint[0] = {.motor = {.motor_id = 0x04, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
-     .joint[1] = {.motor = {.motor_id = 0x05, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
-     .joint[2] = {.motor = {.motor_id = 0x06, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
+    {.joint[0] = {.motor = {.motor_id = 0x04, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 1.37022829f},
+     .joint[1] = {.motor = {.motor_id = 0x05, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 13.8134966f},
+     .joint[2] = {.motor = {.motor_id = 0x06, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = -7.19111013},
      .wheel={.hcan=&hcan1,.ID=0x202}},
 
-    {.joint[0] = {.motor = {.motor_id = 0x07, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
-     .joint[1] = {.motor = {.motor_id = 0x08, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
-     .joint[2] = {.motor = {.motor_id = 0x09, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
+    {.joint[0] = {.motor = {.motor_id = 0x07, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 7.39551306f},
+     .joint[1] = {.motor = {.motor_id = 0x08, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = -3.72834039f},
+     .joint[2] = {.motor = {.motor_id = 0x09, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 13.5358467f},
      .wheel={.hcan=&hcan1,.ID=0x203}},
 
-    {.joint[0] = {.motor = {.motor_id = 0x0A, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
-     .joint[1] = {.motor = {.motor_id = 0x0B, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
-     .joint[2] = {.motor = {.motor_id = 0x0C, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
+    {.joint[0] = {.motor = {.motor_id = 0x0A, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 4.92101049f},
+     .joint[1] = {.motor = {.motor_id = 0x0B, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 11.5412884f},
+     .joint[2] = {.motor = {.motor_id = 0x0C, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = -4.45736456f},
      .wheel={.hcan=&hcan1,.ID=0x204
 }}};
 
@@ -82,20 +82,26 @@ void CDC_Recv_Cb(uint8_t *src, uint16_t size)
 PID2 wheel_vel_pid[4];
 float wheel_exp_vel[4],wheel_exp_torque[4];
 int16_t can_send_buf[4];
+float inv_wheel[4]={-1.0f,1.0f,-1.0f,1.0f};
 void WheelControlTask(void* param)
 {
     TickType_t last_wake_time=xTaskGetTickCount();
-    leg[0].wheel.vel_pid.Kp=1.0f;
-    leg[0].wheel.vel_pid.Ki=1.0f;
-    leg[0].wheel.vel_pid.limit=100.0f;
+    leg[0].wheel.vel_pid.Kp=0.55f;
+    leg[0].wheel.vel_pid.Ki=0.04f;
+    leg[0].wheel.vel_pid.limit=300.0f;
     leg[0].wheel.vel_pid.output_limit=4.0f;
     leg[3].wheel.vel_pid=leg[2].wheel.vel_pid=leg[1].wheel.vel_pid=leg[0].wheel.vel_pid;
     while(1)
     {
         for(int i=0;i<4;i++)
         {
-            PID_Control2(leg[i].wheel.motor.Speed*3.14159265f*2.0f/60.0f/19.0f,wheel_exp_vel[i],&leg[i].wheel.vel_pid);
-            can_send_buf[i]=(int16_t)((leg[i].wheel.vel_pid.pid_out+wheel_exp_torque[i])/0.3f*(16384.0f/20.0f/0.3f));
+            PID_Control2(leg[i].wheel.motor.Speed*3.14159265f*2.0f/60.0f/19.0f,wheel_exp_vel[i]*inv_wheel[i],&leg[i].wheel.vel_pid);
+						float out_temp=((leg[i].wheel.vel_pid.pid_out+wheel_exp_torque[i]*inv_wheel[i])/0.3f*(16384.0f/20.0f/0.3f));
+						if(out_temp>16384)
+							out_temp=16384;
+						else if(out_temp<-16384)
+							out_temp=-16384;
+            can_send_buf[i]=(int16_t)out_temp;
         }
         MotorSend(&hcan1,0x200,can_send_buf);
         vTaskDelayUntil(&last_wake_time,2);
@@ -122,15 +128,87 @@ void MotorSendTask(void *param) // 将电机的数据发送到PC上
     }
 }
 
+static uint32_t slope(float target,float *cur_target,float step_limit)
+{
+    float delta=target-*cur_target;
+    uint32_t ret=0;
+
+    if(delta>step_limit)
+        delta=step_limit;
+    else if(delta<-step_limit)
+        delta=-step_limit;
+    else    //本次结束后，应该就会到达目标值
+        ret=1;
+
+    *cur_target=*cur_target+step_limit;
+    return ret;
+}
+
+static uint32_t DogReset(uint32_t time_out_ms)
+{
+	__disable_irq();	//更新电机初始关节角度和Kp，关闭中断确保绝对同步，防止狗腿震荡
+    for (int i = 1; i < 4; i++)         //将狗腿状态读入当前目标值，设置狗腿期望为当前位置
+    {
+        leg[i].joint[0].exp_omega = 0.0f;
+        leg[i].joint[0].exp_torque = 0.0f;
+        leg[i].joint[0].Kp = 4.0f;
+        leg[i].joint[0].Kd = 0.24f;
+        leg[i].joint[0].exp_rad=legs_state.leg[i].joint[0].rad;
+			
+        leg[i].joint[1].exp_omega = 0.0f;
+        leg[i].joint[1].exp_torque = 0.0f;
+        leg[i].joint[1].Kp = 3.7f;
+        leg[i].joint[1].Kd = 0.24f;
+        leg[i].joint[1].exp_rad=legs_state.leg[i].joint[1].rad;
+
+        leg[i].joint[2].exp_omega = 0.0f;
+        leg[i].joint[2].exp_torque = 0.0f;
+        leg[i].joint[2].Kp = 3.0f;
+        leg[i].joint[2].Kd = 0.11f;
+        leg[i].joint[2].exp_rad=legs_state.leg[i].joint[2].rad;
+    }
+		__enable_irq();
+		//PID参数:[0]:kp=4.0,kd=0.24;[1]:kp=3.7,kd=0.24;[2]:kp=3,kd=0.11
+
+    uint32_t finished_check;
+    uint32_t current_time=0;
+    do{
+        finished_check=0;
+        for(int i=0;i<4;i++)
+        {
+            for(int j=0;j<3;j++)
+            {
+                finished_check=finished_check+slope(0.0f,&leg[i].joint[j].exp_rad,0.001);
+            }
+        }
+        vTaskDelay(5);
+        current_time=current_time+5;
+        if(current_time>time_out_ms)    //如果复位已经超时，那么返回0
+            return 0;
+    }while(finished_check!=12);     //完成校验不等于12，说明有电机没有完成复位
+
+    return 1;   //返回1表示狗复位成功
+}
+
 void MotorRecvTask(void *param) // 从PC接收电机的期望值
 {
     cdc_recv_semphr = xSemaphoreCreateBinary();
     xSemaphoreTake(cdc_recv_semphr, 0);
+
+    vTaskDelay(2000);    //等待其它任务启动
+    //TODO:狗腿复位到0度，起立
+	//DogReset(60000);
+    if(DogReset(60000)==0) //上电限时1min
+    {
+        while(1)
+            vTaskDelay(100);
+    }
+
     while (1)
     {
         if (xSemaphoreTake(cdc_recv_semphr, pdMS_TO_TICKS(50)) != pdPASS) // 发生超时，说明通讯断开
         {
-            // TODO:通过LED显示，清零所有电机期望，电机进入阻尼模式，整狗进入安全模式
+            // TODO:通过LED显示，清零所有力矩，电机进入低阻尼模式，整狗进入安全模式
             for (int i = 0; i < 4; i++)
             {
                 for (int j = 0; j < 3; j++)
@@ -138,7 +216,7 @@ void MotorRecvTask(void *param) // 从PC接收电机的期望值
                     leg[i].joint[j].exp_omega = 0.0f;
                     leg[i].joint[j].exp_torque = 0.0f;
                     leg[i].joint[j].Kp = 0.0f;
-                    leg[i].joint[j].Kd = 0.0f;
+                    leg[i].joint[j].Kd = 0.1f;
                 }
             }
             continue;
@@ -160,6 +238,7 @@ void MotorRecvTask(void *param) // 从PC接收电机的期望值
         }
     }
 }
+
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
