@@ -19,7 +19,7 @@ typedef struct {
 
 // 腿部结构体 4个关节定义
 typedef struct { 
-    joint_ramp_t joint_ramp_t[4];
+    joint_ramp_t joint_ramp_t[3];
 }leg_ramp_t;
 
 

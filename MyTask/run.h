@@ -62,6 +62,5 @@ void MotorSendTask(void* param);
 void MotorRecvTask(void* param);
 void Motor3508Control(void *param);
 void MotorContol_start_setup(void *param);
-void Motor3508_setup_seed(void *param);
 
 #endif

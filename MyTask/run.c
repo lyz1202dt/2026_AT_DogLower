@@ -43,8 +43,7 @@ leg_ramp_t leg_ramp[4] = {
 
         .joint_ramp_t[2] = {.ramp_start[ex_omega_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
                              ,.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
-                             ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}},
-.joint_ramp_t[3] = {.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}}
+                             ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}}
     }, 
 
 
@@ -58,9 +57,7 @@ leg_ramp_t leg_ramp[4] = {
 
         .joint_ramp_t[2] = {.ramp_start[ex_omega_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
                              ,.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
-                             ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}},
-
-        .joint_ramp_t[3] = {.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}}
+                             ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}}
     }, 
 
 
@@ -74,9 +71,7 @@ leg_ramp_t leg_ramp[4] = {
 
         .joint_ramp_t[2] = {.ramp_start[ex_omega_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
                              ,.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
-                             ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}},
-
-.joint_ramp_t[3] = {.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}}
+                             ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}}
     }, 
 
 
@@ -90,9 +85,7 @@ leg_ramp_t leg_ramp[4] = {
 
         .joint_ramp_t[2] = {.ramp_start[ex_omega_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
                              ,.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}
-                             ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}},
-
-.joint_ramp_t[3] = {.ramp_start[ex_rad_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}}
+                             ,.ramp_start[ex_torque_ramp] ={.target_value = 0.0f, .step_size = 0.0f, .is_running = 1}}
     }
 };
 
@@ -100,12 +93,12 @@ LegPack_t legs_target = {.pack_type = 0x00};
 LegPack_t legs_state = {.pack_type = 0x00};
 Leg_t leg[4] = {
     {.joint[0] = {.motor = {.motor_id = 0x01, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
-     .joint[1] = {.motor = {.motor_id = 0x02, .rs485 = &go_rs485bus}, .inv_motor = -1, .pos_offset = 0.0f},
+     .joint[1] = {.motor = {.motor_id = 0x02, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
      .joint[2] = {.motor = {.motor_id = 0x03, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
      .joint4   = {.hcan = &hcan2 , .ID = 0x201}                                                           },
 
     {.joint[0] = {.motor = {.motor_id = 0x04, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
-     .joint[1] = {.motor = {.motor_id = 0x05, .rs485 = &go_rs485bus}, .inv_motor = -1, .pos_offset = 0.0f},
+     .joint[1] = {.motor = {.motor_id = 0x05, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
      .joint[2] = {.motor = {.motor_id = 0x06, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
      .joint4   = {.hcan = &hcan2 , .ID = 0x202}                                                           },
 
@@ -115,7 +108,7 @@ Leg_t leg[4] = {
      .joint4   = {.hcan = &hcan2 , .ID = 0x203}                                                           },
 
     {.joint[0] = {.motor = {.motor_id = 0x0A, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
-     .joint[1] = {.motor = {.motor_id = 0x0B, .rs485 = &go_rs485bus}, .inv_motor = -1, .pos_offset = 0.0f},
+     .joint[1] = {.motor = {.motor_id = 0x0B, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
      .joint[2] = {.motor = {.motor_id = 0x0C, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
      .joint4   = {.hcan = &hcan2 , .ID = 0x204}                                                           }}; 
 
@@ -285,71 +278,6 @@ void Motor3508Control(void *param)
     }
 }
 
-void Motor3508_setup_seed(void *param)
-{
-    leg[FRONT_LEFT].joint4.vel_pid.Kp = 0.0f;
-    leg[FRONT_LEFT].joint4.vel_pid.Ki = 0.0f;
-    leg[FRONT_LEFT].joint4.vel_pid.Kd = 0.0f;
-    leg[FRONT_LEFT].joint4.vel_pid.limit = 10000.0f;
-    leg[FRONT_LEFT].joint4.vel_pid.output_limit = 10000.0f;
-    
-    leg[FRONT_RIGHT].joint4.vel_pid.Kp = 0.0f;
-    leg[FRONT_RIGHT].joint4.vel_pid.Ki = 0.0f;
-    leg[FRONT_RIGHT].joint4.vel_pid.Kd = 0.0f;
-    leg[FRONT_RIGHT].joint4.vel_pid.limit = 10000.0f;
-    leg[FRONT_RIGHT].joint4.vel_pid.output_limit = 10000.0f;
-    
-    leg[BACK_LEFT].joint4.vel_pid.Kp = 0.0f;
-    leg[BACK_LEFT].joint4.vel_pid.Ki = 0.0f;
-    leg[BACK_LEFT].joint4.vel_pid.Kd = 0.0f;
-    leg[BACK_LEFT].joint4.vel_pid.limit = 10000.0f;
-    leg[BACK_LEFT].joint4.vel_pid.output_limit = 10000.0f;
-    
-    leg[BACK_RIGHT].joint4.vel_pid.Kp = 0.0f;
-    leg[BACK_RIGHT].joint4.vel_pid.Ki = 0.0f;
-    leg[BACK_RIGHT].joint4.vel_pid.Kd = 0.0f;
-    leg[BACK_RIGHT].joint4.vel_pid.output_limit = 10000.0f;
-
-
-/**********************************************************/
-    leg[FRONT_LEFT].joint4.pos_pid.Kp = 0.0f;
-    leg[FRONT_LEFT].joint4.pos_pid.Ki = 0.0f;
-    leg[FRONT_LEFT].joint4.pos_pid.Kd = 0.0f;
-    leg[FRONT_LEFT].joint4.pos_pid.limit = 10000.0f;
-    leg[FRONT_LEFT].joint4.pos_pid.output_limit = 10000.0f;
-    
-    leg[FRONT_RIGHT].joint4.pos_pid.Kp = 0.0f;
-    leg[FRONT_RIGHT].joint4.pos_pid.Ki = 0.0f;
-    leg[FRONT_RIGHT].joint4.pos_pid.Kd = 0.0f;
-    leg[FRONT_RIGHT].joint4.pos_pid.limit = 10000.0f;
-    leg[FRONT_RIGHT].joint4.pos_pid.output_limit = 10000.0f;
-    
-    leg[BACK_LEFT].joint4.pos_pid.Kp = 0.0f;
-    leg[BACK_LEFT].joint4.pos_pid.Ki = 0.0f;
-    leg[BACK_LEFT].joint4.pos_pid.Kd = 0.0f;
-    leg[BACK_LEFT].joint4.pos_pid.limit = 10000.0f;
-    leg[BACK_LEFT].joint4.pos_pid.output_limit = 10000.0f;
-    
-    leg[BACK_RIGHT].joint4.pos_pid.Kp = 0.0f;
-    leg[BACK_RIGHT].joint4.pos_pid.Ki = 0.0f;
-    leg[BACK_RIGHT].joint4.pos_pid.Kd = 0.0f;
-    leg[BACK_RIGHT].joint4.pos_pid.output_limit = 10000.0f;
-
-    TickType_t last_wake_time=xTaskGetTickCount();
-    while (1)
-    { 
-        for (int i = 0; i < 4; i++)
-        {
-		PID_Control2(leg[i].joint4.motor.Angle_DEG,(leg[i].joint4.ex_rad)*19.0f*180.0f/3.14159265f,&leg[i].joint4.pos_pid);
-		PID_Control2(leg[i].joint4.motor.Speed,leg[i].joint4.pos_pid.pid_out,&leg[i].joint4.vel_pid);
-            can2_send_buf[i] = leg[i].joint4.vel_pid.pid_out;
-        }
-         MotorSend(&hcan2,0x200,can2_send_buf);
-        vTaskDelayUntil(&last_wake_time,pdMS_TO_TICKS(2));
-    }
-}
-
-
 void MotorContol_start_setup(void *param)
 {
     TickType_t last_wake_time=xTaskGetTickCount();
@@ -368,7 +296,7 @@ while(flash)
                 SimpleRamp_Update(&leg_ramp[FRONT_LEFT].joint_ramp_t[2].ramp_start[ex_rad_ramp]) | 
                 SimpleRamp_Update(&leg_ramp[FRONT_LEFT].joint_ramp_t[2].ramp_start[ex_torque_ramp])
             |
-                SimpleRamp_Update(&leg_ramp[FRONT_LEFT].joint_ramp_t[3].ramp_start[ex_rad_ramp]) | 
+ 
 
 
 /*****************************************************************************************************************/
@@ -384,7 +312,7 @@ while(flash)
                 SimpleRamp_Update(&leg_ramp[FRONT_RIGHT].joint_ramp_t[2].ramp_start[ex_rad_ramp]) | 
                 SimpleRamp_Update(&leg_ramp[FRONT_RIGHT].joint_ramp_t[2].ramp_start[ex_torque_ramp])
             |
-                SimpleRamp_Update(&leg_ramp[FRONT_RIGHT].joint_ramp_t[3].ramp_start[ex_rad_ramp]) | 
+
                 
 
 /*****************************************************************************************************************/
@@ -400,7 +328,7 @@ while(flash)
                 SimpleRamp_Update(&leg_ramp[BACK_LEFT].joint_ramp_t[2].ramp_start[ex_rad_ramp]) | 
                 SimpleRamp_Update(&leg_ramp[BACK_LEFT].joint_ramp_t[2].ramp_start[ex_torque_ramp])
             |
-                SimpleRamp_Update(&leg_ramp[BACK_LEFT].joint_ramp_t[3].ramp_start[ex_rad_ramp]) | 
+ 
                
 
 /*****************************************************************************************************************/
@@ -415,8 +343,7 @@ while(flash)
             SimpleRamp_Update(&leg_ramp[BACK_RIGHT].joint_ramp_t[2].ramp_start[ex_omega_ramp]) | 
                 SimpleRamp_Update(&leg_ramp[BACK_RIGHT].joint_ramp_t[2].ramp_start[ex_rad_ramp]) | 
                 SimpleRamp_Update(&leg_ramp[BACK_RIGHT].joint_ramp_t[2].ramp_start[ex_torque_ramp])
-            |
-                SimpleRamp_Update(&leg_ramp[BACK_RIGHT].joint_ramp_t[3].ramp_start[ex_rad_ramp])
+
             );
 for(uint8_t i=0;i<4;i++)
 {
@@ -426,13 +353,11 @@ for(uint8_t i=0;i<4;i++)
         leg[i].joint[j].exp_rad = SimpleRamp_Update(&leg_ramp[i].joint_ramp_t[j].ramp_start[ex_rad_ramp]);
         leg[i].joint[j].exp_torque = SimpleRamp_Update(&leg_ramp[i].joint_ramp_t[j].ramp_start[ex_torque_ramp]);
     }
-    leg[i].joint4.ex_rad =  SimpleRamp_GetValue(&leg_ramp[i].joint_ramp_t[3].ramp_start[ex_rad_ramp]);
 }
-vTaskDelayUntil(&last_wake_time,pdMS_TO_TICKS(2));
+vTaskDelayUntil(&last_wake_time,pdMS_TO_TICKS(5));
 }
     vTaskResume(usb_recv_task_handle);
     vTaskResume(motor_3508_control_task_handle);
-    vTaskDelete(Motor3508_setup_seed_task_handle);
     vTaskDelete(NULL);
 }
 
