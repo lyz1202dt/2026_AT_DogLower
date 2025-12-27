@@ -16,8 +16,8 @@ RS485_t rs485bus;
 
 QueueHandle_t cdc_recv_semphr;
 
-LegPack_t legs_target = {.pack_type = 0x00};
-LegPack_t legs_state = {.pack_type = 0x00};
+MotorTargetPack_t legs_target = {.pack_type = 0x00};
+MotorStatePack_t legs_state = {.pack_type = 0x00};
 Leg_t leg[4] = {
     {.joint[0] = {.motor = {.motor_id = 0x01, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 0.0882038921f},
      .joint[1] = {.motor = {.motor_id = 0x02, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = -6.12652731f},
@@ -68,10 +68,10 @@ uint32_t current_size=0;
 uint32_t cnt = 0;
 void CDC_Recv_Cb(uint8_t *src, uint16_t size)
 {
-    if(size==sizeof(LegPack_t)&&((LegPack_t*)src)->pack_type==0x00)
+    if(size==sizeof(MotorTargetPack_t)&&((MotorTargetPack_t*)src)->pack_type==0x00)
     {
         HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-        memcpy(&legs_target, src, sizeof(LegPack_t));
+        memcpy(&legs_target, src, sizeof(MotorTargetPack_t));
         xSemaphoreGive(cdc_recv_semphr);
     }
     cnt++;
@@ -96,11 +96,11 @@ void WheelControlTask(void* param)
         for(int i=0;i<4;i++)
         {
             PID_Control2(leg[i].wheel.motor.Speed*3.14159265f*2.0f/60.0f/19.0f,wheel_exp_vel[i]*inv_wheel[i],&leg[i].wheel.vel_pid);
-						float out_temp=((leg[i].wheel.vel_pid.pid_out+wheel_exp_torque[i]*inv_wheel[i])/0.3f*(16384.0f/20.0f/0.3f));
-						if(out_temp>16384)
-							out_temp=16384;
-						else if(out_temp<-16384)
-							out_temp=-16384;
+			float out_temp=((leg[i].wheel.vel_pid.pid_out+wheel_exp_torque[i]*inv_wheel[i])/0.3f*(16384.0f/20.0f/0.3f));
+			if(out_temp>16384)
+				out_temp=16384;
+			else if(out_temp<-16384)
+				out_temp=-16384;
             can_send_buf[i]=(int16_t)out_temp;
         }
         MotorSend(&hcan1,0x200,can_send_buf);
@@ -122,6 +122,8 @@ void MotorSendTask(void *param) // 将电机的数据发送到PC上
                 legs_state.leg[i].joint[j].omega = leg[i].joint[j].inv_motor * (leg[i].joint[j].motor.state.velocity) / 6.33f;
                 legs_state.leg[i].joint[j].torque = leg[i].joint[j].inv_motor * (leg[i].joint[j].motor.state.torque) * 6.33f;
             }
+            legs_state.leg[i].wheel.omega=leg[i].wheel.motor.Speed*3.14159265f*2.0f/60.0f/19.0f;
+            legs_state.leg[i].wheel.torque=0.0f;    //TODO:根据反馈计算真实力矩
         }
         CDC_Transmit_FS((uint8_t*)&legs_state, sizeof(legs_state));
         vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(8));
@@ -218,6 +220,8 @@ void MotorRecvTask(void *param) // 从PC接收电机的期望值
                     leg[i].joint[j].Kp = 0.0f;
                     leg[i].joint[j].Kd = 0.1f;
                 }
+                wheel_exp_torque[i]=0.0f;
+                wheel_exp_vel[i]=0.0f;
             }
             continue;
         }
