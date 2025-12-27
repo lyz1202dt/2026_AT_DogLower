@@ -1,7 +1,5 @@
 #include "CANDrive.h"
 
-#ifdef HAL_CAN_MODULE_ENABLED
-
 uint8_t CAN1_buff[8];
 
 #if defined(CAN2)
@@ -47,7 +45,6 @@ void CanFilter_Init(CAN_HandleTypeDef *hcan) {
 }
 
 HAL_StatusTypeDef CAN_Send_StdDataFrame(CAN_HandleTypeDef *hcan, uint32_t StdId, uint8_t *msg) {
-    RMLIB_ENTER_CRITICAL();
 
     CAN_TxHeaderTypeDef CAN_Tx = {
             .StdId = StdId,                 //标准标识符
@@ -61,7 +58,6 @@ HAL_StatusTypeDef CAN_Send_StdDataFrame(CAN_HandleTypeDef *hcan, uint32_t StdId,
     uint32_t TxMailbox = 0;
 
     HAL_StatusTypeDef err = HAL_CAN_AddTxMessage(hcan, &CAN_Tx, msg, &TxMailbox);
-    RMLIB_EXIT_CRITICAL();
     return err;
 }
 
@@ -74,5 +70,3 @@ uint32_t CAN_Receive_DataFrame(CAN_HandleTypeDef *hcan, uint8_t *buf) {
     else
         return CAN_Rx.ExtId;
 }
-
-#endif

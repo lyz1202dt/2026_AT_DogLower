@@ -112,43 +112,32 @@ Leg_t leg[4] = {
      .joint[2] = {.motor = {.motor_id = 0x0C, .rs485 = &go_rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
      .joint4   = {.hcan = &hcan2 , .ID = 0x204}                                                           }}; 
 
+int32_t remain_time=0;
 void MotorControlTask(void *param) // 将数据发送到电机，并从电机接收数据
 {
     RS485Init(&go_rs485bus, &huart6, GPIOA, GPIO_PIN_4); // 初始化485总线管理器
     TickType_t last_wake_time = xTaskGetTickCount();
     while (1)
     {
-        for (int j = 0; j < 3; j++)
+        for (int i = 0; i < 4; i++)
         {
-            GoMotorSend(&leg[FRONT_LEFT].joint[j].motor, leg[FRONT_LEFT].joint[j].exp_torque / 6.33f * leg[FRONT_LEFT].joint[j].inv_motor,
-                        leg[FRONT_LEFT].joint[j].exp_omega * 6.33f * leg[FRONT_LEFT].joint[j].inv_motor,
-                        leg[FRONT_LEFT].joint[j].exp_rad * 6.33f * leg[FRONT_LEFT].joint[j].inv_motor + leg[FRONT_LEFT].joint[j].pos_offset,
-                        leg[FRONT_LEFT].joint[j].Kp, leg[FRONT_LEFT].joint[j].Kd);
-            GoMotorRecv(&leg[FRONT_LEFT].joint[j].motor);
-
-             GoMotorSend(&leg[FRONT_RIGHT].joint[j].motor, leg[FRONT_RIGHT].joint[j].exp_torque / 6.33f * leg[FRONT_RIGHT].joint[j].inv_motor,
-                        leg[FRONT_RIGHT].joint[j].exp_omega * 6.33f * leg[FRONT_RIGHT].joint[j].inv_motor,
-                        leg[FRONT_RIGHT].joint[j].exp_rad * 6.33f * leg[FRONT_RIGHT].joint[j].inv_motor + leg[FRONT_RIGHT].joint[j].pos_offset,
-                        leg[FRONT_RIGHT].joint[j].Kp, leg[FRONT_RIGHT].joint[j].Kd);
-            GoMotorRecv(&leg[FRONT_RIGHT].joint[j].motor);
-
-             GoMotorSend(&leg[BACK_LEFT].joint[j].motor, leg[BACK_LEFT].joint[j].exp_torque / 6.33f * leg[BACK_LEFT].joint[j].inv_motor,
-                        leg[BACK_LEFT].joint[j].exp_omega * 6.33f * leg[BACK_LEFT].joint[j].inv_motor,
-                        leg[BACK_LEFT].joint[j].exp_rad * 6.33f * leg[BACK_LEFT].joint[j].inv_motor + leg[BACK_LEFT].joint[j].pos_offset,
-                        leg[BACK_LEFT].joint[j].Kp, leg[BACK_LEFT].joint[j].Kd);
-            GoMotorRecv(&leg[BACK_LEFT].joint[j].motor);
-
-             GoMotorSend(&leg[BACK_RIGHT].joint[j].motor, leg[BACK_RIGHT].joint[j].exp_torque / 6.33f * leg[BACK_RIGHT].joint[j].inv_motor,
-                        leg[BACK_RIGHT].joint[j].exp_omega * 6.33f * leg[BACK_RIGHT].joint[j].inv_motor,
-                        leg[BACK_RIGHT].joint[j].exp_rad * 6.33f * leg[BACK_RIGHT].joint[j].inv_motor + leg[BACK_RIGHT].joint[j].pos_offset,
-                        leg[BACK_RIGHT].joint[j].Kp, leg[BACK_RIGHT].joint[j].Kd);
-            GoMotorRecv(&leg[BACK_RIGHT].joint[j].motor);
-        }   
-
+            for(int j=0;j<3;j++)
+            {
+                GoMotorSend(&leg[i].joint[j].motor, leg[i].joint[j].exp_torque / 6.33f * leg[i].joint[j].inv_motor,
+                        leg[i].joint[j].exp_omega * 6.33f * leg[i].joint[j].inv_motor,
+                        leg[i].joint[j].exp_rad * 6.33f * leg[i].joint[j].inv_motor + leg[i].joint[j].pos_offset,
+                        leg[i].joint[j].Kp, leg[i].joint[j].Kd);
+                GoMotorRecv(&leg[i].joint[j].motor);
+            }
+        }
+		uint32_t temp=HAL_GetTick();
         vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(5));
+		remain_time=HAL_GetTick()-temp;
     }
 }
 
+uint32_t current_size=0;
+uint32_t cnt = 0;
 void CDC_Recv_Cb(uint8_t *src, uint16_t size)
 {
     if(size==sizeof(LegPack_t)&&((LegPack_t*)src)->pack_type==0x00)
@@ -157,6 +146,8 @@ void CDC_Recv_Cb(uint8_t *src, uint16_t size)
         memcpy(&legs_target, src, sizeof(LegPack_t));
         xSemaphoreGive(cdc_recv_semphr);
     }
+    cnt++;
+		current_size=size;
     //HAL_UART_Transmit_DMA(&huart3, src, size);
 }
 
