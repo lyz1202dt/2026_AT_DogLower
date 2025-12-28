@@ -66,8 +66,8 @@ typedef struct{
 }WheelState_t;
 
 typedef struct{
-    MotorTarget_t joint[3];
-    WheelTarget_t wheel;
+    MotorState_t joint[3];
+    WheelState_t wheel;
 }LegState_t;
 
 typedef struct{
