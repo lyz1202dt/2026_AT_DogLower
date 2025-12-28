@@ -71,7 +71,7 @@ typedef struct{
 
 typedef struct{
     int pack_type;
-    LegTarget_t leg[4];
+    LegState_t leg[4];
 }MotorStatePack_t;
 
 #pragma pack()
