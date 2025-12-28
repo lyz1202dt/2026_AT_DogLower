@@ -62,6 +62,7 @@ typedef struct{
 
 typedef struct{
     float omega;
+    float torque;
 }WheelState_t;
 
 typedef struct{
