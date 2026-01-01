@@ -57,7 +57,8 @@ void USB_CDC_Init(Recv_finished_cb_t recv_cb,RecvBufferOverflow_cb_t recv_overfl
 void CDC_RecvCplt_Handler(uint8_t *Buf, uint32_t *Len)
 {
     BaseType_t pxHigherPriorityTaskWoken;
-    xQueueSendFromISR(kUsbRecvQueue, Len, &pxHigherPriorityTaskWoken);
+		if(kUsbRecvQueue)
+			xQueueSendFromISR(kUsbRecvQueue, Len, &pxHigherPriorityTaskWoken);
 		//current_cdc_pack_size=*Len;
     portYIELD_FROM_ISR(pxHigherPriorityTaskWoken);
 }
