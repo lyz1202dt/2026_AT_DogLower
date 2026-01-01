@@ -41,7 +41,6 @@ Leg_t leg[4] = {
 }}};
 
 float setup_offset[4][3];	//上电启动时的电机角度
-uint32_t first_run=1;
 int32_t remain_time=0;
 void MotorControlTask(void *param) // 将数据发送到电机，并从电机接收数据
 {
@@ -60,19 +59,10 @@ void MotorControlTask(void *param) // 将数据发送到电机，并从电机接
                 GoMotorRecv(&leg[i].joint[j].motor);
             }
         }
-		uint32_t temp=HAL_GetTick();
-    vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(5));
-		remain_time=HAL_GetTick()-temp;
-		if(first_run&&remain_time==4)	//经过实际测试，发现传输完所有电机的数据只需要1ms
-		{
-			first_run=0;
-            for(int i=0;i<4;i++)
-            {
-                for(int j=0;j<3;j++)
-                    setup_offset[i][j]=leg[i].joint[j].motor.state.rad;     //记录上电偏移值
-            }
-        }
-    }
+				uint32_t temp=HAL_GetTick();
+				vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(5));
+				remain_time=HAL_GetTick()-temp;
+		}
 }
 
 uint32_t current_size=0;
@@ -210,13 +200,19 @@ void MotorRecvTask(void *param) // 从PC接收电机的期望值
     cdc_recv_semphr = xSemaphoreCreateBinary();
     xSemaphoreTake(cdc_recv_semphr, 0);
 
-    vTaskDelay(2000);    //等待其它任务启动
+    vTaskDelay(3000);    //等待其它任务启动
+		for(int i=0;i<4;i++)
+		{
+			for(int j=0;j<3;j++)
+				setup_offset[i][j]=leg[i].joint[j].motor.state.rad;     //记录上电偏移值
+    }
     //TODO:狗腿复位到0度，起立
 		//DogReset(60000);
+		vTaskDelay(50);
     if(DogReset(60000)==0) //上电限时1min
     {
-        while(1)
-            vTaskDelay(100);
+        //while(1)
+        //    vTaskDelay(100);
     }
 		xSemaphoreTake(cdc_recv_semphr, portMAX_DELAY);
     while (1)
