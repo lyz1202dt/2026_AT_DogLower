@@ -98,7 +98,7 @@ int main(void)
   MX_TIM4_Init();
   MX_UART5_Init();
   MX_USART2_UART_Init();
-  MX_USART3_UART_Init();£» 
+  MX_USART3_UART_Init();
   MX_UART4_Init();
   MX_USART6_UART_Init();
   MX_USART1_UART_Init();
@@ -118,6 +118,7 @@ int main(void)
   HAL_CAN_ActivateNotification(&hcan2,CAN_IT_RX_FIFO1_MSG_PENDING);
 	HAL_CAN_ActivateNotification(&hcan1,CAN_IT_TX_MAILBOX_EMPTY);
 	HAL_CAN_ActivateNotification(&hcan2,CAN_IT_TX_MAILBOX_EMPTY);
+	
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in freertos.c) */
@@ -185,6 +186,8 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 extern uint32_t err_timer_cnt;
+extern uint32_t uart6_recovering;
+uint32_t uart6_recover_cnt=0;
 /* USER CODE END 4 */
 
 /**
@@ -201,9 +204,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	if(htim->Instance==TIM10)
 	{
 		err_timer_cnt++;
-		if(err_timer_cnt>40)
+		if(err_timer_cnt>40&&uart6_recovering==0)
 		{
-			//HAL_NVIC_SystemReset();
+			HAL_NVIC_SystemReset();
+			uart6_recovering=1;
 		}
 	}
   /* USER CODE END Callback 0 */

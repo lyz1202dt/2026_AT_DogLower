@@ -11,6 +11,7 @@
 #define BACK_RIGHT 3
 
 uint32_t err_timer_cnt=0;
+uint32_t uart6_recovering=0;
 
 RS485_t rs485bus;
 
@@ -47,11 +48,13 @@ void MotorControlTask(void *param) // 将数据发送到电机，并从电机接
     RS485Init(&rs485bus, &huart6, GPIOA, GPIO_PIN_4); // 初始化485总线管理器
     TickType_t last_wake_time = xTaskGetTickCount();
     while (1)
-    {
+    {	
         for (int i = 0; i < 4; i++)
         {
             for(int j=0;j<3;j++)
             {
+								if(uart6_recovering)
+									continue;
                 GoMotorSend(&leg[i].joint[j].motor, leg[i].joint[j].exp_torque / 6.33f * leg[i].joint[j].inv_motor,
                         leg[i].joint[j].exp_omega * 6.33f * leg[i].joint[j].inv_motor,
                         leg[i].joint[j].exp_rad * 6.33f * leg[i].joint[j].inv_motor + leg[i].joint[j].pos_offset+setup_offset[i][j],
@@ -200,21 +203,22 @@ void MotorRecvTask(void *param) // 从PC接收电机的期望值
     cdc_recv_semphr = xSemaphoreCreateBinary();
     xSemaphoreTake(cdc_recv_semphr, 0);
 
-    vTaskDelay(3000);    //等待其它任务启动
-		for(int i=0;i<4;i++)
-		{
-			for(int j=0;j<3;j++)
-				setup_offset[i][j]=leg[i].joint[j].motor.state.rad;     //记录上电偏移值
-    }
-    //TODO:狗腿复位到0度，起立
-		//DogReset(60000);
-		vTaskDelay(50);
-    if(DogReset(60000)==0) //上电限时1min
-    {
-        //while(1)
-        //    vTaskDelay(100);
-    }
+//    vTaskDelay(3000);    //等待其它任务启动
+//		for(int i=0;i<4;i++)
+//		{
+//			for(int j=0;j<3;j++)
+//				setup_offset[i][j]=leg[i].joint[j].motor.state.rad;     //记录上电偏移值
+//    }
+//    //TODO:狗腿复位到0度，起立
+//		//DogReset(60000);
+//		vTaskDelay(50);
+//    if(DogReset(60000)==0) //上电限时1min
+//    {
+//        //while(1)
+//        //    vTaskDelay(100);
+//    }
 		xSemaphoreTake(cdc_recv_semphr, portMAX_DELAY);
+
     while (1)
     {
         if (xSemaphoreTake(cdc_recv_semphr, pdMS_TO_TICKS(50)) != pdPASS) // 发生超时，说明通讯断开
