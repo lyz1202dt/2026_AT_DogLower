@@ -35,13 +35,14 @@ Leg_t leg[4] = {
      .wheel={.hcan=&hcan1,.ID=0x203}},
 
     {.joint[0] = {.motor = {.motor_id = 0x0A, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 4.96626282f},
-     .joint[1] = {.motor = {.motor_id = 0x0B, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 4.96999979f+0.256941795f},
+     .joint[1] = {.motor = {.motor_id = 0x0B, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 4.96999979f+5.69662952f},
      .joint[2] = {.motor = {.motor_id = 0x0C, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 2.49789596f},
      .wheel={.hcan=&hcan1,.ID=0x204
 }}};
 
 float setup_offset[4][3];	//上电启动时的电机角度
 int32_t remain_time=0;
+uint32_t first_run=10;
 void MotorControlTask(void *param) // 将数据发送到电机，并从电机接收数据
 {
     RS485Init(&rs485bus, &huart6, GPIOA, GPIO_PIN_4); // 初始化485总线管理器
@@ -62,6 +63,8 @@ void MotorControlTask(void *param) // 将数据发送到电机，并从电机接
 		uint32_t temp=HAL_GetTick();
 		vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(5));
 		remain_time=HAL_GetTick()-temp;
+		if(remain_time==4)
+			first_run--;
 	}
 }
 
@@ -199,22 +202,18 @@ void MotorRecvTask(void *param) // 从PC接收电机的期望值
 {
     cdc_recv_semphr = xSemaphoreCreateBinary();
     xSemaphoreTake(cdc_recv_semphr, 0);
+		while(first_run)	//等待电机数据准备好
+			vTaskDelay(1);
+		//TODO:上电时电机角度在极点附近的处理
+		if(leg[0].joint[0].motor.state.rad>4.0f)
+			leg[0].joint[0].pos_offset=leg[0].joint[0].pos_offset+6.2831853f;
+		if(leg[2].joint[2].motor.state.rad>4.0f)
+			leg[2].joint[2].pos_offset=leg[2].joint[2].pos_offset+6.2831853f;
+		if(leg[3].joint[1].motor.state.rad<3.0f)
+			leg[3].joint[1].pos_offset=leg[3].joint[1].pos_offset-6.2831853f;
 
-//    vTaskDelay(3000);    //等待其它任务启动
-//		for(int i=0;i<4;i++)
-//		{
-//			for(int j=0;j<3;j++)
-//				setup_offset[i][j]=leg[i].joint[j].motor.state.rad;     //记录上电偏移值
-//    }
-//    //TODO:狗腿复位到0度，起立
-//		//DogReset(60000);
-//		vTaskDelay(50);
-//    if(DogReset(60000)==0) //上电限时1min
-//    {
-//        //while(1)
-//        //    vTaskDelay(100);
-//    }
-	xSemaphoreTake(cdc_recv_semphr, portMAX_DELAY);     //等待第一个数据帧到来
+		xSemaphoreTake(cdc_recv_semphr, portMAX_DELAY);     //等待第一个数据帧到来
+		
     while (1)
     {
         if (xSemaphoreTake(cdc_recv_semphr, pdMS_TO_TICKS(50)) != pdPASS) // 发生超时，说明通讯断开
