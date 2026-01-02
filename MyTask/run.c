@@ -11,7 +11,6 @@
 #define BACK_RIGHT 3
 
 uint32_t err_timer_cnt=0;
-uint32_t uart6_recovering=0;
 
 RS485_t rs485bus;
 
@@ -20,24 +19,24 @@ QueueHandle_t cdc_recv_semphr;
 MotorTargetPack_t legs_target = {.pack_type = 0x00};
 MotorStatePack_t legs_state = {.pack_type = 0x00};
 Leg_t leg[4] = {
-    {.joint[0] = {.motor = {.motor_id = 0x01, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
-     .joint[1] = {.motor = {.motor_id = 0x02, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = -4.96999979f},
-     .joint[2] = {.motor = {.motor_id = 0x03, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
+    {.joint[0] = {.motor = {.motor_id = 0x01, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = -0.0627014637f},
+     .joint[1] = {.motor = {.motor_id = 0x02, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = -4.96999979f+5.18389654f},
+     .joint[2] = {.motor = {.motor_id = 0x03, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 2.08084488f},
      .wheel={.hcan=&hcan1,.ID=0x201}},
 
-    {.joint[0] = {.motor = {.motor_id = 0x04, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
-     .joint[1] = {.motor = {.motor_id = 0x05, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 4.96999979f},
-     .joint[2] = {.motor = {.motor_id = 0x06, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
+    {.joint[0] = {.motor = {.motor_id = 0x04, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 1.41337156f},
+     .joint[1] = {.motor = {.motor_id = 0x05, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 4.96999979f+1.75314832f},
+     .joint[2] = {.motor = {.motor_id = 0x06, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 6.09105444f},
      .wheel={.hcan=&hcan1,.ID=0x202}},
 
-    {.joint[0] = {.motor = {.motor_id = 0x07, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
-     .joint[1] = {.motor = {.motor_id = 0x08, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = -4.96999979f},
-     .joint[2] = {.motor = {.motor_id = 0x09, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
+    {.joint[0] = {.motor = {.motor_id = 0x07, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 1.13667977f},
+     .joint[1] = {.motor = {.motor_id = 0x08, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = -4.96999979f+1.66436911f},
+     .joint[2] = {.motor = {.motor_id = 0x09, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 0.390206367f},
      .wheel={.hcan=&hcan1,.ID=0x203}},
 
-    {.joint[0] = {.motor = {.motor_id = 0x0A, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
-     .joint[1] = {.motor = {.motor_id = 0x0B, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 4.96999979f},
-     .joint[2] = {.motor = {.motor_id = 0x0C, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 0.0f},
+    {.joint[0] = {.motor = {.motor_id = 0x0A, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 4.96626282f},
+     .joint[1] = {.motor = {.motor_id = 0x0B, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 4.96999979f+0.256941795f},
+     .joint[2] = {.motor = {.motor_id = 0x0C, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 2.49789596f},
      .wheel={.hcan=&hcan1,.ID=0x204
 }}};
 
@@ -53,8 +52,6 @@ void MotorControlTask(void *param) // 将数据发送到电机，并从电机接
         {
             for(int j=0;j<3;j++)
             {
-								if(uart6_recovering)
-									continue;
                 GoMotorSend(&leg[i].joint[j].motor, leg[i].joint[j].exp_torque / 6.33f * leg[i].joint[j].inv_motor,
                         leg[i].joint[j].exp_omega * 6.33f * leg[i].joint[j].inv_motor,
                         leg[i].joint[j].exp_rad * 6.33f * leg[i].joint[j].inv_motor + leg[i].joint[j].pos_offset+setup_offset[i][j],
@@ -62,10 +59,10 @@ void MotorControlTask(void *param) // 将数据发送到电机，并从电机接
                 GoMotorRecv(&leg[i].joint[j].motor);
             }
         }
-				uint32_t temp=HAL_GetTick();
-				vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(5));
-				remain_time=HAL_GetTick()-temp;
-		}
+		uint32_t temp=HAL_GetTick();
+		vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(5));
+		remain_time=HAL_GetTick()-temp;
+	}
 }
 
 uint32_t current_size=0;
@@ -150,10 +147,10 @@ static uint32_t slope(float target,float *cur_target,float step_limit)
     return ret;
 }
 
-float init_pos[4][3]={{0.0f,0.9f,0.0f},
-											{0.0f,-0.9f,0.0f},
-											{0.0f,0.9f,0.0f},
-											{0.0f,-0.9f,0.0f}};
+float init_pos[4][3]={{0.0f,0.8f,0.0f},
+					{0.0f,-0.8f,0.0f},
+					{0.0f,0.8f,0.0f},
+					{0.0f,-0.8f,0.0f}};
 static uint32_t DogReset(uint32_t time_out_ms)
 {
 	__disable_irq();	//更新电机初始关节角度和Kp，关闭中断确保绝对同步，防止狗腿震荡
@@ -187,7 +184,7 @@ static uint32_t DogReset(uint32_t time_out_ms)
         for(int i=0;i<4;i++)
         {
             for(int j=0;j<3;j++)
-							finished_check=finished_check+slope(init_pos[i][j],&leg[i].joint[j].exp_rad,0.001f);
+				finished_check=finished_check+slope(init_pos[i][j],&leg[i].joint[j].exp_rad,0.001f);
         }
         vTaskDelay(5);
         current_time=current_time+5;
@@ -217,8 +214,7 @@ void MotorRecvTask(void *param) // 从PC接收电机的期望值
 //        //while(1)
 //        //    vTaskDelay(100);
 //    }
-		xSemaphoreTake(cdc_recv_semphr, portMAX_DELAY);
-
+	xSemaphoreTake(cdc_recv_semphr, portMAX_DELAY);     //等待第一个数据帧到来
     while (1)
     {
         if (xSemaphoreTake(cdc_recv_semphr, pdMS_TO_TICKS(50)) != pdPASS) // 发生超时，说明通讯断开

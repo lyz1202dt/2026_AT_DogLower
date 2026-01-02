@@ -186,8 +186,6 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 extern uint32_t err_timer_cnt;
-extern uint32_t uart6_recovering;
-uint32_t uart6_recover_cnt=0;
 /* USER CODE END 4 */
 
 /**
@@ -204,10 +202,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	if(htim->Instance==TIM10)
 	{
 		err_timer_cnt++;
-		if(err_timer_cnt>40&&uart6_recovering==0)
+		if(err_timer_cnt>30)
 		{
 			HAL_NVIC_SystemReset();
-			uart6_recovering=1;
 		}
 	}
   /* USER CODE END Callback 0 */
