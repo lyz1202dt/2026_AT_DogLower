@@ -3,14 +3,33 @@
 #include "mylist.h"
 #include "usb_trans.h"
 #include "WatchDog2.h"
+#include "rs485_config.h"  // 包含RS485配置
 #include <string.h>
+
+// 定义全局接收缓冲区，用于RS485接收
+uint8_t rs485_recv_buffer[RS485_RECV_BUFFER_SIZE];
 
 #define FRONT_LEFT 0
 #define FRONT_RIGHT 1
 #define BACK_LEFT 2
 #define BACK_RIGHT 3
 
-uint32_t err_timer_cnt=0;
+// 添加错误统计结构
+typedef struct {
+    uint32_t total;
+    uint32_t overrun;
+    uint32_t frame;
+    uint32_t noise;
+    uint32_t parity;
+    uint32_t last_error_time;
+    uint32_t continuous_errors;
+    uint32_t recovery_attempts;
+    uint32_t last_recovery_time;
+} ErrorStats_t;
+
+ErrorStats_t error_stats = {0};
+uint32_t error_cnt = 0;
+uint32_t err_timer_cnt = 0;
 
 RS485_t rs485bus;
 
@@ -43,10 +62,39 @@ Leg_t leg[4] = {
 float setup_offset[4][3];	//上电启动时的电机角度
 int32_t remain_time=0;
 uint32_t first_run=10;
+// 添加一个函数用于尝试软恢复UART
+void AttemptUARTRecovery(UART_HandleTypeDef *huart) {
+    // 停止当前的UART操作
+    HAL_UART_DMAStop(huart);
+    
+    // 重置HAL状态
+    huart->ErrorCode = HAL_UART_ERROR_NONE;
+    huart->RxState = HAL_UART_STATE_READY;
+    huart->gState = HAL_UART_STATE_READY;
+    
+    // 短暂延时让总线稳定
+    HAL_Delay(5);
+    
+    // 尝试重启接收
+    if (HAL_UARTEx_ReceiveToIdle_DMA(huart, rs485_recv_buffer, RS485_RECV_BUFFER_SIZE) != HAL_OK) {
+        // 如果标准DMA接收失败，尝试重新初始化UART
+        MX_USART6_UART_Init();
+        HAL_UARTEx_ReceiveToIdle_DMA(huart, rs485_recv_buffer, RS485_RECV_BUFFER_SIZE);
+    }
+}
+
 void MotorControlTask(void *param) // 将数据发送到电机，并从电机接收数据
 {
     RS485Init(&rs485bus, &huart6, GPIOA, GPIO_PIN_4); // 初始化485总线管理器
     TickType_t last_wake_time = xTaskGetTickCount();
+    
+    // 初始化RS485接收
+    if (HAL_UARTEx_ReceiveToIdle_DMA(&huart6, rs485_recv_buffer, RS485_RECV_BUFFER_SIZE) != HAL_OK) {
+        // 如果初始化失败，尝试重新初始化UART
+        MX_USART6_UART_Init();
+        HAL_UARTEx_ReceiveToIdle_DMA(&huart6, rs485_recv_buffer, RS485_RECV_BUFFER_SIZE);
+    }
+    
     while (1)
     {	
         for (int i = 0; i < 4; i++)
@@ -282,24 +330,83 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t size)
     }
 }
 
-uint32_t error_cnt=0;
-
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == USART6)
     {
-			HAL_UART_DMAStop(huart);
-        // 清除错误标志（HAL 已处理大部分，但 ORE 仍需要手动清）
-      __HAL_UART_CLEAR_FEFLAG(huart);
-        __HAL_UART_CLEAR_NEFLAG(huart);
-        __HAL_UART_CLEAR_OREFLAG(huart);
-
-        // 3. 清除 huart->ErrorCode，否则 HAL 会认为错误仍然存在
+        uint32_t now = HAL_GetTick();
+        
+        // 检查错误频率，但不进行复位
+        if ((now - error_stats.last_error_time) < 10) { // 10ms内多次错误
+            error_stats.continuous_errors++;
+        } else {
+            error_stats.continuous_errors = 0; // 重置连续错误计数
+        }
+        error_stats.last_error_time = now;
+        
+        // 先停止DMA传输，避免在清除错误标志时产生新的中断或错误
+        HAL_UART_DMAStop(huart);
+        
+        // 重置HAL状态
         huart->ErrorCode = HAL_UART_ERROR_NONE;
-			
-			huart->RxState = HAL_UART_STATE_READY;
-			
-			RS485RecvIRQ_Handler(&rs485bus, huart, 0);
-			error_cnt++;
+        huart->RxState = HAL_UART_STATE_READY;
+        
+        // 然后清除错误标志 - 按照STM32F4参考手册要求的顺序
+        uint32_t isrflags = READ_REG(huart->Instance->SR);
+        
+        // 按顺序处理各种错误标志，必须先读SR再读DR来清除错误
+        if (isrflags & (USART_SR_ORE | USART_SR_NE | USART_SR_FE)) {
+            // 对于ORE、NE、FE错误，需要先读SR再读DR
+            volatile uint32_t temp_sr = READ_REG(huart->Instance->SR);
+            volatile uint32_t temp_dr = READ_REG(huart->Instance->DR); // 这个读取会清除ORE、NE、FE
+            
+            // 统计具体的错误类型
+            if (isrflags & USART_SR_ORE) {
+                error_stats.overrun++;
+            }
+            if (isrflags & USART_SR_NE) {
+                error_stats.noise++;
+            }
+            if (isrflags & USART_SR_FE) {
+                error_stats.frame++;
+            }
+        }
+        
+        if (isrflags & USART_SR_PE) {
+            // 奇偶校验错误只需读SR即可清除
+            volatile uint32_t temp_sr = READ_REG(huart->Instance->SR);
+            error_stats.parity++;
+        }
+        
+        // 增加总错误计数
+        error_stats.total++;
+        error_cnt = error_stats.total; // 保持与原变量的兼容性
+        
+        // 如果连续错误次数过多，尝试软恢复而不是系统复位
+        if (error_stats.continuous_errors > 10) {
+            if ((now - error_stats.last_recovery_time) > 1000) { // 至少1秒后才尝试恢复
+                AttemptUARTRecovery(huart);
+                error_stats.recovery_attempts++;
+                error_stats.last_recovery_time = now;
+                error_stats.continuous_errors = 0; // 重置连续错误计数
+            }
+        } else {
+            // 短暂延时(让总线稳定)后重新启动接收
+            HAL_Delay(2); // 稍微长一点的延时让总线稳定
+            
+            // 重新启动接收，使用适当的缓冲区
+            if (HAL_UARTEx_ReceiveToIdle_DMA(huart, rs485_recv_buffer, RS485_RECV_BUFFER_SIZE) != HAL_OK) {
+                // 如果重启失败，可能是DMA或UART配置问题
+                // 尝试重新初始化UART
+                MX_USART6_UART_Init();
+                
+                // 然后再次尝试启动接收
+                if (HAL_UARTEx_ReceiveToIdle_DMA(huart, rs485_recv_buffer, RS485_RECV_BUFFER_SIZE) != HAL_OK) {
+                    // 如果还是失败，可以设置一个标志，让主循环尝试恢复
+                    extern uint32_t err_timer_cnt;
+                    err_timer_cnt = 31; // 设置为超时值，触发主循环中的恢复措施
+                }
+            }
+        }
     }
 }

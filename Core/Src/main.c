@@ -28,7 +28,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "rs485_config.h"  // 包含RS485配置
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -38,6 +38,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define RS485_RECV_BUFFER_SIZE 256  // 添加缓冲区大小定义
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -49,6 +50,7 @@
 
 /* USER CODE BEGIN PV */
 extern DMA_HandleTypeDef hdma_usart6_rx;
+extern UART_HandleTypeDef huart6; // 声明huart6句柄
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -186,25 +188,23 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 extern uint32_t err_timer_cnt;
-/* USER CODE END 4 */
 
-/**
-  * @brief  Period elapsed callback in non blocking mode
-  * @note   This function is called  when TIM2 interrupt took place, inside
-  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
-  * a global variable "uwTick" used as application time base.
-  * @param  htim : TIM handle
-  * @retval None
-  */
+// 修改定时器回调函数，避免复位机器人
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
 	if(htim->Instance==TIM10)
 	{
 		err_timer_cnt++;
-		if(err_timer_cnt>30)
+		if(err_timer_cnt>30)  // 30秒无正常通信
 		{
-			HAL_NVIC_SystemReset();
+			// 不进行系统复位，而是采取更温和的措施
+			// 只重启相关通信模块而不影响整个系统
+			HAL_UART_DMAStop(&huart6);  // 停止当前的UART6 DMA
+			HAL_Delay(10);
+			// 尝试重启UART6接收，但不复位整个系统
+			extern uint8_t rs485_recv_buffer[RS485_RECV_BUFFER_SIZE]; // 声明外部缓冲区
+			HAL_UARTEx_ReceiveToIdle_DMA(&huart6, rs485_recv_buffer, RS485_RECV_BUFFER_SIZE);
 		}
 	}
   /* USER CODE END Callback 0 */
@@ -215,6 +215,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
   /* USER CODE END Callback 1 */
 }
+/* USER CODE END 4 */
 
 /**
   * @brief  This function is executed in case of error occurrence.
