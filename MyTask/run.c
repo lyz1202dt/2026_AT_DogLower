@@ -10,7 +10,26 @@
 #define BACK_LEFT 2
 #define BACK_RIGHT 3
 
-uint32_t err_timer_cnt=0;
+// 添加错误统计结构
+typedef struct {
+    uint32_t total;
+    uint32_t overrun;
+    uint32_t frame;
+    uint32_t noise;
+    uint32_t parity;
+    uint32_t last_error_time;
+    uint32_t continuous_errors;
+    uint32_t recovery_attempts;
+    uint32_t last_recovery_time;
+} ErrorStats_t;
+
+ErrorStats_t error_stats = {0};
+uint32_t error_cnt = 0;
+uint32_t err_timer_cnt = 0;
+
+// 添加错误标志和重启接收标志
+uint32_t last_error_time = 0;
+
 
 RS485_t rs485bus;
 
@@ -231,7 +250,6 @@ void MotorRecvTask(void *param) // 从PC接收电机的期望值
                 wheel_exp_torque[i]=0.0f;
                 wheel_exp_vel[i]=0.0f;
             }
-            continue;
         }
 
         // TODO:安全限幅并给到电机期望
@@ -282,24 +300,63 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t size)
     }
 }
 
-uint32_t error_cnt=0;
+
 
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == USART6)
     {
-			HAL_UART_DMAStop(huart);
-        // 清除错误标志（HAL 已处理大部分，但 ORE 仍需要手动清）
-      __HAL_UART_CLEAR_FEFLAG(huart);
-        __HAL_UART_CLEAR_NEFLAG(huart);
-        __HAL_UART_CLEAR_OREFLAG(huart);
-
-        // 3. 清除 huart->ErrorCode，否则 HAL 会认为错误仍然存在
+        uint32_t now = HAL_GetTick();
+        
+        // 检查错误频率，但不进行复位
+        if ((now - error_stats.last_error_time) < 10) { // 10ms内多次错误
+            error_stats.continuous_errors++;
+        } else {
+            error_stats.continuous_errors = 0; // 重置连续错误计数
+        }
+        error_stats.last_error_time = now;
+        
+        // 先停止DMA传输，避免在清除错误标志时产生新的中断或错误
+        HAL_UART_DMAStop(huart);
+        
+        // 重置HAL状态
         huart->ErrorCode = HAL_UART_ERROR_NONE;
-			
-			huart->RxState = HAL_UART_STATE_READY;
-			
-			RS485RecvIRQ_Handler(&rs485bus, huart, 0);
-			error_cnt++;
+        huart->RxState = HAL_UART_STATE_READY;
+        huart->gState = HAL_UART_STATE_READY;
+        
+        // 然后清除错误标志 - 按照STM32F4参考手册要求的顺序
+        uint32_t isrflags = READ_REG(huart->Instance->SR);
+        
+        // 按顺序处理各种错误标志，必须先读SR再读DR来清除错误
+        if (isrflags & (USART_SR_ORE | USART_SR_NE | USART_SR_FE)) {
+            // 对于ORE、NE、FE错误，需要先读SR再读DR
+            volatile uint32_t temp_sr = READ_REG(huart->Instance->SR);
+            volatile uint32_t temp_dr = READ_REG(huart->Instance->DR); // 这个读取会清除ORE、NE、FE
+            
+            // 统计具体的错误类型
+            if (isrflags & USART_SR_ORE) {
+                error_stats.overrun++;
+            }
+            if (isrflags & USART_SR_NE) {
+                error_stats.noise++;
+            }
+            if (isrflags & USART_SR_FE) {
+                error_stats.frame++;
+            }
+        }
+        
+        if (isrflags & USART_SR_PE) {
+            // 奇偶校验错误只需读SR即可清除
+            volatile uint32_t temp_sr = READ_REG(huart->Instance->SR);
+            error_stats.parity++;
+        }
+        
+        // 增加总错误计数
+        error_stats.total++;
+        error_cnt = error_stats.total; // 保持与原变量的兼容性
+        
+        last_error_time = now;
+        
+        RS485RecvIRQ_Handler(&rs485bus, huart, 0);
     }
 }
