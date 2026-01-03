@@ -201,11 +201,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 0 */
 	if(htim->Instance==TIM10)
 	{
-		err_timer_cnt++;
-		if(err_timer_cnt>30)
-		{
-			HAL_NVIC_SystemReset();
-		}
+	
 	}
   /* USER CODE END Callback 0 */
   if (htim->Instance == TIM2) {
