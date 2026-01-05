@@ -64,7 +64,7 @@ int32_t remain_time=0;
 uint32_t first_run=10;
 void MotorControlTask(void *param) // 将数据发送到电机，并从电机接收数据
 {
-    RS485Init(&rs485bus, &huart6, GPIOA, GPIO_PIN_4); // 初始化485总线管理器
+     
     TickType_t last_wake_time = xTaskGetTickCount();
     while (1)
     {	
@@ -363,18 +363,25 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 
 uint64_t uart_reast = 0;
 extern TaskHandle_t motor_control_task_handle;
+static uint32_t action_stack1[128];
+static uint32_t action_stack2[128];
+static StaticTask_t task_block1;
+static StaticTask_t task_block2;
+static uint8_t choose_stack=0;
+static TaskHandle_t task_handle=NULL;
 SemaphoreHandle_t uart6ResetSem;
 void UART6_ServiceTask(void *arg)
 {
         uart6ResetSem = xSemaphoreCreateBinary();
-    
+     task_handle=xTaskCreateStatic(MotorControlTask,"MotorControl",128,NULL,5,&action_stack1[0],&task_block1);
     for (;;)
     {
         
         if (xSemaphoreTake(uart6ResetSem, portMAX_DELAY) == pdTRUE)
         {
-            vTaskSuspend(motor_control_task_handle);
-            vTaskDelay(pdMS_TO_TICKS(5));
+            vTaskDelete( task_handle);
+
+            vTaskDelay(pdMS_TO_TICKS(10));
             __disable_irq();
 
             
@@ -395,7 +402,16 @@ void UART6_ServiceTask(void *arg)
             
             uart_reast++;
             __enable_irq();
-            vTaskResume(motor_control_task_handle);
+            if(choose_stack==0)
+            {
+                choose_stack=1;
+                task_handle=xTaskCreateStatic(MotorControlTask,"MotorControl",128,NULL,5,&action_stack2[0],&task_block2);
+            }
+            else
+            {
+                choose_stack=0;
+                task_handle=xTaskCreateStatic(MotorControlTask,"MotorControl",128,NULL,5,&action_stack1[0],&task_block1);
+            }
         }
     }
 }
