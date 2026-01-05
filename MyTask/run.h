@@ -82,5 +82,5 @@ void MotorControlTask(void* param);
 void MotorSendTask(void* param);
 void MotorRecvTask(void* param);
 void WheelControlTask(void* param);
-
+void UART6_ServiceTask(void *arg);
 #endif

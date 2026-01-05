@@ -25,6 +25,7 @@ uint32_t RS485Recv(RS485_t *rs485,uint8_t*data,uint32_t size,uint32_t time_out,u
 		HAL_GPIO_WritePin(rs485->crtl_port,rs485->ctrl_pin,GPIO_PIN_RESET);     //总线转入读取模式
     //HAL_UART_Receive_DMA(rs485->huart,data,size);
 		HAL_UART_DMAStop(rs485->huart);
+    __HAL_UART_CLEAR_IDLEFLAG(rs485->huart);
 		HAL_UARTEx_ReceiveToIdle_DMA(rs485->huart, data,size);
 		__HAL_DMA_DISABLE_IT(rs485->huart->hdmarx, DMA_IT_HT);
 		uint32_t ret=xSemaphoreTake(rs485->recv_semphr,pdMS_TO_TICKS(time_out));

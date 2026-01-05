@@ -186,6 +186,8 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 extern uint32_t err_timer_cnt;
+
+ extern SemaphoreHandle_t uart6ResetSem;
 /* USER CODE END 4 */
 
 /**
@@ -201,11 +203,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 0 */
 	if(htim->Instance==TIM10)
 	{
-		err_timer_cnt++;
-		if(err_timer_cnt>30)
-		{
-			HAL_NVIC_SystemReset();
-		}
+    err_timer_cnt++;
+    if(err_timer_cnt>30)
+    {
+      BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+        /* 给信号量通知任务进行 UART6 软复位 */
+        xSemaphoreGiveFromISR(uart6ResetSem, &xHigherPriorityTaskWoken);
+
+        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+      err_timer_cnt=0;
+    }
 	}
   /* USER CODE END Callback 0 */
   if (htim->Instance == TIM2) {
