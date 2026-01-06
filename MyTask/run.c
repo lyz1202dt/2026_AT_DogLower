@@ -4,7 +4,7 @@
 #include "usb_trans.h"
 #include "WatchDog2.h"
 #include <string.h>
-
+#include "JY61.h"
 #define FRONT_LEFT 0
 #define FRONT_RIGHT 1
 #define BACK_LEFT 2
@@ -22,6 +22,7 @@ typedef struct {
     uint32_t recovery_attempts;
     uint32_t last_recovery_time;
 } ErrorStats_t;
+extern JY61_Typedef JY61;
 
 ErrorStats_t error_stats = {0};
 uint32_t error_cnt = 0;
@@ -150,7 +151,7 @@ void MotorSendTask(void *param) // 将电机的数据发送到PC上
         }
         CDC_Transmit_FS((uint8_t*)&legs_state, sizeof(legs_state));
         vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(8));
-    }
+    } 
 }
 
 static uint32_t slope(float target,float *cur_target,float step_limit)
