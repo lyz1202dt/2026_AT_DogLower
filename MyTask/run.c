@@ -27,6 +27,8 @@ ErrorStats_t error_stats = {0};
 uint32_t error_cnt = 0;
 uint32_t err_timer_cnt = 0;
 
+uint32_t req_stop_transmit;
+
 // 添加错误标志和重启接收标志
 uint32_t last_error_time = 0;
 
@@ -80,6 +82,12 @@ void MotorControlTask(void *param) // 将数据发送到电机，并从电机接
             }
         }
         vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(5));
+        if(req_stop_transmit)
+        {
+            req_stop_transmit=0;
+            while(1)
+                vTaskDelay(100);
+        }
         if(err_check==12&&first_run)
             first_run--;
     }
@@ -240,9 +248,7 @@ void MotorRecvTask(void *param) // 从PC接收电机的期望值
         setup_offset[i][2]=leg[i].joint[2].motor.state.rad;
     }
 		allow_send=1;		//允许发送数据
-    
-    xSemaphoreTake(cdc_recv_semphr, portMAX_DELAY);     //等待第一个数据帧到来
-        
+       
     while (1)
     {
         if (xSemaphoreTake(cdc_recv_semphr, pdMS_TO_TICKS(50)) != pdPASS) // 发生超时，说明通讯断开
@@ -391,12 +397,16 @@ void UART6_ServiceTask(void *arg)
         
         if (xSemaphoreTake(uart6ResetSem, portMAX_DELAY) == pdTRUE)
         {
-            vTaskDelete( task_handle);
-
-            vTaskDelay(pdMS_TO_TICKS(10));
+            req_stop_transmit=1;
+            while(req_stop_transmit)
+                vTaskDelay(2);
+            
+            vTaskDelete(task_handle);
             __disable_irq();
 
             
+            __HAL_DMA_DISABLE(huart6.hdmarx);
+            __HAL_DMA_DISABLE(huart6.hdmatx);
             // 1. 停止 DMA，清 IDLE
             HAL_UART_DMAStop(&huart6);
             __HAL_UART_CLEAR_IDLEFLAG(&huart6);
