@@ -36,6 +36,8 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 extern RS485_t rs485bus;
+extern uint8_t data[11];
+extern UART_HandleTypeDef huart4;
 extern UART_HandleTypeDef huart6;
 /* USER CODE END PD */
 
@@ -113,6 +115,7 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
+  HAL_UART_Receive_DMA(&huart4,data,11);
   xTaskCreate(MotorSendTask,"MotorSend",256,NULL,4,&usb_send_task_handle);
   xTaskCreate(MotorRecvTask,"MotorRecv",128,NULL,4,&usb_recv_task_handle);
 	xTaskCreate(WheelControlTask,"WheelCtrl",128,NULL,6,&wheel_control_task_handle);

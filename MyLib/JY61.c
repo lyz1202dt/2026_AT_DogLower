@@ -1,15 +1,28 @@
 #include "JY61.h"
-
+#include "run.h"
 uint8_t Gyroscope_Init_count = 0;
 //顺时针为负
 float Yaw_offset;
 JY61_Typedef JY61;
+extern MotorStatePack_t legs_state;
+
+uint8_t data[11];
 
 static uint8_t sum10(uint8_t *data) {
     uint8_t sum = 0;
     for (uint8_t i = 0; i < 10; i++)
         sum += data[i];
     return sum;
+}
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+    if (huart->Instance == UART4)
+    {  
+       JY61_Receive(&JY61, data, 11);
+       HAL_UART_Receive_DMA(&huart4, data, 11);
+    }
+    else 
+       HAL_UART_Receive_DMA(&huart4, data, 11);
+    
 }
 void JY61_Receive(JY61_Typedef* Gyro, uint8_t *data, uint8_t len) {
     for (uint8_t i = 0; i < len; i++) {
@@ -30,6 +43,9 @@ void JY61_Receive(JY61_Typedef* Gyro, uint8_t *data, uint8_t len) {
                         Gyro->AngularVelocity.X = pack.X / 32768.0f * 2000;
                         Gyro->AngularVelocity.Y = pack.Y / 32768.0f * 2000;
                         Gyro->AngularVelocity.Z = pack.Z / 32768.0f * 2000;
+                        legs_state.JY61_.AngularVelocity.X=Gyro->AngularVelocity.X*3.1415926/180.0f;
+                        legs_state.JY61_.AngularVelocity.Y=Gyro->AngularVelocity.Y*3.1415926/180.0f;
+                        legs_state.JY61_.AngularVelocity.Z=Gyro->AngularVelocity.Z*3.1415926/180.0f;
                     }
                     break;
                 case 0x53://角度
@@ -41,6 +57,9 @@ void JY61_Receive(JY61_Typedef* Gyro, uint8_t *data, uint8_t len) {
                         Gyro->Angle.Yaw = pack.Z / 32768.0f * 180;
                         Gyro->Temp = pack.Temp / 340.0f + 36.53f;
                         float diff = Gyro->Angle.Yaw - Gyro->Angle.lastYaw;
+                        legs_state.JY61_.Angle.Roll = Gyro->Angle.Roll*3.1415926/180.0f;
+                        legs_state.JY61_.Angle.Pitch = Gyro->Angle.Pitch*3.1415926/180.0f;
+                        legs_state.JY61_.Angle.Yaw = Gyro->Angle.Yaw*3.1415926/180.0f;
 
                         if (diff > 180)
                             Gyro->Angle.rand--;

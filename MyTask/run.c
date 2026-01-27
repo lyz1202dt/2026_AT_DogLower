@@ -4,7 +4,6 @@
 #include "usb_trans.h"
 #include "WatchDog2.h"
 #include <string.h>
-
 #define FRONT_LEFT 0
 #define FRONT_RIGHT 1
 #define BACK_LEFT 2
@@ -22,7 +21,6 @@ typedef struct {
     uint32_t recovery_attempts;
     uint32_t last_recovery_time;
 } ErrorStats_t;
-
 ErrorStats_t error_stats = {0};
 uint32_t error_cnt = 0;
 uint32_t err_timer_cnt = 0;
@@ -34,7 +32,6 @@ uint32_t last_error_time = 0;
 
 
 RS485_t rs485bus;
-
 QueueHandle_t cdc_recv_semphr;
 
 MotorTargetPack_t legs_target = {.pack_type = 0x00};
