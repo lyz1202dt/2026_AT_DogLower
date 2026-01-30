@@ -9,6 +9,11 @@
 #define FRONT_RIGHT 1
 #define BACK_LEFT 2
 #define BACK_RIGHT 3
+#define MAX_pos {0.0f,0.0f,0.0f,0.0f}
+#define MIN_pos {0.0f,0.0f,0.0f,0.0f}
+
+double pos_MIN[4] = MIN_pos;
+double pos_MAX[4] = MAX_pos;
 
 // 添加错误统计结构
 typedef struct {
@@ -280,6 +285,16 @@ void MotorRecvTask(void *param) // 从PC接收电机的期望值
             }
             wheel_exp_vel[i]=legs_target.leg[i].wheel.omega;
             wheel_exp_torque[i]=legs_target.leg[i].wheel.torque;
+            if(leg[i].joint[2].exp_rad >= pos_MAX[i] && leg[i].joint[2].exp_omega > 0.0f)
+            {
+                leg[i].joint[2].exp_omega = 0.0f;
+                leg[i].joint[2].exp_rad = pos_MAX[i];
+            }
+            if(leg[i].joint[2].exp_rad <= pos_MIN[i] && leg[i].joint[2].exp_omega < 0.0f)
+            {
+                leg[i].joint[2].exp_omega = 0.0f;
+                leg[i].joint[2].exp_rad = pos_MIN[i];
+            }
         }
     }
 }
