@@ -39,6 +39,9 @@ extern RS485_t rs485bus;
 extern uint8_t data[11];
 extern UART_HandleTypeDef huart4;
 extern UART_HandleTypeDef huart6;
+extern UART_HandleTypeDef huart5;
+
+QueueHandle_t remote_semaphore;
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -48,6 +51,7 @@ TaskHandle_t usb_recv_task_handle;
 TaskHandle_t motor_control_task_handle;
 TaskHandle_t wheel_control_task_handle;
 TaskHandle_t uart6_service_task_handle;
+TaskHandle_t uart5_remocont_task_handle;
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -106,6 +110,7 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
+	remote_semaphore=xSemaphoreCreateBinary();
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -120,6 +125,7 @@ void MX_FREERTOS_Init(void) {
   xTaskCreate(MotorRecvTask,"MotorRecv",128,NULL,4,&usb_recv_task_handle);
 	xTaskCreate(WheelControlTask,"WheelCtrl",128,NULL,6,&wheel_control_task_handle);
   xTaskCreate(UART6_ServiceTask,"UART6Reset",256,NULL,7,&uart6_service_task_handle);
+	xTaskCreate(UART5_RemotecontrolTask,"UART5Recont",256,NULL,6,&uart5_remocont_task_handle);
   RS485Init(&rs485bus, &huart6, GPIOA, GPIO_PIN_4);// 初始化485总线管理器
   /* USER CODE END RTOS_THREADS */
 

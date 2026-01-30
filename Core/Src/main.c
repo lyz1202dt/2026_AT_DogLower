@@ -28,7 +28,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "run.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -49,6 +49,7 @@
 
 /* USER CODE BEGIN PV */
 extern DMA_HandleTypeDef hdma_usart6_rx;
+extern uint8_t remote_control_buf[12];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -119,6 +120,8 @@ int main(void)
 	HAL_CAN_ActivateNotification(&hcan1,CAN_IT_TX_MAILBOX_EMPTY);
 	HAL_CAN_ActivateNotification(&hcan2,CAN_IT_TX_MAILBOX_EMPTY);
 	
+    HAL_UART_Receive_DMA(&huart5, remote_control_buf, sizeof(remote_control_buf));
+    __HAL_UART_ENABLE_IT(&huart5, UART_IT_IDLE);
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in freertos.c) */

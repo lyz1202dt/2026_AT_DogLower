@@ -5,6 +5,8 @@
 #include "WatchDog2.h"
 #include <string.h>
 #include "usbd_cdc_if.h"
+#include "bezier.h" 
+
 #define FRONT_LEFT 0
 #define FRONT_RIGHT 1
 #define BACK_LEFT 2
@@ -33,7 +35,31 @@ uint32_t last_error_time = 0;
 
 
 RS485_t rs485bus;
+
 QueueHandle_t cdc_recv_semphr;
+
+
+//******有关遥控器需要的数据定义********
+
+static BezierLine bezier = {.p1_x = 0.660634f, .p1_y = 0.131222f, .p2_x = 0.846154f, .p2_y = 0.556561f}; // 摇杆贝塞尔曲线参数
+uint8_t remote_control_buf[12];
+float filter_gate=0.05f,last_v0,last_v1,last_omega,last_v3;
+static const float filter_alpha = 0.6f;
+float max_omega=57.3f,max_speed=1.0f;
+float cur_dir=0.0f;
+
+
+RemoteCmd_t remote_cmd;
+RemotePack_t remotedata;
+
+extern QueueHandle_t remote_semaphore;
+extern BaseType_t xHigherPriorityTaskWoken;
+
+//**************************************
+
+
+
+
 
 MotorTargetPack_t legs_target = {.pack_type = 0x00};
 MotorStatePack_t legs_state = {.pack_type = 0x00};
@@ -433,5 +459,85 @@ void UART6_ServiceTask(void *arg)
                 task_handle=xTaskCreateStatic(MotorControlTask,"MotorControl",128,NULL,5,&action_stack1[0],&task_block1);
             }
         }
+    }
+}
+
+
+void UART5_RemotecontrolTask(void *param){
+	
+    TickType_t xLastWakeTime = xTaskGetTickCount(); // 获取当前 Tick
+    const TickType_t xFrequency = pdMS_TO_TICKS(100);
+
+
+	 while(1)
+    {
+			
+			  float vel[3];
+        // 阻塞等待 ISR 释放的信号量
+         if (xSemaphoreTake(remote_semaphore, pdMS_TO_TICKS(200)) != pdTRUE){ // 200ms未收到遥控器的数据，复位摇杆
+            remotedata.rocker[0]=0;
+					  remotedata.rocker[1]=0;
+					  remotedata.rocker[2]=0;
+					  remotedata.rocker[3]=0;
+				 }
+				 
+				__disable_irq();
+		last_v0=filter_gate*(((float)(remotedata.rocker[0])) / 2047.0f)+(1.0f-filter_gate)*last_v0;
+		vel[0]=last_v0;
+		last_v1=filter_gate*(((float)(remotedata.rocker[1])) / 2047.0f)+(1.0f-filter_gate)*last_v1;
+		vel[1]=last_v1;
+		last_omega=(((float)(remotedata.rocker[2])) / 2047.0f) * max_omega*filter_gate+(1.0f-filter_gate)*last_omega;
+				 
+		__enable_irq();
+     
+				   remote_cmd.omega = BezierTransform(last_omega, bezier); // 计算自转角速度
+				 remote_cmd.omega = remote_cmd.omega * M_PI / 180.0f;
+
+		
+        float rocker_val = (float)remotedata.rocker[3] / 2047.0f;  
+      last_v3 = filter_alpha * rocker_val + (1.0f - filter_alpha) * last_v3;
+         vel[2] = last_v3 * 1.0f; 
+
+
+
+				 // 归一化第四个摇杆值
+
+        float model = sqrtf(vel[0] * vel[0] + vel[1] * vel[1]);
+        if (model != 0.0f)
+            cur_dir = atan2f(vel[1], vel[0]);
+
+        model = BezierTransform(model, bezier);
+        
+        vel[0] = model * cosf(cur_dir) * max_speed;
+        vel[1] = model * sinf(cur_dir) * max_speed;
+        remote_cmd.vx = vel[0];
+        remote_cmd.vy = vel[1];
+				remote_cmd.wheel_v = vel[2];
+				 
+        
+	    vTaskDelayUntil(&xLastWakeTime, xFrequency);
+				
+		}
+}
+
+
+void UART5_IT(UART_HandleTypeDef *huart)
+{
+    if (__HAL_UART_GET_FLAG(&huart5, UART_FLAG_IDLE))
+    {
+        __HAL_UART_CLEAR_IDLEFLAG(&huart5);
+        HAL_UART_DMAStop(&huart5);
+
+        if (remote_control_buf[0]==0xAA && remote_control_buf[11]==0xBB)
+        {
+            memcpy(&remotedata,remote_control_buf, 12);
+					
+         BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+                xSemaphoreGiveFromISR(remote_semaphore, &xHigherPriorityTaskWoken);
+                portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+
+        }
+
+        HAL_UART_Receive_DMA(&huart5, remote_control_buf, 12);
     }
 }
