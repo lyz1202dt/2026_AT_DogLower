@@ -5,6 +5,7 @@
 #include "WatchDog2.h"
 #include <string.h>
 #include "usbd_cdc_if.h"
+#include "JY61.h"
 #define FRONT_LEFT 0
 #define FRONT_RIGHT 1
 #define BACK_LEFT 2
@@ -25,8 +26,10 @@ typedef struct {
 ErrorStats_t error_stats = {0};
 uint32_t error_cnt = 0;
 uint32_t err_timer_cnt = 0;
-
+uint8_t data[11];
 uint32_t req_stop_transmit;
+extern JY61_Typedef_ JY61_;
+extern DMA_HandleTypeDef hdma_uart4_rx;
 
 // 添加错误标志和重启接收标志
 uint32_t last_error_time = 0;
@@ -61,22 +64,129 @@ Leg_t leg[4] = {
 
 float setup_offset[4][3];    //上电启动时的电机角度
 uint32_t first_run=5;
+uint32_t watch_dog_id[12];
+typedef void (*WatchDogCb_t)(void *user_data);
+
+void watchdog_cb(uint32_t *param)
+{  uint32_t user_data=(uint32_t)param; 
+    if(user_data==1)
+     {
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_5, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_4, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_3, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_2, GPIO_PIN_SET);
+     }
+    else if(user_data==2)
+    {
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_5, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_4, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_3, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_2, GPIO_PIN_RESET);
+    }
+    else if(user_data==3)
+    {
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_5, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_4, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_3, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_2, GPIO_PIN_SET);
+    }
+    else if(user_data==4)
+    {
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_5, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_4, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_3, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_2, GPIO_PIN_RESET);
+    }
+    else if(user_data==5)
+    {
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_5, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_4, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_3, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_2, GPIO_PIN_SET);
+    }
+    else if(user_data==6)
+    {
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_5, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_4, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_3, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_2, GPIO_PIN_RESET);
+    }
+    else if(user_data==7)
+    {
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_5, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_4, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_3, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_2, GPIO_PIN_SET);
+    }
+    else if(user_data==8)
+    {
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_5, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_4, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_3, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_2, GPIO_PIN_RESET);
+    }
+    else if(user_data==9)
+    {
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_5, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_4, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_3, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_2, GPIO_PIN_SET);
+    }
+    else if(user_data==10)
+    {
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_5, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_4, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_3, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_2, GPIO_PIN_RESET);
+    }
+    else if(user_data==11)
+    {
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_5, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_4, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_3, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_2, GPIO_PIN_SET);
+    }
+    else if(user_data==12)
+    {
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_5, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_4, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_3, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOE,GPIO_PIN_2, GPIO_PIN_RESET);
+    }
+}
 void MotorControlTask(void *param) // 将数据发送到电机，并从电机接收数据
-{
-    
-    TickType_t last_wake_time = xTaskGetTickCount();
+{   
+     TickType_t last_wake_time = xTaskGetTickCount();
+     watch_dog_id[0]=AddWatchDog(watchdog_cb,1000,(void*)1,WATCHDOG_MODE_REPEAT);
+     watch_dog_id[1]=AddWatchDog(watchdog_cb,1000,(void*)2,WATCHDOG_MODE_REPEAT);
+     watch_dog_id[2]=AddWatchDog(watchdog_cb,1000,(void*)3,WATCHDOG_MODE_REPEAT);
+     watch_dog_id[3]=AddWatchDog(watchdog_cb,1000,(void*)4,WATCHDOG_MODE_REPEAT);
+     watch_dog_id[4]=AddWatchDog(watchdog_cb,1000,(void*)5,WATCHDOG_MODE_REPEAT);
+     watch_dog_id[5]=AddWatchDog(watchdog_cb,1000,(void*)6,WATCHDOG_MODE_REPEAT);
+     watch_dog_id[6]=AddWatchDog(watchdog_cb,1000,(void*)7,WATCHDOG_MODE_REPEAT);
+     watch_dog_id[7]=AddWatchDog(watchdog_cb,1000,(void*)8,WATCHDOG_MODE_REPEAT);
+     watch_dog_id[8]=AddWatchDog(watchdog_cb,1000,(void*)9,WATCHDOG_MODE_REPEAT);
+     watch_dog_id[9]=AddWatchDog(watchdog_cb,1000,(void*)10,WATCHDOG_MODE_REPEAT);
+    watch_dog_id[10]=AddWatchDog(watchdog_cb,1000,(void*)11,WATCHDOG_MODE_REPEAT);
+    watch_dog_id[11]=AddWatchDog(watchdog_cb,1000,(void*)12,WATCHDOG_MODE_REPEAT);
     while (1)
-    {   
-				int err_check=0;
+    {       uint32_t Recv_return;
+			int err_check=0;
         for (int i = 0; i < 4; i++)
         {
             for(int j=0;j<3;j++)
-            {
+            {   
                 GoMotorSend(&leg[i].joint[j].motor, leg[i].joint[j].exp_torque / 6.33f * leg[i].joint[j].inv_motor,
                         leg[i].joint[j].exp_omega * 6.33f * leg[i].joint[j].inv_motor,
                         leg[i].joint[j].exp_rad * 6.33f * leg[i].joint[j].inv_motor + leg[i].joint[j].pos_offset+setup_offset[i][j],
                         leg[i].joint[j].Kp, leg[i].joint[j].Kd);
-                err_check+=GoMotorRecv(&leg[i].joint[j].motor);
+               //err_check+=GoMotorRecv(&leg[i].joint[j].motor);
+                 Recv_return=GoMotorRecv(&leg[i].joint[j].motor);
+                 if(Recv_return)
+                 {  watch_dog_id[i*3+j]=i*3+j;
+                    FeedDog(watch_dog_id[i*3+j]);
+                    err_check++;
+                 }
             }
         }
         vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(5));
@@ -86,7 +196,7 @@ void MotorControlTask(void *param) // 将数据发送到电机，并从电机接
             while(1)
                 vTaskDelay(100);
         }
-        if(err_check==12&&first_run)
+        if(err_check==12&&first_run) 
             first_run--;
     }
 }
@@ -313,6 +423,11 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t size)
         RS485RecvIRQ_Handler(&rs485bus, huart, size);
         err_timer_cnt=0;    //每接收一次，就清零
     }
+    else if(huart->Instance==UART4){
+         JY61_Receive(&JY61, data, size);
+         HAL_UARTEx_ReceiveToIdle_DMA(&huart4,data,sizeof(data));
+				__HAL_DMA_DISABLE_IT (&hdma_uart4_rx, DMA_IT_HT);
+    }
 }
 
 
@@ -373,6 +488,12 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
         last_error_time = now;
         
         RS485RecvIRQ_Handler(&rs485bus, huart, 0);
+    }
+    else if(huart->Instance==UART4)
+    {       
+            __HAL_UART_CLEAR_IDLEFLAG(huart);
+            HAL_UART_DMAStop(huart);
+            HAL_UARTEx_ReceiveToIdle_DMA(&huart4,data,sizeof(data));
     }
 }
 

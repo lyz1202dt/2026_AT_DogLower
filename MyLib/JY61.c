@@ -1,12 +1,12 @@
 #include "JY61.h"
 #include "run.h"
 uint8_t Gyroscope_Init_count = 0;
-//Ë³Ê±ÕëÎª¸º
+//Ë³Ê±ï¿½ï¿½Îªï¿½ï¿½
 float Yaw_offset;
 JY61_Typedef JY61;
 extern MotorStatePack_t legs_state;
 
-uint8_t data[11];
+
 
 static uint8_t sum10(uint8_t *data) {
     uint8_t sum = 0;
@@ -14,30 +14,21 @@ static uint8_t sum10(uint8_t *data) {
         sum += data[i];
     return sum;
 }
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-    if (huart->Instance == UART4)
-    {  
-       JY61_Receive(&JY61, data, 11);
-       HAL_UART_Receive_DMA(&huart4, data, 11);
-    }
-    else 
-       HAL_UART_Receive_DMA(&huart4, data, 11);
-    
-}
+
 void JY61_Receive(JY61_Typedef* Gyro, uint8_t *data, uint8_t len) {
     for (uint8_t i = 0; i < len; i++) {
-        if (data[i] == 0x55) { // °üÊ¶±ð
+        if (data[i] == 0x55) { // ï¿½ï¿½Ê¶ï¿½ï¿½
             Angle_Pack_Typedef pack = *(Angle_Pack_Typedef *)(data + i);
             switch (pack.ID) {
-                case 0x51://¼ÓËÙ¶È
+                case 0x51://ï¿½ï¿½ï¿½Ù¶ï¿½
                     if (pack.sum == sum10(data + i)) {
-                        i += 9;//Ìø¹ýÕâ¸öÊý¾Ý°ü³¤¶È
+                        i += 9;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý°ï¿½ï¿½ï¿½ï¿½ï¿?
                         Gyro->Acceleration.X = pack.X / 32768.0f * 16;
                         Gyro->Acceleration.Y = pack.Y / 32768.0f * 16;
                         Gyro->Acceleration.Z = pack.Z / 32768.0f * 16;
                     }
                     break;
-                case 0x52://½ÇËÙ¶È
+                case 0x52://ï¿½ï¿½ï¿½Ù¶ï¿½
                     if (pack.sum == sum10(data + i)) {
                         i += 9;
                         Gyro->AngularVelocity.X = pack.X / 32768.0f * 2000;
@@ -48,7 +39,7 @@ void JY61_Receive(JY61_Typedef* Gyro, uint8_t *data, uint8_t len) {
                         legs_state.JY61_.AngularVelocity.Z=Gyro->AngularVelocity.Z*3.1415926/180.0f;
                     }
                     break;
-                case 0x53://½Ç¶È
+                case 0x53://ï¿½Ç¶ï¿½
                     if (pack.sum == sum10(data + i)) {
                         i += 9;
                         Gyro->Angle.lastYaw = Gyro->Angle.Yaw;
@@ -66,7 +57,7 @@ void JY61_Receive(JY61_Typedef* Gyro, uint8_t *data, uint8_t len) {
                         else if (diff < -180)
                             Gyro->Angle.rand++;
 
-                        Gyro->Angle.Multiturn = Gyro->Angle.Yaw + Gyro->Angle.rand * 360.0f - Yaw_offset;//Ë³Ê±ÕëÎª¸º
+                        Gyro->Angle.Multiturn = Gyro->Angle.Yaw + Gyro->Angle.rand * 360.0f - Yaw_offset;//Ë³Ê±ï¿½ï¿½Îªï¿½ï¿½
                     }
                     break;
             }
