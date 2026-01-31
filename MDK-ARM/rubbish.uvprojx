@@ -513,6 +513,16 @@
               <FileType>5</FileType>
               <FilePath>..\MyLib\CANDrive.h</FilePath>
             </File>
+            <File>
+              <FileName>dm_h6215.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyLib\dm_h6215.c</FilePath>
+            </File>
+            <File>
+              <FileName>dm_h6215.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\MyLib\dm_h6215.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

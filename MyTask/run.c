@@ -5,6 +5,13 @@
 #include "WatchDog2.h"
 #include <string.h>
 #include "usbd_cdc_if.h"
+
+#define test 0
+
+
+
+
+
 #define FRONT_LEFT 0
 #define FRONT_RIGHT 1
 #define BACK_LEFT 2
@@ -41,22 +48,22 @@ Leg_t leg[4] = {
     {.joint[0] = {.motor = {.motor_id = 0x01, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = -4.02757889f},
      .joint[1] = {.motor = {.motor_id = 0x02, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = -6.77129902f},
      .joint[2] = {.motor = {.motor_id = 0x03, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 6.47869856f},
-     .wheel={.hcan=&hcan1,.ID=0x201}},
+     .wheel = {.wheel_ = {.hcan = &hcan1,.id = 0x01} , .inv_wheel = 1}},
 
     {.joint[0] = {.motor = {.motor_id = 0x04, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 4.29111939f},
      .joint[1] = {.motor = {.motor_id = 0x05, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 6.60819724f},
      .joint[2] = {.motor = {.motor_id = 0x06, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = -6.20990329f},
-     .wheel={.hcan=&hcan1,.ID=0x202}},
+     .wheel = {.wheel_ = {.hcan = &hcan1,.id = 0x02} , .inv_wheel = 1}},
 
     {.joint[0] = {.motor = {.motor_id = 0x07, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 4.09088597f},
      .joint[1] = {.motor = {.motor_id = 0x08, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = -6.67971121f},
      .joint[2] = {.motor = {.motor_id = 0x09, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 6.661729104f},
-     .wheel={.hcan=&hcan1,.ID=0x203}},
+     .wheel = {.wheel_ = {.hcan = &hcan1,.id = 0x03} , .inv_wheel = 1}},
 
     {.joint[0] = {.motor = {.motor_id = 0x0A, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = -4.19752234f},
      .joint[1] = {.motor = {.motor_id = 0x0B, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 6.64519156f},
      .joint[2] = {.motor = {.motor_id = 0x0C, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = -6.56194712f},
-     .wheel={.hcan=&hcan1,.ID=0x204
+     .wheel = {.wheel_ = {.hcan = &hcan1,.id = 0x04} , .inv_wheel = 1
 }}};
 
 float setup_offset[4][3];    //上电启动时的电机角度
@@ -106,34 +113,63 @@ void CDC_Recv_Cb(uint8_t *src, uint16_t size)
     //HAL_UART_Transmit_DMA(&huart3, src, size);
 }
 
-PID2 wheel_vel_pid[4];
-float wheel_exp_vel[4],wheel_exp_torque[4];
-int16_t can_send_buf[4];
-float inv_wheel[4]={-1.0f,1.0f,-1.0f,1.0f};
+// kp 应为0.00f
+float wheel_Kp=0.00f; 
+float wheel_exp_rad=0.0f;
+float wheel_Kd=0.00f;
+
+
+#if (test)
+
+DMH6215_t motor = {.hcan = &hcan1,.id = 0x01};
+
+float wheel_exp_torque = 0.0f;
+float wheel_exp_omega = 0.0f;
 void WheelControlTask(void* param)
 {
     TickType_t last_wake_time=xTaskGetTickCount();
-    leg[0].wheel.vel_pid.Kp=0.55f;
-    leg[0].wheel.vel_pid.Ki=0.04f;
-    leg[0].wheel.vel_pid.limit=300.0f;
-    leg[0].wheel.vel_pid.output_limit=4.0f;
-    leg[3].wheel.vel_pid=leg[2].wheel.vel_pid=leg[1].wheel.vel_pid=leg[0].wheel.vel_pid;
+
+        DMH6215_Enable(&motor);
+    
     while(1)
     {
-        for(int i=0;i<4;i++)
-        {
-            PID_Control2(leg[i].wheel.motor.Speed*3.14159265f*2.0f/60.0f/19.0f,wheel_exp_vel[i]*inv_wheel[i],&leg[i].wheel.vel_pid);
-            float out_temp=((leg[i].wheel.vel_pid.pid_out+wheel_exp_torque[i]*inv_wheel[i])/0.3f*(16384.0f/20.0f/0.3f));
-            if(out_temp>16384)
-                out_temp=16384;
-            else if(out_temp<-16384)
-                out_temp=-16384;
-            can_send_buf[i]=(int16_t)out_temp;
-        }
-        MotorSend(&hcan1,0x200,can_send_buf);
+
+            DMH6215_MIT_Control(&motor, wheel_exp_rad, 
+            wheel_exp_omega, wheel_exp_torque,
+            wheel_Kp , wheel_Kd);
+
         vTaskDelayUntil(&last_wake_time,2);
     }
 }
+
+
+#endif
+
+
+#if (!test)
+void WheelControlTask(void* param)
+{
+    TickType_t last_wake_time=xTaskGetTickCount();
+    for (uint8_t i = 0; i < 4; i++)
+    {
+        DMH6215_Enable(&leg[i].wheel.wheel_);
+    }
+    
+    while(1)
+    {
+        for(uint8_t i = 0; i < 4; i++)
+        {
+            DMH6215_MIT_Control(&leg[i].wheel.wheel_, wheel_exp_rad, 
+            leg[i].wheel.inv_wheel * leg[i].wheel.exp_omega, leg[i].wheel.inv_wheel * leg[i].wheel.exp_torque,
+            wheel_Kp , wheel_Kd);
+        }
+
+        vTaskDelayUntil(&last_wake_time,2);
+    }
+}
+#endif
+
+
 
 uint8_t allow_send=0;
 void MotorSendTask(void *param) // 将电机的数据发送到PC上
@@ -150,8 +186,9 @@ void MotorSendTask(void *param) // 将电机的数据发送到PC上
                 legs_state.leg[i].joint[j].omega = leg[i].joint[j].inv_motor * (leg[i].joint[j].motor.state.velocity) / 6.33f;
                 legs_state.leg[i].joint[j].torque = leg[i].joint[j].inv_motor * (leg[i].joint[j].motor.state.torque) * 6.33f;
             }
-            legs_state.leg[i].wheel.omega=leg[i].wheel.motor.Speed*3.14159265f*2.0f/60.0f/19.0f;
-            legs_state.leg[i].wheel.torque=0.0f;    //TODO:根据反馈计算真实力矩
+            //等待计算
+             legs_state.leg[i].wheel.omega=leg[i].wheel.inv_wheel * leg[i].wheel.wheel_.velocity;
+             legs_state.leg[i].wheel.torque=leg[i].wheel.inv_wheel * leg[i].wheel.wheel_.torque;  //TODO:根据反馈计算真实力矩
         }
 				if(allow_send)    //电机数据准备好再发
 					CDC_Transmit_FS((uint8_t*)&legs_state, sizeof(legs_state));
@@ -159,69 +196,6 @@ void MotorSendTask(void *param) // 将电机的数据发送到PC上
     }
 }
 
-static uint32_t slope(float target,float *cur_target,float step_limit)
-{
-    float delta=target-*cur_target;
-    uint32_t ret=0;
-
-    if(delta>step_limit)
-        delta=step_limit;
-    else if(delta<-step_limit)
-        delta=-step_limit;
-    else    //本次结束后，应该就会到达目标值
-        ret=1;
-
-    *cur_target=*cur_target+delta;
-    return ret;
-}
-
-float init_pos[4][3]={{0.0f,0.8f,0.0f},
-                    {0.0f,-0.8f,0.0f},
-                    {0.0f,0.8f,0.0f},
-                    {0.0f,-0.8f,0.0f}};
-static uint32_t DogReset(uint32_t time_out_ms)
-{
-    __disable_irq();    //更新电机初始关节角度和Kp，关闭中断确保绝对同步，防止狗腿震荡
-    for (int i = 0; i < 4; i++)         //将狗腿状态读入当前目标值，设置狗腿期望为当前位置
-    {
-        leg[i].joint[0].exp_omega = 0.0f;
-        leg[i].joint[0].exp_torque = 0.0f;
-        leg[i].joint[0].Kp = 3.0f;
-        leg[i].joint[0].Kd = 0.17f;
-        leg[i].joint[0].exp_rad=legs_state.leg[i].joint[0].rad;
-            
-        leg[i].joint[1].exp_omega = 0.0f;
-        leg[i].joint[1].exp_torque = 0.0f;
-        leg[i].joint[1].Kp = 3.0f;
-        leg[i].joint[1].Kd = 0.14f;
-        leg[i].joint[1].exp_rad=legs_state.leg[i].joint[1].rad;
-
-        leg[i].joint[2].exp_omega = 0.0f;
-        leg[i].joint[2].exp_torque = 0.0f;
-        leg[i].joint[2].Kp = 3.0f;
-        leg[i].joint[2].Kd = 0.11f;
-        leg[i].joint[2].exp_rad=legs_state.leg[i].joint[2].rad;
-    }
-        __enable_irq();
-        //PID参数:[0]:kp=4.0,kd=0.24;[1]:kp=3.7,kd=0.24;[2]:kp=3,kd=0.11
-
-    uint32_t finished_check;
-    uint32_t current_time=0;
-    do{
-        finished_check=0;
-        for(int i=0;i<4;i++)
-        {
-            for(int j=0;j<3;j++)
-                finished_check=finished_check+slope(init_pos[i][j],&leg[i].joint[j].exp_rad,0.001f);
-        }
-        vTaskDelay(5);
-        current_time=current_time+5;
-        if(current_time>time_out_ms)    //如果复位已经超时，那么返回0
-            return 0;
-    }while(finished_check!=12);     //完成校验不等于12，说明有电机没有完成复位
-
-    return 1;   //返回1表示狗复位成功
-}
 
 void MotorRecvTask(void *param) // 从PC接收电机的期望值
 {
@@ -261,8 +235,9 @@ void MotorRecvTask(void *param) // 从PC接收电机的期望值
                     leg[i].joint[j].Kp = 0.0f;
                     leg[i].joint[j].Kd = 0.1f;
                 }
-                wheel_exp_torque[i]=0.0f;
-                wheel_exp_vel[i]=0.0f;
+
+                leg[i].wheel.exp_omega=0.0f;
+                leg[i].wheel.exp_torque=0.0f;
             }
             continue;
         }
@@ -278,8 +253,8 @@ void MotorRecvTask(void *param) // 从PC接收电机的期望值
                 leg[i].joint[j].Kp = legs_target.leg[i].joint[j].kp;
                 leg[i].joint[j].Kd = legs_target.leg[i].joint[j].kd;
             }
-            wheel_exp_vel[i]=legs_target.leg[i].wheel.omega;
-            wheel_exp_torque[i]=legs_target.leg[i].wheel.torque;
+                leg[i].wheel.exp_omega=legs_target.leg[i].wheel.omega;
+                leg[i].wheel.exp_torque=legs_target.leg[i].wheel.torque;
         }
     }
 }
@@ -291,10 +266,20 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
     if(hcan->Instance==CAN1)
     {
         uint32_t id=CAN_Receive_DataFrame(hcan,buf);
-        Motor3508Recv(&leg[0].wheel,hcan,id,buf);
-        Motor3508Recv(&leg[1].wheel,hcan,id,buf);
-        Motor3508Recv(&leg[2].wheel,hcan,id,buf);
-        Motor3508Recv(&leg[3].wheel,hcan,id,buf);
+        #if (!test)
+        
+        DMH6215_Recv_Handle(&leg[0].wheel.wheel_,hcan,id,buf);
+        DMH6215_Recv_Handle(&leg[1].wheel.wheel_,hcan,id,buf);
+        DMH6215_Recv_Handle(&leg[2].wheel.wheel_,hcan,id,buf);
+        DMH6215_Recv_Handle(&leg[3].wheel.wheel_,hcan,id,buf);
+        #endif
+
+        #if (test)
+        {
+            DMH6215_Recv_Handle(&motor,hcan,id,buf);
+        }
+        #endif
+
     }
 }
 
@@ -435,3 +420,85 @@ void UART6_ServiceTask(void *arg)
         }
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// static uint32_t slope(float target,float *cur_target,float step_limit)
+// {
+//     float delta=target-*cur_target;
+//     uint32_t ret=0;
+
+//     if(delta>step_limit)
+//         delta=step_limit;
+//     else if(delta<-step_limit)
+//         delta=-step_limit;
+//     else    //本次结束后，应该就会到达目标值
+//         ret=1;
+
+//     *cur_target=*cur_target+delta;
+//     return ret;
+// }
+
+// float init_pos[4][3]={{0.0f,0.8f,0.0f},
+//                     {0.0f,-0.8f,0.0f},
+//                     {0.0f,0.8f,0.0f},
+//                      {0.0f,-0.8f,0.0f}};
+// static uint32_t DogReset(uint32_t time_out_ms)
+// {
+//     __disable_irq();    //更新电机初始关节角度和Kp，关闭中断确保绝对同步，防止狗腿震荡
+//     for (int i = 0; i < 4; i++)         //将狗腿状态读入当前目标值，设置狗腿期望为当前位置
+//     {
+//         leg[i].joint[0].exp_omega = 0.0f;
+//         leg[i].joint[0].exp_torque = 0.0f;
+//         leg[i].joint[0].Kp = 3.0f;
+//         leg[i].joint[0].Kd = 0.17f;
+//         leg[i].joint[0].exp_rad=legs_state.leg[i].joint[0].rad;
+            
+//         leg[i].joint[1].exp_omega = 0.0f;
+//         leg[i].joint[1].exp_torque = 0.0f;
+//         leg[i].joint[1].Kp = 3.0f;
+//         leg[i].joint[1].Kd = 0.14f;
+//         leg[i].joint[1].exp_rad=legs_state.leg[i].joint[1].rad;
+
+//         leg[i].joint[2].exp_omega = 0.0f;
+//         leg[i].joint[2].exp_torque = 0.0f;
+//         leg[i].joint[2].Kp = 3.0f;
+//         leg[i].joint[2].Kd = 0.11f;
+//         leg[i].joint[2].exp_rad=legs_state.leg[i].joint[2].rad;
+//     }
+//         __enable_irq();
+//         //PID参数:[0]:kp=4.0,kd=0.24;[1]:kp=3.7,kd=0.24;[2]:kp=3,kd=0.11
+
+//     uint32_t finished_check;
+//     uint32_t current_time=0;
+//     do{
+//         finished_check=0;
+//         for(int i=0;i<4;i++)
+//         {
+//             for(int j=0;j<3;j++)
+//                 finished_check=finished_check+slope(init_pos[i][j],&leg[i].joint[j].exp_rad,0.001f);
+//         }
+//         vTaskDelay(5);
+//         current_time=current_time+5;
+//         if(current_time>time_out_ms)    //如果复位已经超时，那么返回0
+//             return 0;
+//     }while(finished_check!=12);     //完成校验不等于12，说明有电机没有完成复位
+
+//     return 1;   //返回1表示狗复位成功
+// }

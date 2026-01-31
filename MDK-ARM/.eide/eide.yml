@@ -70,6 +70,8 @@ virtualFolder:
         - path: ../MyLib/motorEx.c
         - path: ../MyLib/motorEx.h
         - path: ../MyLib/CANDrive.h
+        - path: ../MyLib/dm_h6215.c
+        - path: ../MyLib/dm_h6215.h
       folders: []
     - name: MyTask
       files:

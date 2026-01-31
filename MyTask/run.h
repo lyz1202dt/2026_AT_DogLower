@@ -7,6 +7,7 @@
 
 #include "motorEx.h"
 #include "go_motor.h"
+#include "dm_h6215.h"
 
 typedef struct{
     GO_MotorHandle_t motor;
@@ -22,8 +23,15 @@ typedef struct{
 }Joint_t;
 
 typedef struct{
+    DMH6215_t wheel_;
+    int8_t inv_wheel;
+    float exp_omega;
+    float exp_torque;
+}DMH6215_t_;
+
+typedef struct{
     Joint_t joint[3];
-    Motor3508Ex_t wheel;
+    DMH6215_t_ wheel;
 }Leg_t;
 
 #pragma pack(1)
