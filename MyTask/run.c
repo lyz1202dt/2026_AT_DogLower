@@ -28,7 +28,10 @@ uint32_t error_cnt = 0;
 uint32_t err_timer_cnt = 0;
 uint8_t data[11];
 uint32_t req_stop_transmit;
-extern JY61_Typedef_ JY61_;
+
+
+JY61_Typedef JY61;
+
 extern DMA_HandleTypeDef hdma_uart4_rx;
 
 // 添加错误标志和重启接收标志
@@ -263,6 +266,14 @@ void MotorSendTask(void *param) // 将电机的数据发送到PC上
             legs_state.leg[i].wheel.omega=leg[i].wheel.motor.Speed*3.14159265f*2.0f/60.0f/19.0f;
             legs_state.leg[i].wheel.torque=0.0f;    //TODO:根据反馈计算真实力矩
         }
+        legs_state.JY61_.AngularVelocity.X=JY61.AngularVelocity.X*3.1415926/180.0f;
+        legs_state.JY61_.AngularVelocity.Y=JY61.AngularVelocity.Y*3.1415926/180.0f;
+        legs_state.JY61_.AngularVelocity.Z=JY61.AngularVelocity.Z*3.1415926/180.0f;
+
+        legs_state.JY61_.Angle.Roll = JY61.Angle.Roll*3.1415926/180.0f;
+        legs_state.JY61_.Angle.Pitch = JY61.Angle.Pitch*3.1415926/180.0f;
+        legs_state.JY61_.Angle.Yaw = JY61.Angle.Yaw*3.1415926/180.0f;
+        
 				if(allow_send)    //电机数据准备好再发
 					CDC_Transmit_FS((uint8_t*)&legs_state, sizeof(legs_state));
         vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(5));
@@ -424,7 +435,7 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t size)
         err_timer_cnt=0;    //每接收一次，就清零
     }
     else if(huart->Instance==UART4){
-         JY61_Receive(&JY61, data, size);
+        JY61_Receive(&JY61, data, size);
          HAL_UARTEx_ReceiveToIdle_DMA(&huart4,data,sizeof(data));
 				__HAL_DMA_DISABLE_IT (&hdma_uart4_rx, DMA_IT_HT);
     }
