@@ -44,16 +44,15 @@ QueueHandle_t cdc_recv_semphr;
 static BezierLine bezier = {.p1_x = 0.660634f, .p1_y = 0.131222f, .p2_x = 0.846154f, .p2_y = 0.556561f}; // 摇杆贝塞尔曲线参数
 uint8_t remote_control_buf[12];
 float filter_gate=0.05f,last_v0,last_v1,last_omega,last_v3;
-static const float filter_alpha = 0.6f;
-float max_omega=57.3f,max_speed=1.0f;
+static const float filter_alpha = 0.2f;
+float max_omega=30.0f,max_speed=1.0f;
 float cur_dir=0.0f;
+float key1=0,key2=0;
 
-
-RemoteCmd_t remote_cmd;
-RemotePack_t remotedata;
+RemotePack_t remotedata;//接收遥控数据的结构体
 
 extern QueueHandle_t remote_semaphore;
-extern BaseType_t xHigherPriorityTaskWoken;
+
 
 //**************************************
 
@@ -339,6 +338,24 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t size)
         RS485RecvIRQ_Handler(&rs485bus, huart, size);
         err_timer_cnt=0;    //每接收一次，就清零
     }
+
+    if(huart->Instance == UART5)
+		{
+			
+			 if (remote_control_buf[0]==0xAA )
+        {
+            memcpy(&remotedata,remote_control_buf, 12);
+					
+         BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+                xSemaphoreGiveFromISR(remote_semaphore, &xHigherPriorityTaskWoken);
+                portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+
+        }
+
+        HAL_UARTEx_ReceiveToIdle_DMA(&huart5, remote_control_buf, 12);
+			
+		 }
+
 }
 
 
@@ -487,11 +504,12 @@ void UART5_RemotecontrolTask(void *param){
 		last_v1=filter_gate*(((float)(remotedata.rocker[1])) / 2047.0f)+(1.0f-filter_gate)*last_v1;
 		vel[1]=last_v1;
 		last_omega=(((float)(remotedata.rocker[2])) / 2047.0f) * max_omega*filter_gate+(1.0f-filter_gate)*last_omega;
+				 key1=remotedata.key1 ;
 				 
 		__enable_irq();
      
-				   remote_cmd.omega = BezierTransform(last_omega, bezier); // 计算自转角速度
-				 remote_cmd.omega = remote_cmd.omega * M_PI / 180.0f;
+				 legs_state.remote_cmd.omega = BezierTransform(last_omega, bezier); // 计算自转角速度
+				 legs_state.remote_cmd.omega = legs_state.remote_cmd.omega * M_PI / 180.0f;
 
 		
         float rocker_val = (float)remotedata.rocker[3] / 2047.0f;  
@@ -510,34 +528,12 @@ void UART5_RemotecontrolTask(void *param){
         
         vel[0] = model * cosf(cur_dir) * max_speed;
         vel[1] = model * sinf(cur_dir) * max_speed;
-        remote_cmd.vx = vel[0];
-        remote_cmd.vy = vel[1];
-				remote_cmd.wheel_v = vel[2];
-				 
+        legs_state.remote_cmd.vy = vel[0];		
+        legs_state.remote_cmd.vx = vel[1];
+				legs_state.remote_cmd.wheel_v = vel[2]; 
         
 	    vTaskDelayUntil(&xLastWakeTime, xFrequency);
 				
 		}
 }
 
-
-void UART5_IT(UART_HandleTypeDef *huart)
-{
-    if (__HAL_UART_GET_FLAG(&huart5, UART_FLAG_IDLE))
-    {
-        __HAL_UART_CLEAR_IDLEFLAG(&huart5);
-        HAL_UART_DMAStop(&huart5);
-
-        if (remote_control_buf[0]==0xAA && remote_control_buf[11]==0xBB)
-        {
-            memcpy(&remotedata,remote_control_buf, 12);
-					
-         BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-                xSemaphoreGiveFromISR(remote_semaphore, &xHigherPriorityTaskWoken);
-                portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-
-        }
-
-        HAL_UART_Receive_DMA(&huart5, remote_control_buf, 12);
-    }
-}
