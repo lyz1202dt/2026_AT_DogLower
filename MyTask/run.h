@@ -51,11 +51,26 @@ typedef struct{
     LegTarget_t leg[4];
 }MotorTargetPack_t;
 
+typedef struct {
+    uint8_t head;
+    int16_t rocker[4];
+    uint8_t key1;
+    uint8_t key2;
+    uint8_t end;
+} RemotePack_t;
 
 
 typedef struct {
     float X, Y, Z;
 } Vector3D_Typedef_;
+
+typedef struct{
+    float vx;
+    float vy;
+    float omega;
+	  float wheel_v;
+} RemoteCmd_t;
+
 
 typedef struct {
   Vector3D_Typedef_ AngularVelocity;
@@ -84,6 +99,7 @@ typedef struct{
     int pack_type;
     LegState_t leg[4];
     JY61_Typedef_ JY61_;
+	RemoteCmd_t remote_cmd;
 }MotorStatePack_t;
 
 #pragma pack()
@@ -94,4 +110,5 @@ void MotorSendTask(void* param);
 void MotorRecvTask(void* param);
 void WheelControlTask(void* param);
 void UART6_ServiceTask(void *arg);
+void UART5_RemotecontrolTask(void *param);
 #endif
