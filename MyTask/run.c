@@ -6,6 +6,7 @@
 #include <string.h>
 #include "usbd_cdc_if.h"
 #include "JY61.h"
+#include "bezier.h" 
 #define FRONT_LEFT 0
 #define FRONT_RIGHT 1
 #define BACK_LEFT 2
@@ -28,6 +29,27 @@ uint32_t error_cnt = 0;
 uint32_t err_timer_cnt = 0;
 uint8_t data[11];
 uint32_t req_stop_transmit;
+
+//******有关遥控器需要的数据定义********
+
+static BezierLine bezier = {.p1_x = 0.660634f, .p1_y = 0.131222f, .p2_x = 0.846154f, .p2_y = 0.556561f}; // 摇杆贝塞尔曲线参数
+uint8_t remote_control_buf[12];
+float filter_gate=1.0f,last_v0,last_v1,last_omega,last_v3;
+static const float filter_alpha = 0.2f;
+float max_omega=120.0f;
+float max_forword_speed=1.0f,max_backward_speed=0.5f,max_speed=0.4f;
+float cur_dir=0.0f;
+float key1=0,key2=0;
+
+RemotePack_t remotedata;//接收遥控数据的结构体
+
+extern QueueHandle_t remote_semaphore;
+
+
+//**************************************
+
+
+
 extern JY61_Typedef_ JY61_;
 extern DMA_HandleTypeDef hdma_uart4_rx;
 
@@ -428,6 +450,23 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t size)
          HAL_UARTEx_ReceiveToIdle_DMA(&huart4,data,sizeof(data));
 				__HAL_DMA_DISABLE_IT (&hdma_uart4_rx, DMA_IT_HT);
     }
+		 if(huart->Instance == UART5)
+		{
+			
+			 if (remote_control_buf[0]==0xAA )
+        {
+            memcpy(&remotedata,remote_control_buf, 12);
+					
+         BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+                xSemaphoreGiveFromISR(remote_semaphore, &xHigherPriorityTaskWoken);
+                portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+
+        }
+
+        HAL_UARTEx_ReceiveToIdle_DMA(&huart5, remote_control_buf, sizeof( remote_control_buf));
+			
+		 }
+
 }
 
 
@@ -495,6 +534,12 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
             HAL_UART_DMAStop(huart);
             HAL_UARTEx_ReceiveToIdle_DMA(&huart4,data,sizeof(data));
     }
+		 else if(huart->Instance==UART5)
+    {       
+            __HAL_UART_CLEAR_IDLEFLAG(huart);
+            HAL_UART_DMAStop(huart);
+            HAL_UARTEx_ReceiveToIdle_DMA(&huart5, remote_control_buf, sizeof( remote_control_buf));
+    }
 }
 
 uint64_t uart_reast = 0;
@@ -556,3 +601,70 @@ void UART6_ServiceTask(void *arg)
         }
     }
 }
+void UART5_RemotecontrolTask(void *param){
+	
+    TickType_t xLastWakeTime = xTaskGetTickCount(); // 获取当前 Tick
+    const TickType_t xFrequency = pdMS_TO_TICKS(100);
+
+
+	 while(1)
+    {
+			
+			  float vel[3];
+        // 阻塞等待 ISR 释放的信号量
+         if (xSemaphoreTake(remote_semaphore, pdMS_TO_TICKS(200)) != pdTRUE){ // 200ms未收到遥控器的数据，复位摇杆
+            remotedata.rocker[0]=0;
+					  remotedata.rocker[1]=0;
+					  remotedata.rocker[2]=0;
+					  remotedata.rocker[3]=0;
+				 }
+				 
+				__disable_irq();
+		last_v0=filter_gate*(((float)(remotedata.rocker[0])) / 2047.0f)+(1.0f-filter_gate)*last_v0;
+		vel[0]=last_v0;
+		last_v1=filter_gate*(((float)(remotedata.rocker[1])) / 2047.0f)+(1.0f-filter_gate)*last_v1;
+		vel[1]=last_v1;
+		last_omega=(((float)(remotedata.rocker[2])) / 2047.0f) * max_omega*filter_gate+(1.0f-filter_gate)*last_omega;
+				 key1=remotedata.key1 ;
+				 
+		__enable_irq();
+    
+					 legs_state.remote_cmd.omega = BezierTransform(last_omega, bezier); // 计算自转角速度
+				 legs_state.remote_cmd.omega = legs_state.remote_cmd.omega * M_PI / 180.0f;
+
+		
+        float rocker_val = (float)remotedata.rocker[3] / 2047.0f;  
+      last_v3 = filter_alpha * rocker_val + (1.0f - filter_alpha) * last_v3;
+         vel[2] = last_v3 * 1.0f; 
+
+
+
+				 // 归一化第四个摇杆值
+
+        float model = sqrtf(vel[0] * vel[0] + vel[1] * vel[1]);
+        if (model != 0.0f)
+            cur_dir = atan2f(vel[1], vel[0]);
+
+        model = BezierTransform(model, bezier);
+				 vel[1] = model * sinf(cur_dir) ;
+				
+				if(vel[1]>=0){
+				 vel[1] = vel[1]*max_forword_speed ;
+				}else if(vel[1]<0){
+					 vel[1] = vel[1]*max_backward_speed;
+				};
+				
+				
+        
+        vel[0] = model * cosf(cur_dir) * max_speed;
+       
+        legs_state.remote_cmd.vy = vel[0];		
+        legs_state.remote_cmd.vx = vel[1];
+				legs_state.remote_cmd.wheel_v = vel[2]; 
+        
+	    vTaskDelayUntil(&xLastWakeTime, xFrequency);
+				
+				
+		}
+}
+

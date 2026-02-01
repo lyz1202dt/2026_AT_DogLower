@@ -49,6 +49,7 @@
 
 /* USER CODE BEGIN PV */
 extern DMA_HandleTypeDef hdma_usart6_rx;
+extern uint8_t remote_control_buf[12];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -118,6 +119,8 @@ int main(void)
   HAL_CAN_ActivateNotification(&hcan2,CAN_IT_RX_FIFO1_MSG_PENDING);
 	HAL_CAN_ActivateNotification(&hcan1,CAN_IT_TX_MAILBOX_EMPTY);
 	HAL_CAN_ActivateNotification(&hcan2,CAN_IT_TX_MAILBOX_EMPTY);
+	
+	 HAL_UARTEx_ReceiveToIdle_DMA(&huart5, remote_control_buf, 12);
 	
   /* USER CODE END 2 */
 
