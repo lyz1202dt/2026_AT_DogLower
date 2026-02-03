@@ -513,6 +513,16 @@
               <FileType>5</FileType>
               <FilePath>..\MyLib\CANDrive.h</FilePath>
             </File>
+            <File>
+              <FileName>bezier.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyLib\bezier.c</FilePath>
+            </File>
+            <File>
+              <FileName>bezier.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\MyLib\bezier.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

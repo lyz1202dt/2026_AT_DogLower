@@ -52,7 +52,7 @@ extern QueueHandle_t remote_semaphore;
 
 extern JY61_Typedef_ JY61_;
 extern DMA_HandleTypeDef hdma_uart4_rx;
-
+JY61_Typedef	JY61;
 // 添加错误标志和重启接收标志
 uint32_t last_error_time = 0;
 
@@ -88,8 +88,7 @@ float setup_offset[4][3];    //上电启动时的电机角度
 uint32_t first_run=5;
 uint32_t watch_dog_id[12];
 typedef void (*WatchDogCb_t)(void *user_data);
-
-void watchdog_cb(uint32_t *param)
+static void watchdog_cb(uint32_t *param)
 {  uint32_t user_data=(uint32_t)param; 
     if(user_data==1)
      {
@@ -97,6 +96,7 @@ void watchdog_cb(uint32_t *param)
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_4, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_3, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_2, GPIO_PIN_SET);
+        legs_state.watch_dog=legs_state.watch_dog|0x0001;
      }
     else if(user_data==2)
     {
@@ -104,6 +104,7 @@ void watchdog_cb(uint32_t *param)
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_4, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_3, GPIO_PIN_SET);
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_2, GPIO_PIN_RESET);
+        legs_state.watch_dog=legs_state.watch_dog|0x0002;
     }
     else if(user_data==3)
     {
@@ -111,6 +112,7 @@ void watchdog_cb(uint32_t *param)
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_4, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_3, GPIO_PIN_SET);
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_2, GPIO_PIN_SET);
+        legs_state.watch_dog=legs_state.watch_dog|0x0004;
     }
     else if(user_data==4)
     {
@@ -118,6 +120,7 @@ void watchdog_cb(uint32_t *param)
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_4, GPIO_PIN_SET);
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_3, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_2, GPIO_PIN_RESET);
+        legs_state.watch_dog=legs_state.watch_dog|0x0008;
     }
     else if(user_data==5)
     {
@@ -125,6 +128,7 @@ void watchdog_cb(uint32_t *param)
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_4, GPIO_PIN_SET);
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_3, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_2, GPIO_PIN_SET);
+        legs_state.watch_dog=legs_state.watch_dog|0x0010;
     }
     else if(user_data==6)
     {
@@ -132,6 +136,7 @@ void watchdog_cb(uint32_t *param)
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_4, GPIO_PIN_SET);
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_3, GPIO_PIN_SET);
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_2, GPIO_PIN_RESET);
+        legs_state.watch_dog=legs_state.watch_dog|0x0020;
     }
     else if(user_data==7)
     {
@@ -139,6 +144,7 @@ void watchdog_cb(uint32_t *param)
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_4, GPIO_PIN_SET);
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_3, GPIO_PIN_SET);
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_2, GPIO_PIN_SET);
+        legs_state.watch_dog=legs_state.watch_dog|0x0040;
     }
     else if(user_data==8)
     {
@@ -146,6 +152,7 @@ void watchdog_cb(uint32_t *param)
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_4, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_3, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_2, GPIO_PIN_RESET);
+        legs_state.watch_dog=legs_state.watch_dog|0x0080;
     }
     else if(user_data==9)
     {
@@ -153,6 +160,7 @@ void watchdog_cb(uint32_t *param)
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_4, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_3, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_2, GPIO_PIN_SET);
+        legs_state.watch_dog=legs_state.watch_dog|0x0100;
     }
     else if(user_data==10)
     {
@@ -160,6 +168,7 @@ void watchdog_cb(uint32_t *param)
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_4, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_3, GPIO_PIN_SET);
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_2, GPIO_PIN_RESET);
+        legs_state.watch_dog=legs_state.watch_dog|0x0200;
     }
     else if(user_data==11)
     {
@@ -167,6 +176,7 @@ void watchdog_cb(uint32_t *param)
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_4, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_3, GPIO_PIN_SET);
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_2, GPIO_PIN_SET);
+        legs_state.watch_dog=legs_state.watch_dog|0x0400;
     }
     else if(user_data==12)
     {
@@ -174,50 +184,86 @@ void watchdog_cb(uint32_t *param)
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_4, GPIO_PIN_SET);
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_3, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(GPIOE,GPIO_PIN_2, GPIO_PIN_RESET);
+        
+			legs_state.watch_dog=legs_state.watch_dog|0x0800;
     }
 }
+
+SemaphoreHandle_t uart6ResetSem;
+uint32_t n[12] ={0};
+uint64_t uart_reast = 0;
+
 void MotorControlTask(void *param) // 将数据发送到电机，并从电机接收数据
 {   
      TickType_t last_wake_time = xTaskGetTickCount();
-     watch_dog_id[0]=AddWatchDog(watchdog_cb,1000,(void*)1,WATCHDOG_MODE_REPEAT);
-     watch_dog_id[1]=AddWatchDog(watchdog_cb,1000,(void*)2,WATCHDOG_MODE_REPEAT);
-     watch_dog_id[2]=AddWatchDog(watchdog_cb,1000,(void*)3,WATCHDOG_MODE_REPEAT);
-     watch_dog_id[3]=AddWatchDog(watchdog_cb,1000,(void*)4,WATCHDOG_MODE_REPEAT);
-     watch_dog_id[4]=AddWatchDog(watchdog_cb,1000,(void*)5,WATCHDOG_MODE_REPEAT);
-     watch_dog_id[5]=AddWatchDog(watchdog_cb,1000,(void*)6,WATCHDOG_MODE_REPEAT);
-     watch_dog_id[6]=AddWatchDog(watchdog_cb,1000,(void*)7,WATCHDOG_MODE_REPEAT);
-     watch_dog_id[7]=AddWatchDog(watchdog_cb,1000,(void*)8,WATCHDOG_MODE_REPEAT);
-     watch_dog_id[8]=AddWatchDog(watchdog_cb,1000,(void*)9,WATCHDOG_MODE_REPEAT);
-     watch_dog_id[9]=AddWatchDog(watchdog_cb,1000,(void*)10,WATCHDOG_MODE_REPEAT);
-    watch_dog_id[10]=AddWatchDog(watchdog_cb,1000,(void*)11,WATCHDOG_MODE_REPEAT);
-    watch_dog_id[11]=AddWatchDog(watchdog_cb,1000,(void*)12,WATCHDOG_MODE_REPEAT);
+	
+     uart6ResetSem = xSemaphoreCreateBinary();
+     xSemaphoreTake(uart6ResetSem, 0);
+	 legs_state.watch_dog=0x0000;	
+	 watch_dog_id[0]=AddWatchDog(watchdog_cb,200,(void*)1,WATCHDOG_MODE_REPEAT);
+     watch_dog_id[1]=AddWatchDog(watchdog_cb,200,(void*)2,WATCHDOG_MODE_REPEAT);
+     watch_dog_id[2]=AddWatchDog(watchdog_cb,200,(void*)3,WATCHDOG_MODE_REPEAT);
+     watch_dog_id[3]=AddWatchDog(watchdog_cb,200,(void*)4,WATCHDOG_MODE_REPEAT);
+     watch_dog_id[4]=AddWatchDog(watchdog_cb,200,(void*)5,WATCHDOG_MODE_REPEAT);
+     watch_dog_id[5]=AddWatchDog(watchdog_cb,200,(void*)6,WATCHDOG_MODE_REPEAT);
+     watch_dog_id[6]=AddWatchDog(watchdog_cb,200,(void*)7,WATCHDOG_MODE_REPEAT);
+     watch_dog_id[7]=AddWatchDog(watchdog_cb,200,(void*)8,WATCHDOG_MODE_REPEAT);
+     watch_dog_id[8]=AddWatchDog(watchdog_cb,200,(void*)9,WATCHDOG_MODE_REPEAT);
+     watch_dog_id[9]=AddWatchDog(watchdog_cb,200,(void*)10,WATCHDOG_MODE_REPEAT);
+    watch_dog_id[10]=AddWatchDog(watchdog_cb,200,(void*)11,WATCHDOG_MODE_REPEAT);
+    watch_dog_id[11]=AddWatchDog(watchdog_cb,200,(void*)12,WATCHDOG_MODE_REPEAT);
+     
     while (1)
-    {       uint32_t Recv_return;
-			int err_check=0;
+    {
+		int err_check=0;
         for (int i = 0; i < 4; i++)
         {
             for(int j=0;j<3;j++)
             {   
+							//if(j!=1 && i!=0){
                 GoMotorSend(&leg[i].joint[j].motor, leg[i].joint[j].exp_torque / 6.33f * leg[i].joint[j].inv_motor,
                         leg[i].joint[j].exp_omega * 6.33f * leg[i].joint[j].inv_motor,
                         leg[i].joint[j].exp_rad * 6.33f * leg[i].joint[j].inv_motor + leg[i].joint[j].pos_offset+setup_offset[i][j],
                         leg[i].joint[j].Kp, leg[i].joint[j].Kd);
                //err_check+=GoMotorRecv(&leg[i].joint[j].motor);
-                 Recv_return=GoMotorRecv(&leg[i].joint[j].motor);
-                 if(Recv_return)
+							
+                 int ret=GoMotorRecv(&leg[i].joint[j].motor);
+									n[i*3+j]+=ret;
+                 if(ret)
                  {  watch_dog_id[i*3+j]=i*3+j;
                     FeedDog(watch_dog_id[i*3+j]);
                     err_check++;
+                    legs_state.watch_dog=legs_state.watch_dog&(~(0x0001<<(i*3+j)));
                  }
+							// }
             }
         }
         vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(5));
-        if(req_stop_transmit)
+				
+        if(xSemaphoreTake(uart6ResetSem, pdMS_TO_TICKS(0)) == pdTRUE)
         {
-            req_stop_transmit=0;
-            while(1)
-                vTaskDelay(100);
+            vTaskDelay(2);
+					
+					uart_reast++;
+					
+					HAL_UART_DMAStop(&huart6);
+					
+						__HAL_DMA_DISABLE(huart6.hdmarx);
+            __HAL_DMA_DISABLE(huart6.hdmatx);
+            
+            __HAL_UART_CLEAR_IDLEFLAG(&huart6);
+
+            // 2. 调用 DeInit，自动触发 MspDeInit
+            HAL_UART_DeInit(&huart6);
+
+            // 3. 外设寄存器硬复位
+            __HAL_RCC_USART6_FORCE_RESET();
+            __HAL_RCC_USART6_RELEASE_RESET();
+
+            // 4. 重新初始化 UART + DMA，MspInit 会自动执行
+            MX_USART6_UART_Init();
         }
+				
         if(err_check==12&&first_run) 
             first_run--;
     }
@@ -266,7 +312,7 @@ void WheelControlTask(void* param)
         vTaskDelayUntil(&last_wake_time,2);
     }
 }
-
+uint16_t count=0;
 uint8_t allow_send=0;
 void MotorSendTask(void *param) // 将电机的数据发送到PC上
 {
@@ -295,6 +341,9 @@ void MotorSendTask(void *param) // 将电机的数据发送到PC上
         
 				if(allow_send)    //电机数据准备好再发
 					CDC_Transmit_FS((uint8_t*)&legs_state, sizeof(legs_state));
+				if(legs_state.watch_dog!=0x0000)
+					count++;
+					
         vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(5));
     }
 }
@@ -448,12 +497,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t size)
 {
-    if (huart->Instance == USART6)
-    {
-        RS485RecvIRQ_Handler(&rs485bus, huart, size);
-        err_timer_cnt=0;    //每接收一次，就清零
-    }
-    else if(huart->Instance==UART4){
+    if(huart->Instance==UART4){
         JY61_Receive(&JY61, data, size);
         HAL_UART_DMAStop(&huart4);
         __HAL_UART_CLEAR_IDLEFLAG(&huart4);
@@ -473,7 +517,7 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t size)
 
         }
 
-        HAL_UARTEx_ReceiveToIdle_DMA(&huart5, remote_control_buf, sizeof( remote_control_buf));
+        HAL_UARTEx_ReceiveToIdle_DMA(&huart5, remote_control_buf, sizeof(remote_control_buf));
 			
 		 }
 
@@ -552,7 +596,7 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
     }
 }
 
-uint64_t uart_reast = 0;
+
 extern TaskHandle_t motor_control_task_handle;
 static uint32_t action_stack1[128];
 static uint32_t action_stack2[128];
@@ -560,55 +604,37 @@ static StaticTask_t task_block1;
 static StaticTask_t task_block2;
 static uint8_t choose_stack=0;
 static TaskHandle_t task_handle=NULL;
-SemaphoreHandle_t uart6ResetSem;
 void UART6_ServiceTask(void *arg)
-{
-        uart6ResetSem = xSemaphoreCreateBinary();
-        xSemaphoreTake(uart6ResetSem, 0);
-     task_handle=xTaskCreateStatic(MotorControlTask,"MotorControl",128,NULL,5,&action_stack1[0],&task_block1);
+{	
     for (;;)
     {
         
-        if (xSemaphoreTake(uart6ResetSem, portMAX_DELAY) == pdTRUE)
-        {
-            req_stop_transmit=1;
-            while(req_stop_transmit)
-                vTaskDelay(2);
-            
-            vTaskDelete(task_handle);
-            __disable_irq();
+//        if (xSemaphoreTake(uart6ResetSem, portMAX_DELAY) == pdTRUE)
+//        {
+//            req_stop_transmit=1;
+//            while(req_stop_transmit)
+//                vTaskDelay(2);
+//            
+//            vTaskDelete(task_handle);
+//            __disable_irq();
 
-            
-            __HAL_DMA_DISABLE(huart6.hdmarx);
-            __HAL_DMA_DISABLE(huart6.hdmatx);
-            // 1. 停止 DMA，清 IDLE
-            HAL_UART_DMAStop(&huart6);
-            __HAL_UART_CLEAR_IDLEFLAG(&huart6);
+//            
+//            
 
-            // 2. 调用 DeInit，自动触发 MspDeInit
-            HAL_UART_DeInit(&huart6);
-
-            // 3. 外设寄存器硬复位
-            __HAL_RCC_USART6_FORCE_RESET();
-            __HAL_RCC_USART6_RELEASE_RESET();
-
-            // 4. 重新初始化 UART + DMA，MspInit 会自动执行
-            MX_USART6_UART_Init();
-
-            
-            uart_reast++;
-            __enable_irq();
-            if(choose_stack==0)
-            {
-                choose_stack=1;
-                task_handle=xTaskCreateStatic(MotorControlTask,"MotorControl",128,NULL,5,&action_stack2[0],&task_block2);
-            }
-            else
-            {
-                choose_stack=0;
-                task_handle=xTaskCreateStatic(MotorControlTask,"MotorControl",128,NULL,5,&action_stack1[0],&task_block1);
-            }
-        }
+//            
+//            
+//            __enable_irq();
+//            if(choose_stack==0)
+//            {
+//                choose_stack=1;
+//                task_handle=xTaskCreateStatic(MotorControlTask,"MotorControl",128,NULL,5,&action_stack2[0],&task_block2);
+//            }
+//            else
+//            {
+//                choose_stack=0;
+//                task_handle=xTaskCreateStatic(MotorControlTask,"MotorControl",128,NULL,5,&action_stack1[0],&task_block1);
+//            }
+//        }
     }
 }
 void UART5_RemotecontrolTask(void *param){
@@ -628,6 +654,7 @@ void UART5_RemotecontrolTask(void *param){
 					  remotedata.rocker[2]=0;
 					  remotedata.rocker[3]=0;
 				 }
+				 
 				 
 				__disable_irq();
 		last_v0=filter_gate*(((float)(remotedata.rocker[0])) / 2047.0f)+(1.0f-filter_gate)*last_v0;

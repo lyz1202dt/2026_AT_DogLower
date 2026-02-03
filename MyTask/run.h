@@ -100,6 +100,7 @@ typedef struct{
     LegState_t leg[4];
     JY61_Typedef_ JY61_;
 	RemoteCmd_t remote_cmd;
+    uint16_t watch_dog;
 }MotorStatePack_t;
 
 #pragma pack()
