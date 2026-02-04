@@ -513,6 +513,26 @@
               <FileType>5</FileType>
               <FilePath>..\MyLib\CANDrive.h</FilePath>
             </File>
+            <File>
+              <FileName>kfc_grasp and release.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\Dog_robotic_arm\Mylib\kfc_grasp and release.c</FilePath>
+            </File>
+            <File>
+              <FileName>kfc_grasp and release.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\Dog_robotic_arm\Mylib\kfc_grasp and release.h</FilePath>
+            </File>
+            <File>
+              <FileName>RobStride.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\Dog_robotic_arm\Mylib\RobStride.c</FilePath>
+            </File>
+            <File>
+              <FileName>RobStride.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\Dog_robotic_arm\Mylib\RobStride.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -527,6 +547,26 @@
               <FileName>run.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\MyTask\run.h</FilePath>
+            </File>
+            <File>
+              <FileName>arm.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\arm.c</FilePath>
+            </File>
+            <File>
+              <FileName>arm.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\arm.h</FilePath>
+            </File>
+            <File>
+              <FileName>task_init.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\task_init.c</FilePath>
+            </File>
+            <File>
+              <FileName>task_init.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\task_init.h</FilePath>
             </File>
           </Files>
         </Group>

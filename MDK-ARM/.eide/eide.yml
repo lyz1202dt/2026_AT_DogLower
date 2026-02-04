@@ -70,11 +70,19 @@ virtualFolder:
         - path: ../MyLib/motorEx.c
         - path: ../MyLib/motorEx.h
         - path: ../MyLib/CANDrive.h
+        - path: ../../Dog_robotic_arm/Mylib/kfc_grasp and release.c
+        - path: ../../Dog_robotic_arm/Mylib/kfc_grasp and release.h
+        - path: ../../Dog_robotic_arm/Mylib/RobStride.c
+        - path: ../../Dog_robotic_arm/Mylib/RobStride.h
       folders: []
     - name: MyTask
       files:
         - path: ../MyTask/run.c
         - path: ../MyTask/run.h
+        - path: arm.c
+        - path: arm.h
+        - path: task_init.c
+        - path: task_init.h
       folders: []
     - name: Drivers
       files: []

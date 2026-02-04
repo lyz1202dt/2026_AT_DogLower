@@ -26,7 +26,6 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "run.h"
-#include "task_init.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
