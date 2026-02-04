@@ -108,7 +108,7 @@ int main(void)
 	
 	__HAL_DMA_DISABLE_IT(&hdma_usart6_rx, DMA_IT_HT);
 	HAL_TIM_Base_Start_IT(&htim10);
-
+  HAL_TIM_Base_Start(&htim1);
   CanFilter_Init(&hcan1);
   CanFilter_Init(&hcan2);
   
@@ -119,6 +119,8 @@ int main(void)
 	HAL_CAN_ActivateNotification(&hcan1,CAN_IT_TX_MAILBOX_EMPTY);
 	HAL_CAN_ActivateNotification(&hcan2,CAN_IT_TX_MAILBOX_EMPTY);
 	
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in freertos.c) */
