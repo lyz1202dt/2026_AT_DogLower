@@ -45,6 +45,7 @@
 /MDK-ARM/DebugConfig/
 /MDK-ARM/RTE/
 /MDK-ARM/.vscode/
+/MDK-ARM/JLinkLog.txt
 
 
 # 杂项 IDE 缓存
