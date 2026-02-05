@@ -1,0 +1,7 @@
+CompileFlags:
+  Add:
+    - -ID:\HRAppStoreDownload\ARM\ARMCLANG/include
+    - -ID:\HRAppStoreDownload\ARM\ARMCLANG/include/libcxx
+  Remove: []
+  CompilationDatabase: ./build/rubbish
+  Compiler: D:\HRAppStoreDownload\ARM\ARMCLANG\bin\armclang.exe

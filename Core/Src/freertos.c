@@ -115,12 +115,12 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-  HAL_UART_Receive_DMA(&huart4,data,11);
-  xTaskCreate(MotorSendTask,"MotorSend",256,NULL,4,&usb_send_task_handle);
-  xTaskCreate(MotorRecvTask,"MotorRecv",128,NULL,4,&usb_recv_task_handle);
-	xTaskCreate(WheelControlTask,"WheelCtrl",128,NULL,6,&wheel_control_task_handle);
-  xTaskCreate(UART6_ServiceTask,"UART6Reset",256,NULL,7,&uart6_service_task_handle);
-  RS485Init(&rs485bus, &huart6, GPIOA, GPIO_PIN_4);// 初始化485总线管理器
+ // HAL_UART_Receive_DMA(&huart4,data,11);
+ // xTaskCreate(MotorSendTask,"MotorSend",256,NULL,4,&usb_send_task_handle);
+ // xTaskCreate(MotorRecvTask,"MotorRecv",128,NULL,4,&usb_recv_task_handle);
+	//xTaskCreate(WheelControlTask,"WheelCtrl",128,NULL,6,&wheel_control_task_handle);
+ // xTaskCreate(UART6_ServiceTask,"UART6Reset",256,NULL,7,&uart6_service_task_handle);
+  //RS485Init(&rs485bus, &huart6, GPIOA, GPIO_PIN_4);// 初始化485总线管理器
   /* USER CODE END RTOS_THREADS */
 
 }
