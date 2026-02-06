@@ -22,7 +22,7 @@
 #define WATCHDOG_MODE_REPEAT 0x06
 
 //看门狗每秒轮询频率（Hz） 注意：该值严禁大于1000
-#define WATCHDOG_FREQUENCY 10
+#define WATCHDOG_FREQUENCY 200
 
 typedef void (*WatchDogCb_t)(void *user_data);
 

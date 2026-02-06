@@ -108,31 +108,31 @@ void MotorControlTask(void *param) // 将数据发送到电机，并从电机接
     uart6ResetSem = xSemaphoreCreateBinary();
     xSemaphoreTake(uart6ResetSem, 0);
     legs_state.watch_dog = 0x0000;
-    watch_dog_id[0] = AddWatchDog(watchdog_cb, 100, (void *)0, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[1] = AddWatchDog(watchdog_cb, 100, (void *)1, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[2] = AddWatchDog(watchdog_cb, 100, (void *)2, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[3] = AddWatchDog(watchdog_cb, 100, (void *)3, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[4] = AddWatchDog(watchdog_cb, 100, (void *)4, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[5] = AddWatchDog(watchdog_cb, 100, (void *)5, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[6] = AddWatchDog(watchdog_cb, 100, (void *)6, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[7] = AddWatchDog(watchdog_cb, 100, (void *)7, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[8] = AddWatchDog(watchdog_cb, 100, (void *)8, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[9] = AddWatchDog(watchdog_cb, 100, (void *)9, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[10] = AddWatchDog(watchdog_cb, 100, (void *)10, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[11] = AddWatchDog(watchdog_cb, 100, (void *)11, WATCHDOG_MODE_REPEAT);
+    watch_dog_id[0] = AddWatchDog(watchdog_cb, 50, (void *)0, WATCHDOG_MODE_REPEAT);
+    watch_dog_id[1] = AddWatchDog(watchdog_cb, 50, (void *)1, WATCHDOG_MODE_REPEAT);
+    watch_dog_id[2] = AddWatchDog(watchdog_cb, 50, (void *)2, WATCHDOG_MODE_REPEAT);
+    watch_dog_id[3] = AddWatchDog(watchdog_cb, 50, (void *)3, WATCHDOG_MODE_REPEAT);
+    watch_dog_id[4] = AddWatchDog(watchdog_cb, 50, (void *)4, WATCHDOG_MODE_REPEAT);
+    watch_dog_id[5] = AddWatchDog(watchdog_cb, 50, (void *)5, WATCHDOG_MODE_REPEAT);
+    watch_dog_id[6] = AddWatchDog(watchdog_cb, 50, (void *)6, WATCHDOG_MODE_REPEAT);
+    watch_dog_id[7] = AddWatchDog(watchdog_cb, 50, (void *)7, WATCHDOG_MODE_REPEAT);
+    watch_dog_id[8] = AddWatchDog(watchdog_cb, 50, (void *)8, WATCHDOG_MODE_REPEAT);
+    watch_dog_id[9] = AddWatchDog(watchdog_cb, 50, (void *)9, WATCHDOG_MODE_REPEAT);
+    watch_dog_id[10] = AddWatchDog(watchdog_cb, 50, (void *)10, WATCHDOG_MODE_REPEAT);
+    watch_dog_id[11] = AddWatchDog(watchdog_cb, 50, (void *)11, WATCHDOG_MODE_REPEAT);
 
-    watch_dog_id[12] = AddWatchDog(watchdog_reast, 50, (void *)0, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[13] = AddWatchDog(watchdog_reast, 50, (void *)1, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[14] = AddWatchDog(watchdog_reast, 50, (void *)2, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[15] = AddWatchDog(watchdog_reast, 50, (void *)3, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[16] = AddWatchDog(watchdog_reast, 50, (void *)4, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[17] = AddWatchDog(watchdog_reast, 50, (void *)5, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[18] = AddWatchDog(watchdog_reast, 50, (void *)6, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[19] = AddWatchDog(watchdog_reast, 50, (void *)7, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[20] = AddWatchDog(watchdog_reast, 50, (void *)8, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[21] = AddWatchDog(watchdog_reast, 50, (void *)9, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[22] = AddWatchDog(watchdog_reast, 50, (void *)10, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[23] = AddWatchDog(watchdog_reast, 50, (void *)11, WATCHDOG_MODE_REPEAT);
+    watch_dog_id[12] = AddWatchDog(watchdog_reast, 30, (void *)0, WATCHDOG_MODE_REPEAT);
+    watch_dog_id[13] = AddWatchDog(watchdog_reast, 30, (void *)1, WATCHDOG_MODE_REPEAT);
+    watch_dog_id[14] = AddWatchDog(watchdog_reast, 30, (void *)2, WATCHDOG_MODE_REPEAT);
+    watch_dog_id[15] = AddWatchDog(watchdog_reast, 30, (void *)3, WATCHDOG_MODE_REPEAT);
+    watch_dog_id[16] = AddWatchDog(watchdog_reast, 30, (void *)4, WATCHDOG_MODE_REPEAT);
+    watch_dog_id[17] = AddWatchDog(watchdog_reast, 30, (void *)5, WATCHDOG_MODE_REPEAT);
+    watch_dog_id[18] = AddWatchDog(watchdog_reast, 30, (void *)6, WATCHDOG_MODE_REPEAT);
+    watch_dog_id[19] = AddWatchDog(watchdog_reast, 30, (void *)7, WATCHDOG_MODE_REPEAT);
+    watch_dog_id[20] = AddWatchDog(watchdog_reast, 30, (void *)8, WATCHDOG_MODE_REPEAT);
+    watch_dog_id[21] = AddWatchDog(watchdog_reast, 30, (void *)9, WATCHDOG_MODE_REPEAT);
+    watch_dog_id[22] = AddWatchDog(watchdog_reast, 30, (void *)10, WATCHDOG_MODE_REPEAT);
+    watch_dog_id[23] = AddWatchDog(watchdog_reast, 30, (void *)11, WATCHDOG_MODE_REPEAT);
 
     while (1)
     {

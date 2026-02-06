@@ -4,7 +4,7 @@ static MyList_t *watchDogList = NULL;
 static TaskHandle_t watchDogTask = NULL;
 static uint32_t watchdog_id = 0;
 
-TaskHandle_t handle;
+//TaskHandle_t handle;
 
 
 static uint32_t match(void *user, void *dst)
@@ -46,7 +46,7 @@ uint32_t AddWatchDog(WatchDogCb_t watchdog_cb, uint32_t timeout_ms, void *user_d
     {
         watchDogList = ListCreate(sizeof(WatchDog2_t));
         xTaskCreate(WatchDogTask, "WatchDogTask", 256, NULL, 6, &watchDogTask);
-			handle=watchDogTask;
+			//handle=watchDogTask;
     }
     watch_dog.id = watchdog_id;
     watch_dog.timeout_ms = timeout_ms;
