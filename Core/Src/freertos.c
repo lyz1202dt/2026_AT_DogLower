@@ -117,24 +117,26 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  //osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
-  //defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   HAL_UARTEx_ReceiveToIdle_DMA(&huart4,data,sizeof(data));
 	__HAL_DMA_DISABLE_IT (&hdma_uart4_rx, DMA_IT_HT);
-  xTaskCreate(MotorSendTask,"MotorSend",256,NULL,4,&usb_send_task_handle);
-  xTaskCreate(MotorRecvTask,"MotorRecv",128,NULL,4,&usb_recv_task_handle);
-	xTaskCreate(WheelControlTask,"WheelCtrl",128,NULL,5,&wheel_control_task_handle);
-	xTaskCreate(MotorControlTask,"MotorControl",128,NULL,6,&motor_control_task_handle);
+  xTaskCreate(MotorSendTask,"MotorSend",512,NULL,4,&usb_send_task_handle);
+  xTaskCreate(MotorRecvTask,"MotorRecv",512,NULL,4,&usb_recv_task_handle);
+	xTaskCreate(WheelControlTask,"WheelCtrl",512,NULL,5,&wheel_control_task_handle);
+	xTaskCreate(MotorControlTask,"MotorControl",512,NULL,6,&motor_control_task_handle);
   //xTaskCreate(UART6_ServiceTask,"UART6Reset",256,NULL,7,&uart6_service_task_handle);
-	xTaskCreate(UART5_RemotecontrolTask,"UART5Recont",256,NULL,3,&uart5_remocont_task_handle);
+	xTaskCreate(UART5_RemotecontrolTask,"UART5Recont",512,NULL,3,&uart5_remocont_task_handle);
   RS485Init(&rs485bus, &huart6, GPIOA, GPIO_PIN_4);// 初始化485总线管理器
   /* USER CODE END RTOS_THREADS */
 
 }
 
+uint32_t debug_stack_mark;
+extern TaskHandle_t handle;
 /* USER CODE BEGIN Header_StartDefaultTask */
 /**
   * @brief  Function implementing the defaultTask thread.
@@ -150,6 +152,7 @@ void StartDefaultTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
+		debug_stack_mark=uxTaskGetStackHighWaterMark2(handle);
     osDelay(1);
   }
   /* USER CODE END StartDefaultTask */

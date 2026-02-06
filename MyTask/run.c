@@ -463,9 +463,12 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t size)
 
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
+    volatile uint32_t temp=0;
     if (huart->Instance == USART6)
     {
         HAL_UART_DMAStop(huart);
+        if(__HAL_UART_GET_FLAG(huart, UART_FLAG_ORE))
+            temp=huart->Instance->DR;
         __HAL_UART_CLEAR_OREFLAG(huart);
         __HAL_UART_CLEAR_FEFLAG(huart);
         __HAL_UART_CLEAR_NEFLAG(huart);
@@ -473,6 +476,7 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 
         __HAL_UART_FLUSH_DRREGISTER(huart);
         error_cnt++;
+        UNUSED(temp);
         // RS485RecvIRQ_Handler(&rs485bus, huart, 0);
     }
     else if (huart->Instance == UART4)
@@ -489,46 +493,6 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
     }
 }
 
-extern TaskHandle_t motor_control_task_handle;
-static uint32_t action_stack1[128];
-static uint32_t action_stack2[128];
-static StaticTask_t task_block1;
-static StaticTask_t task_block2;
-static uint8_t choose_stack = 0;
-static TaskHandle_t task_handle = NULL;
-void UART6_ServiceTask(void *arg)
-{
-    for (;;)
-    {
-
-        //        if (xSemaphoreTake(uart6ResetSem, portMAX_DELAY) == pdTRUE)
-        //        {
-        //            req_stop_transmit=1;
-        //            while(req_stop_transmit)
-        //                vTaskDelay(2);
-        //
-        //            vTaskDelete(task_handle);
-        //            __disable_irq();
-
-        //
-        //
-
-        //
-        //
-        //            __enable_irq();
-        //            if(choose_stack==0)
-        //            {
-        //                choose_stack=1;
-        //                task_handle=xTaskCreateStatic(MotorControlTask,"MotorControl",128,NULL,5,&action_stack2[0],&task_block2);
-        //            }
-        //            else
-        //            {
-        //                choose_stack=0;
-        //                task_handle=xTaskCreateStatic(MotorControlTask,"MotorControl",128,NULL,5,&action_stack1[0],&task_block1);
-        //            }
-        //        }
-    }
-}
 void UART5_RemotecontrolTask(void *param)
 {
 
