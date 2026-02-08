@@ -26,6 +26,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "run.h"
+#include "task_init.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -35,7 +36,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-extern RS485_t rs485bus;
+
 extern uint8_t data[11];
 extern UART_HandleTypeDef huart4;
 extern UART_HandleTypeDef huart6;
@@ -45,9 +46,7 @@ extern UART_HandleTypeDef huart6;
 /* USER CODE BEGIN PM */
 TaskHandle_t usb_send_task_handle;
 TaskHandle_t usb_recv_task_handle;
-TaskHandle_t motor_control_task_handle;
-TaskHandle_t wheel_control_task_handle;
-TaskHandle_t uart6_service_task_handle;
+
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -110,14 +109,14 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  //osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
-  //defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
  // HAL_UART_Receive_DMA(&huart4,data,11);
  // xTaskCreate(MotorSendTask,"MotorSend",256,NULL,4,&usb_send_task_handle);
- // xTaskCreate(MotorRecvTask,"MotorRecv",128,NULL,4,&usb_recv_task_handle);
+  // xTaskCreate(MotorRecvTask,"MotorRecv",128,NULL,4,&usb_recv_task_handle);
 	//xTaskCreate(WheelControlTask,"WheelCtrl",128,NULL,6,&wheel_control_task_handle);
  // xTaskCreate(UART6_ServiceTask,"UART6Reset",256,NULL,7,&uart6_service_task_handle);
   //RS485Init(&rs485bus, &huart6, GPIOA, GPIO_PIN_4);// 初始化485总线管理器
@@ -137,6 +136,8 @@ void StartDefaultTask(void const * argument)
   /* init code for USB_DEVICE */
   MX_USB_DEVICE_Init();
 	task_init();
+
+	
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
   for(;;)

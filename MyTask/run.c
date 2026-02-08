@@ -93,6 +93,7 @@ void MotorControlTask(void *param) // 将数据发送到电机，并从电机接
 
 uint32_t current_size=0;
 uint32_t cnt = 0;
+//*****************************************
 void CDC_Recv_Cb(uint8_t *src, uint16_t size)
 {
     if(size==sizeof(MotorTargetPack_t)&&((MotorTargetPack_t*)src)->pack_type==0x00)
@@ -105,6 +106,7 @@ void CDC_Recv_Cb(uint8_t *src, uint16_t size)
         current_size=size;
     //HAL_UART_Transmit_DMA(&huart3, src, size);
 }
+//**************************************
 
 PID2 wheel_vel_pid[4];
 float wheel_exp_vel[4],wheel_exp_torque[4];
@@ -134,7 +136,7 @@ void WheelControlTask(void* param)
         vTaskDelayUntil(&last_wake_time,2);
     }
 }
-
+//*************************************************************************
 uint8_t allow_send=0;
 void MotorSendTask(void *param) // 将电机的数据发送到PC上
 {
@@ -158,7 +160,7 @@ void MotorSendTask(void *param) // 将电机的数据发送到PC上
         vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(5));
     }
 }
-
+//**********************************************************************
 static uint32_t slope(float target,float *cur_target,float step_limit)
 {
     float delta=target-*cur_target;
@@ -222,7 +224,7 @@ static uint32_t DogReset(uint32_t time_out_ms)
 
     return 1;   //返回1表示狗复位成功
 }
-
+//****************************************************************************
 void MotorRecvTask(void *param) // 从PC接收电机的期望值
 {
     cdc_recv_semphr = xSemaphoreCreateBinary();
@@ -283,7 +285,7 @@ void MotorRecvTask(void *param) // 从PC接收电机的期望值
         }
     }
 }
-
+//******************************************************************************************
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
@@ -435,3 +437,9 @@ void UART6_ServiceTask(void *arg)
         }
     }
 }
+
+
+
+
+
+

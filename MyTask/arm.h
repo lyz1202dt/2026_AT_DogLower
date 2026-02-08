@@ -1,12 +1,18 @@
 #ifndef __ARM_H_
 #define __ARM_H_
-
+#include "arm.h"
+#include "can.h"
+#include "CANDrive.h"
+#include "main.h"
+#include "usb_trans.h"
+#include "usbd_cdc_if.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "PID_old.h"
 #include "RobStride.h"
 #include "motor.h"
 #include "kfc_grasp and release.h"
+#define PAI 3.14159265358979323846f
 extern TaskHandle_t servo_Serve_Handle;
 extern TaskHandle_t stride_Serve_Handle;
 extern TaskHandle_t GM6020_Serve_Handle;
@@ -23,10 +29,18 @@ typedef struct
 
 typedef struct
 {
+
+	PID2 GM6020_pos;
+  PID2 GM6020_vel;
+}Expect_GM6020_;
+
+typedef struct
+{
 	float target_pos;
 	float target_vel;
 	float kp;
 	float kd;
+	
 }Expect_GM6020;
 
 typedef struct
@@ -35,13 +49,15 @@ typedef struct
 	int low;
 }servo;
 
+
+
 typedef struct 
 {
  int pack_type;
  servo servo1;
  Expect_Robstride rob01;
  Expect_GM6020 rob02;
-}target_pack_t;
+}target_pack_t;  //接收上位机期望电机角度的结构体
 
 typedef struct
 {
@@ -49,7 +65,8 @@ typedef struct
 	servo servo2;
 	RobStride_t robstride01;
 	GM6020_TypeDef GM6020;
-}state_pack_t;
+	
+}state_pack_t;   //发送给上位机的结构体
 
 void servo_Serve(void *argument);
 void stride_Serve(void *argument);
@@ -57,16 +74,6 @@ void GM6020_Serve(void *argument);
 void usb_cdc_Send(void *argument);
 void usb_cdc_Receive(void *argument);
 void CDC_Recv_Cb(uint8_t *src, uint16_t size);
-void pid_init( 
-	  PID2*pid,
-	  float kp, 
-		float ki, 
-		float kd,  
-		float limit,     
-    float error_now,  
-    float error_last,
-    float error_inter,
-    float pid_out,
-    float output_limit);
+
 		
 #endif

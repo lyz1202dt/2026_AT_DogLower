@@ -29,6 +29,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "CANDrive.h"
+#include "arm.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -48,7 +50,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-extern DMA_HandleTypeDef hdma_usart6_rx;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -60,6 +62,7 @@ void MX_FREERTOS_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
 
 /* USER CODE END 0 */
 
@@ -77,7 +80,7 @@ int main(void)
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
-
+  
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
@@ -106,10 +109,11 @@ int main(void)
   /* USER CODE BEGIN 2 */
 	MX_USB_DEVICE_Init();
 	
-	__HAL_DMA_DISABLE_IT(&hdma_usart6_rx, DMA_IT_HT);
+	
 	HAL_TIM_Base_Start_IT(&htim10);
   HAL_TIM_Base_Start(&htim1);
   CanFilter_Init(&hcan1);
+	
   CanFilter_Init(&hcan2);
   
   HAL_CAN_Start(&hcan1); 
@@ -119,8 +123,8 @@ int main(void)
 	HAL_CAN_ActivateNotification(&hcan1,CAN_IT_TX_MAILBOX_EMPTY);
 	HAL_CAN_ActivateNotification(&hcan2,CAN_IT_TX_MAILBOX_EMPTY);
 	
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_ALL);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_ALL);
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in freertos.c) */
@@ -134,6 +138,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+		
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -187,9 +192,9 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-extern uint32_t err_timer_cnt;
 
- extern SemaphoreHandle_t uart6ResetSem;
+
+
 /* USER CODE END 4 */
 
 /**
@@ -203,20 +208,7 @@ extern uint32_t err_timer_cnt;
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
-	if(htim->Instance==TIM10)
-	{
-    err_timer_cnt++;
-    if(err_timer_cnt>30)
-    {
-      BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-
-        /* 给信号量通知任务进行 UART6 软复位 */
-        xSemaphoreGiveFromISR(uart6ResetSem, &xHigherPriorityTaskWoken);
-
-        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-      err_timer_cnt=0;
-    }
-	}
+	
   /* USER CODE END Callback 0 */
   if (htim->Instance == TIM2) {
     HAL_IncTick();
