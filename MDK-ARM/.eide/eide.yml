@@ -265,6 +265,7 @@ targets:
           afterBuildTasks: []
           asm-compiler:
             $use: asm-auto
+            defines: []
             misc-controls: ""
           beforeBuildTasks: []
           c/cpp-compiler:
@@ -272,7 +273,7 @@ targets:
             language-cpp: c++11
             link-time-optimization: false
             one-elf-section-per-function: true
-            optimization: level-0
+            optimization: level-3
             short-enums#wchar: true
             warnings: ac5-like-warnings
           global:

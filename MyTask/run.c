@@ -13,25 +13,25 @@
 #define BACK_RIGHT 3
 
 // 添加错误统计结构
-typedef struct
-{
-    uint32_t total;
-    uint32_t overrun;
-    uint32_t frame;
-    uint32_t noise;
-    uint32_t parity;
-    uint32_t last_error_time;
-    uint32_t continuous_errors;
-    uint32_t recovery_attempts;
-    uint32_t last_recovery_time;
-} ErrorStats_t;
-ErrorStats_t error_stats = {0};
+// typedef struct
+// {
+//     uint32_t total;
+//     uint32_t overrun;
+//     uint32_t frame;
+//     uint32_t noise;
+//     uint32_t parity;
+//     uint32_t last_error_time;
+//     uint32_t continuous_errors;
+//     uint32_t recovery_attempts;
+//     uint32_t last_recovery_time;
+// } ErrorStats_t;
+// ErrorStats_t error_stats = {0};
 uint32_t error_cnt = 0;
 uint32_t success_cnt = 0;
 uint32_t reast_cnt = 0;
 uint32_t err_timer_cnt = 0;
 uint8_t data[11];
-uint32_t req_stop_transmit;
+// uint32_t req_stop_transmit;
 
 //******有关遥控器需要的数据定义********
 
@@ -86,53 +86,49 @@ float setup_offset[4][3]; // 上电启动时的电机角度
 uint32_t first_run = 5;
 uint32_t watch_dog_id[24];
 uint32_t reset_uart;
+uint32_t bad_Motor = 0;
+// static void watchdog_cb(void *param)
+// {
+//     uint32_t user_data = (uint32_t)param;
+//     legs_state.watch_dog = legs_state.watch_dog | (0x0001 << user_data);
+// }
 
-static void watchdog_cb(void *param)
-{
-    uint32_t user_data = (uint32_t)param;
-    legs_state.watch_dog = legs_state.watch_dog | (0x0001 << user_data);
-}
-
-static void watchdog_reast(void *param)
-{
-    reset_uart = 1;
-}
-
-SemaphoreHandle_t uart6ResetSem;
+// static void watchdog_reast(void *param)
+// {
+//     reset_uart = 1;
+// }
 uint64_t uart_reast = 0;
 int err_check = 0;
 void MotorControlTask(void *param) // 将数据发送到电机，并从电机接收数据
 {
     TickType_t last_wake_time = xTaskGetTickCount();
 
-    uart6ResetSem = xSemaphoreCreateBinary();
-    xSemaphoreTake(uart6ResetSem, 0);
-    legs_state.watch_dog = 0x0000;
-    watch_dog_id[0] = AddWatchDog(watchdog_cb, 50, (void *)0, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[1] = AddWatchDog(watchdog_cb, 50, (void *)1, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[2] = AddWatchDog(watchdog_cb, 50, (void *)2, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[3] = AddWatchDog(watchdog_cb, 50, (void *)3, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[4] = AddWatchDog(watchdog_cb, 50, (void *)4, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[5] = AddWatchDog(watchdog_cb, 50, (void *)5, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[6] = AddWatchDog(watchdog_cb, 50, (void *)6, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[7] = AddWatchDog(watchdog_cb, 50, (void *)7, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[8] = AddWatchDog(watchdog_cb, 50, (void *)8, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[9] = AddWatchDog(watchdog_cb, 50, (void *)9, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[10] = AddWatchDog(watchdog_cb, 50, (void *)10, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[11] = AddWatchDog(watchdog_cb, 50, (void *)11, WATCHDOG_MODE_REPEAT);
+    // legs_state.watch_dog = 0x0000;
+    // watch_dog_id[0] = AddWatchDog(watchdog_cb, 50, (void *)0, WATCHDOG_MODE_REPEAT);
+    // watch_dog_id[1] = AddWatchDog(watchdog_cb, 50, (void *)1, WATCHDOG_MODE_REPEAT);
+    // watch_dog_id[2] = AddWatchDog(watchdog_cb, 50, (void *)2, WATCHDOG_MODE_REPEAT);
+    // watch_dog_id[3] = AddWatchDog(watchdog_cb, 50, (void *)3, WATCHDOG_MODE_REPEAT);
+    // watch_dog_id[4] = AddWatchDog(watchdog_cb, 50, (void *)4, WATCHDOG_MODE_REPEAT);
+    // watch_dog_id[5] = AddWatchDog(watchdog_cb, 50, (void *)5, WATCHDOG_MODE_REPEAT);
+    // watch_dog_id[6] = AddWatchDog(watchdog_cb, 50, (void *)6, WATCHDOG_MODE_REPEAT);
+    // watch_dog_id[7] = AddWatchDog(watchdog_cb, 50, (void *)7, WATCHDOG_MODE_REPEAT);
+    // watch_dog_id[8] = AddWatchDog(watchdog_cb, 50, (void *)8, WATCHDOG_MODE_REPEAT);
+    // watch_dog_id[9] = AddWatchDog(watchdog_cb, 50, (void *)9, WATCHDOG_MODE_REPEAT);
+    // watch_dog_id[10] = AddWatchDog(watchdog_cb, 50, (void *)10, WATCHDOG_MODE_REPEAT);
+    // watch_dog_id[11] = AddWatchDog(watchdog_cb, 50, (void *)11, WATCHDOG_MODE_REPEAT);
 
-    watch_dog_id[12] = AddWatchDog(watchdog_reast, 30, (void *)0, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[13] = AddWatchDog(watchdog_reast, 30, (void *)1, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[14] = AddWatchDog(watchdog_reast, 30, (void *)2, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[15] = AddWatchDog(watchdog_reast, 30, (void *)3, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[16] = AddWatchDog(watchdog_reast, 30, (void *)4, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[17] = AddWatchDog(watchdog_reast, 30, (void *)5, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[18] = AddWatchDog(watchdog_reast, 30, (void *)6, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[19] = AddWatchDog(watchdog_reast, 30, (void *)7, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[20] = AddWatchDog(watchdog_reast, 30, (void *)8, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[21] = AddWatchDog(watchdog_reast, 30, (void *)9, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[22] = AddWatchDog(watchdog_reast, 30, (void *)10, WATCHDOG_MODE_REPEAT);
-    watch_dog_id[23] = AddWatchDog(watchdog_reast, 30, (void *)11, WATCHDOG_MODE_REPEAT);
+    // watch_dog_id[12] = AddWatchDog(watchdog_reast, 30, (void *)0, WATCHDOG_MODE_REPEAT);
+    // watch_dog_id[13] = AddWatchDog(watchdog_reast, 30, (void *)1, WATCHDOG_MODE_REPEAT);
+    // watch_dog_id[14] = AddWatchDog(watchdog_reast, 30, (void *)2, WATCHDOG_MODE_REPEAT);
+    // watch_dog_id[15] = AddWatchDog(watchdog_reast, 30, (void *)3, WATCHDOG_MODE_REPEAT);
+    // watch_dog_id[16] = AddWatchDog(watchdog_reast, 30, (void *)4, WATCHDOG_MODE_REPEAT);
+    // watch_dog_id[17] = AddWatchDog(watchdog_reast, 30, (void *)5, WATCHDOG_MODE_REPEAT);
+    // watch_dog_id[18] = AddWatchDog(watchdog_reast, 30, (void *)6, WATCHDOG_MODE_REPEAT);
+    // watch_dog_id[19] = AddWatchDog(watchdog_reast, 30, (void *)7, WATCHDOG_MODE_REPEAT);
+    // watch_dog_id[20] = AddWatchDog(watchdog_reast, 30, (void *)8, WATCHDOG_MODE_REPEAT);
+    // watch_dog_id[21] = AddWatchDog(watchdog_reast, 30, (void *)9, WATCHDOG_MODE_REPEAT);
+    // watch_dog_id[22] = AddWatchDog(watchdog_reast, 30, (void *)10, WATCHDOG_MODE_REPEAT);
+    // watch_dog_id[23] = AddWatchDog(watchdog_reast, 30, (void *)11, WATCHDOG_MODE_REPEAT);
 
     while (1)
     {
@@ -151,11 +147,12 @@ void MotorControlTask(void *param) // 将数据发送到电机，并从电机接
                 int ret = GoMotorRecv(&leg[i].joint[j].motor);
                 if (ret)
                 {
-                    FeedDog(watch_dog_id[i * 3 + j]);
-                    FeedDog(watch_dog_id[i * 3 + j + 12]);
+                    bad_Motor &= ~(0x0001 << (i * 3 + j));
+                    // FeedDog(watch_dog_id[i * 3 + j]);
+                    // FeedDog(watch_dog_id[i * 3 + j + 12]);
                     err_check++;
                     legs_state.watch_dog = legs_state.watch_dog & (~(0x0001 << (i * 3 + j)));
-                }
+                }else bad_Motor |= (0x0001 << (i * 3 + j));
                 // }
             }
         }
