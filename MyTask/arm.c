@@ -11,47 +11,32 @@ target_pack_t target_pack = {.pack_type = 0x01};
 state_pack_t state_pack = {.pack_type = 0x01};
 QueueHandle_t cdc_recv_semp;
 
-
-
-
 RobStride_t robstride01
 ={
 .hcan = &hcan1,
 .motor_id = 0x02,	
-
-
 }
 ;
 
 
+float GM6020_forward_rad = 0.0f;//ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+uint16_t last_cur = 0;   //ï¿½ï¿½Ò»ï¿½Î¶ï¿½È¡ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½Ô­Ê¼Öµ
+uint16_t now_cur = 0;    //ï¿½ï¿½Ç°ï¿½ï¿½È¡ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½Ô­Ê¼Öµ
+uint16_t cur_offset = 0; //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ«Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð£×¼ï¿½ï¿½
+uint8_t cur_read = 0;    //ï¿½ï¿½Ö¾Î»ï¿½ï¿½ï¿½Ç·ï¿½ï¿½Ñ¾ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+int32_t cur_round = 0;   //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+
+float current_vel = 0.0f;     //ï¿½ï¿½Ç°ï¿½Ù¶ï¿½Öµ ï¿½ï¿½Ã¿ï¿½ï¿½
+float expected_vel = 0.0f;    //ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½Ôµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
 
+uint8_t can_out[8] = {0};//CANï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý»ï¿½ï¿½ï¿½ï¿½ï¿½
 
+float current_cur = 0.0f;//ï¿½ï¿½Ç°Î»ï¿½ï¿½
 
-//******GM6020µç»úÓÐ¹ØÊý¾Ý¶¨Òå*********************
-float GM6020_forward_rad_ = 0.0;//µ÷ÊÔÓÃµÄÊý¾Ý
+float MAX_VEL = 90.f;//×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½ï¿½ï¿½ï¿½ï¿½
 
-float GM6020_forward_rad = 0.0f;//ÉÏÎ»»ú·¢À´µÄÆÚÍû»¡¶È
-uint16_t last_cur = 0;   //ÉÏÒ»´Î¶ÁÈ¡µÄ±àÂëÆ÷Ô­Ê¼Öµ
-uint16_t now_cur = 0;    //µ±Ç°¶ÁÈ¡µÄ±àÂëÆ÷Ô­Ê¼Öµ
-uint16_t cur_offset = 0; //µçÁ÷±àÂëÆ÷ÁãÆ«Öµ£¨ÓÃÓÚÐ£×¼£©
-uint8_t cur_read = 0;    //±êÖ¾Î»£¬ÊÇ·ñÒÑ¾­¶ÁÈ¡¹ýµçÁ÷±àÂëÆ÷µÄÖµ
-int32_t cur_round = 0;   //µçÁ÷±àÂëÆ÷¶àÈ¦¼ÆÊý£¨´¦Àí±àÂëÆ÷Òç³ö£©
-
-float current_vel = 0.0f;     //µ±Ç°ËÙ¶ÈÖµ ¶ÈÃ¿Ãë
-float expected_vel = 0.0f;    //ÆÚÍûËÙ¶ÈÖµ£¬À´×ÔµçÁ÷»·Êä³ö
-
-
-uint8_t can_out[8] = {0};//CAN·¢ËÍÊý¾Ý»º³åÇø
-
-float current_cur = 0.0f;//µ±Ç°Î»ÖÃ
-
-float MAX_VEL = 90.f;//×ª¶¯×î´óËÙ¶ÈÏÞÖÆ
-
-
-
-
-Expect_GM6020_ GM6020_GO = {
+GM6020_PID PID_SET= {
     .GM6020_pos = {
         .Kp = 1.0f,
         .Ki = 0.0f,
@@ -67,19 +52,8 @@ Expect_GM6020_ GM6020_GO = {
         .output_limit = 10000.0f,
     }
 };
-	
-
-
-
-	
-	
-	
 
  GM6020_TypeDef GM6020_state;
-
-    
-
-//*******************************
 
 TaskHandle_t servo_Serve_Handle;
 void servo_Serve(void *argument)
@@ -90,11 +64,9 @@ void servo_Serve(void *argument)
 	state_pack.servo2.low = target_pack.servo1.low;
 	state_pack.servo2.up = target_pack.servo1.up;
 	Servo_control();  
-		vTaskDelay (5);
+	vTaskDelay (5);
 	}
 }
-
-
 
 TaskHandle_t stride_Serve_Handle;
 void stride_Serve(void *argument)
@@ -107,103 +79,78 @@ void stride_Serve(void *argument)
     TickType_t last_wake = xTaskGetTickCount();
      for(;;)
      {
-        RobStrideMotionControl(&state_pack.robstride01,0x01,target_pack.rob01.except_torque,
+
+        RobStrideMotionControl(&state_pack.robstride01,0x01,NULL,
 			 target_pack.rob01.except_pos,target_pack.rob01.except_omega,
 			 target_pack.rob01.kp,target_pack.rob01.kd);
         vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(5));
      }
 }
 
-
-
-//canµÄ½ÓÊÕ»Øµ÷º¯Êý£¬ÓÃÓÚ½ÓÊÕÔÆÌ¨GM6020µç»úºÍÁé×ãµç»ú
+//canï¿½Ä½ï¿½ï¿½Õ»Øµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú½ï¿½ï¿½ï¿½ï¿½ï¿½Ì¨GM6020ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
-    uint8_t robstride_buf[8];
-	  
-    uint32_t ID;
-
+    
     if(hcan->Instance == CAN2)
     {
 			 CAN_Receive_DataFrame(&hcan2,CAN2_buff);
 			 GM6020_Receive(&GM6020_state,CAN2_buff);
-			if(!cur_read)//µÚÒ»´Î¶ÁÈ¡±àÂëÆ÷µÄÖµ£¬ÓÃÓÚÁãÆ«Ð£×¼
+			if(!cur_read)//ï¿½ï¿½Ò»ï¿½Î¶ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ«Ð£×¼
 	    {
-		      cur_read = 1;//ÉèÖÃ±êÖ¾Î»£¬±íÊ¾ÒÑ¶ÁÈ¡¹ý±àÂëÆ÷µÄÖµ
+		      cur_read = 1;//ï¿½ï¿½ï¿½Ã±ï¿½Ö¾Î»ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½Ñ¶ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
 		      cur_offset = ((CAN2_buff[1] & 0xff) | ((uint16_t)CAN2_buff[0]<<8));
 	     }
-			  if(cur_read)//ÒÑ³õÊ¼»¯¹ý±àÂëÆ÷£¬¿ªÊ¼Õý³£¶ÁÈ¡ºÍ´¦Àí
+			  if(cur_read)//ï¿½Ñ³ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡ï¿½Í´ï¿½ï¿½ï¿½
       {
-           last_cur = now_cur;//±£´æÉÏÒ»´Î±àÂëÆ÷µÄÖµ
-           now_cur = ((CAN2_buff[1] & 0xff) | ((uint16_t)CAN2_buff[0]<<8)) ;//»ñÈ¡µ±Ç°±àÂëÆ÷µÄÖµ
-		        //±àÂëÆ÷Òç³ö¼ì²âºÍ´¦Àí
+           last_cur = now_cur;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½Î±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+           now_cur = ((CAN2_buff[1] & 0xff) | ((uint16_t)CAN2_buff[0]<<8)) ;//ï¿½ï¿½È¡ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+		
           if((int16_t)(now_cur - last_cur + 1e-5) > 4000) cur_round--;
           else if((int16_t)(now_cur - last_cur +1e-5) < -4000) cur_round++;
         }
         
         
     }
-//    else if(hcan->Instance == CAN1)
-//    {
-//        ID = CAN_Receive_DataFrame(hcan, robstride_buf);
-//        RobStrideRecv_Handle(&state_pack.robstride01, hcan, ID,robstride_buf);
-//    }
+   else if(hcan->Instance == CAN1)
+   {
+        CAN_Receive_DataFrame(&hcan1,CAN1_buff);
+		RobStrideRecv_Handle(&state_pack.robstride01, &hcan1, 0x02, CAN1_buff);
+   }
 }
-
-
-
-//¿ØÖÆGM6020µç»úÈÎÎñ
 
 TaskHandle_t GM6020_Serve_Handle;
 void GM6020_Serve(void *argument)
 {
-
-	
 	 TickType_t last_wake = xTaskGetTickCount();
-	 
-  
-	
 	 for(;;)
 	{
+float expect_=GM6020_forward_rad * 180.0f / PAI;
+if(expect_>360 || expect_<-360)
+{
+    expect_ = fmod(expect_, 360.0f);
+}
+		current_cur = cur_round * 360.0f + now_cur * 360.0f / 8192.0f - cur_offset* 360.0f / 8192.0f; 
+
+  PID_Control2(current_cur,expect_,&PID_SET.GM6020_pos);
 		
-		
-	  float expect_=GM6020_forward_rad * 180.0f / PAI;
-		    
-		if(expect_>360 || expect_<-360){
-			
-			
-		}
-		current_cur = cur_round * 360.0f + now_cur * 360.0f / 8192.0f - cur_offset* 360.0f / 8192.0f;      
-  PID_Control2(current_cur,expect_,&GM6020_GO.GM6020_pos);
-					
-		current_vel = (float)state_pack.GM6020.Speed;  
-		
-  //expected_vel = GM6020_GO.GM6020_pos.pid_out;
-			expected_vel = 0;
-	if(expected_vel > MAX_VEL) expected_vel = MAX_VEL;
+  expected_vel = PID_SET.GM6020_pos.pid_out;
+  if(expected_vel > MAX_VEL) expected_vel = MAX_VEL;
   if(expected_vel < -MAX_VEL) expected_vel = -MAX_VEL;
 
-  PID_Control2(current_vel,0,&GM6020_GO.GM6020_vel);
+  PID_Control2( (float)state_pack.GM6020.Speed,expected_vel,&PID_SET.GM6020_vel);
 
-  int16_t current_output = (int16_t)GM6020_GO.GM6020_vel.pid_out;  
+  int16_t current_output = (int16_t)PID_SET.GM6020_vel.pid_out;  
 
   if(current_output > 16384) current_output = 16384;
   if(current_output < -16384) current_output = -16384;
 	
-  can_out[2] = (uint8_t)(current_output >> 8);     // ¸ß8Î»
-  can_out[3] = (uint8_t)(current_output & 0x00FF);   // µÍ8Î»¡¢
-
-  
-  CAN_Send_StdDataFrame(&hcan2,0x1FE,can_out);
+  can_out[2] = (uint8_t)(current_output >> 8);     // ï¿½ï¿½8Î»
+  can_out[3] = (uint8_t)(current_output & 0x00FF);   // ï¿½ï¿½8Î»ï¿½ï¿½
+     CAN_Send_StdDataFrame(&hcan2,0x1FE,can_out);
 	 vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(5));
 	}
 }
 
-
-
-
-
-//ÏÂÎ»»ú·¢ËÍ¸øÉÏÎ»»úµÄÈÎÎñ
 TaskHandle_t usb_cdc_Send_Handle;
 void usb_cdc_Send(void *arguments)
 {
@@ -211,30 +158,14 @@ void usb_cdc_Send(void *arguments)
     TickType_t last_wake_time = xTaskGetTickCount();
 	
 	for(;;){
-		
-//		state_pack.GM6020.Angle_DEG=(now_cur * 360.0f / 8192.0f - cur_offset* 360.0f / 8192.0f)*PAI/180.0f;
-//		state_pack.GM6020.Speed=GM6020_state.Speed ;
-//		state_pack.GM6020.TorqueCurrent=GM6020_state.TorqueCurrent ;
-		state_pack.GM6020.Angle_DEG=2;
-		state_pack.GM6020.Speed=2;
-		state_pack.GM6020.TorqueCurrent=2;
-		state_pack.servo2.up=2;
-		state_pack.servo2.low=2;
-		state_pack.robstride01.state .rad =2;
-		state_pack.robstride01.state .omega  =2;
-		state_pack.robstride01.state.torque  =2;
-		
-		
+  
+		state_pack.GM6020.Angle_DEG=(now_cur * 360.0f / 8192.0f - cur_offset* 360.0f / 8192.0f)*PAI/180.0f;
 		if(allow==1)    {
-				CDC_Transmit_FS((uint8_t*)&state_pack, sizeof(state_pack));
+		CDC_Transmit_FS((uint8_t*)&state_pack, sizeof(state_pack));
         vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(5));
-		
 	}
-	
-	
 	}
 }
-
 TaskHandle_t usb_cdc_Receive_Handle;
 void usb_cdc_Receive(void *argument)
 {
@@ -244,20 +175,19 @@ void usb_cdc_Receive(void *argument)
 		
     if(xSemaphoreTake(cdc_recv_semp, portMAX_DELAY) == pdTRUE)
     {
-        GM6020_forward_rad = target_pack.rob02.target_pos;
+    GM6020_forward_rad = target_pack.rob02.target_pos;
     }
 		
 		vTaskDelay(5);
 		allow=1;
 	}
-	  
 }
 
 uint32_t cur_size=0;
 uint32_t count = 0;
 void CDC_Receive_Cb(uint8_t *src, uint16_t size)
 {
-    if(size==sizeof(target_pack_t)&&((target_pack_t*)src)->pack_type==0x00)
+    if(size==sizeof(target_pack_t)&&((target_pack_t*)src)->pack_type==0x01)
     {
         HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
         memcpy(&target_pack, src, sizeof(target_pack_t));

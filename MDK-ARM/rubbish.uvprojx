@@ -551,22 +551,22 @@
             <File>
               <FileName>arm.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm.c</FilePath>
+              <FilePath>..\MyTask\arm.c</FilePath>
             </File>
             <File>
               <FileName>arm.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\arm.h</FilePath>
+              <FilePath>..\MyTask\arm.h</FilePath>
             </File>
             <File>
               <FileName>task_init.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\task_init.c</FilePath>
+              <FilePath>..\MyTask\task_init.c</FilePath>
             </File>
             <File>
               <FileName>task_init.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\task_init.h</FilePath>
+              <FilePath>..\MyTask\task_init.h</FilePath>
             </File>
           </Files>
         </Group>

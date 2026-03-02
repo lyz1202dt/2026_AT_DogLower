@@ -24,15 +24,9 @@ typedef struct
     float except_pos;
     float except_omega;
     float kp;
-	  float kd; 
+	float kd; 
 }Expect_Robstride;
 
-typedef struct
-{
-
-	PID2 GM6020_pos;
-  PID2 GM6020_vel;
-}Expect_GM6020_;
 
 typedef struct
 {
@@ -42,6 +36,12 @@ typedef struct
 	float kd;
 	
 }Expect_GM6020;
+
+typedef struct
+{
+  PID2 GM6020_pos;
+  PID2 GM6020_vel;
+}GM6020_PID;
 
 typedef struct
 {
@@ -57,7 +57,7 @@ typedef struct
  servo servo1;
  Expect_Robstride rob01;
  Expect_GM6020 rob02;
-}target_pack_t;  //½ÓÊÕÉÏÎ»»úÆÚÍûµç»ú½Ç¶ÈµÄ½á¹¹Ìå
+}target_pack_t;  //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç¶ÈµÄ½á¹¹ï¿½ï¿½
 
 typedef struct
 {
@@ -66,7 +66,7 @@ typedef struct
 	RobStride_t robstride01;
 	GM6020_TypeDef GM6020;
 	
-}state_pack_t;   //·¢ËÍ¸øÉÏÎ»»úµÄ½á¹¹Ìå
+}state_pack_t;   //ï¿½ï¿½ï¿½Í¸ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½Ä½á¹¹ï¿½ï¿½
 
 void servo_Serve(void *argument);
 void stride_Serve(void *argument);

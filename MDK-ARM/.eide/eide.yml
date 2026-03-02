@@ -79,10 +79,10 @@ virtualFolder:
       files:
         - path: ../MyTask/run.c
         - path: ../MyTask/run.h
-        - path: arm.c
-        - path: arm.h
-        - path: task_init.c
-        - path: task_init.h
+        - path: ../MyTask/arm.c
+        - path: ../MyTask/arm.h
+        - path: ../MyTask/task_init.c
+        - path: ../MyTask/task_init.h
       folders: []
     - name: Drivers
       files: []
@@ -271,6 +271,7 @@ targets:
           afterBuildTasks: []
           asm-compiler:
             $use: asm-auto
+            defines: []
             misc-controls: ""
           beforeBuildTasks: []
           c/cpp-compiler:
