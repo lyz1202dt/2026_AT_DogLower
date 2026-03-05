@@ -43,6 +43,8 @@ typedef struct
   PID2 GM6020_vel;
 }GM6020_PID;
 
+//typedef struct
+//{}
 typedef struct
 {
 	int up;

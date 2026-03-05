@@ -40,10 +40,4 @@ void task_init()
           2,
           &usb_cdc_Receive_Handle);
 	      vPortExitCritical();
-			
-				
-
-	 
-    
-	
 }
