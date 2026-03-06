@@ -1,10 +1,13 @@
 #include "arm.h"
-float b = 0;
+#include "math.h"
 
 
+//float up_test=0;
+//float low_test=0;
 
 int allow=0;
 extern int Temp_Servo_Target[4];
+extern int32_t Servo_assignment[4];
 
 int16_t current_output;
 target_pack_t target_pack = {.pack_type = 0x01};
@@ -14,7 +17,7 @@ QueueHandle_t cdc_recv_semp;
 RobStride_t robstride01
 ={
 .hcan = &hcan1,
-.motor_id = 0x02,	
+.motor_id = 0x01,	
 }
 ;
 
@@ -59,8 +62,16 @@ TaskHandle_t servo_Serve_Handle;
 void servo_Serve(void *argument)
 {
 	for(;;){
-	Temp_Servo_Target[0] = target_pack.servo1.up;
-	Temp_Servo_Target[1]= target_pack.servo1.low;
+	Servo_assignment[0] = (int)(target_pack.servo1.up*1300.0/PAI);
+	//Servo_assignment[0] = (int)(up_test*1300.0/PAI);
+	Servo_assignment[1]= (int)(target_pack.servo1.low*620.0/PAI*2.0);
+  //Servo_assignment[1]= (int)(low_test*620.0/PAI*2);
+		if(Servo_assignment[0]>1300){
+			Servo_assignment[0]=1300;
+		}
+		if(Servo_assignment[1]>620){
+			Servo_assignment[1]=620; 
+		}
 	state_pack.servo2.low = target_pack.servo1.low;
 	state_pack.servo2.up = target_pack.servo1.up;
 	Servo_control();  
@@ -72,7 +83,7 @@ TaskHandle_t stride_Serve_Handle;
 void stride_Serve(void *argument)
 {
     vTaskDelay(2000);
-    RobStrideInit(&state_pack.robstride01,&hcan1,0x02,RobStride_01);
+    RobStrideInit(&state_pack.robstride01,&hcan1,0x01,RobStride_01);
     RobStrideSetMode(&state_pack.robstride01, RobStride_MotionControl);
     vTaskDelay(100);
     RobStrideEnable(&state_pack.robstride01);
@@ -113,7 +124,7 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
     }
    else if(hcan->Instance == CAN1)
    {
-        CAN_Receive_DataFrame(&hcan1,CAN1_buff);
+     CAN_Receive_DataFrame(&hcan1,CAN1_buff);
 		RobStrideRecv_Handle(&state_pack.robstride01, &hcan1, 0x02, CAN1_buff);
    }
 }
@@ -139,7 +150,7 @@ if(expect_>360 || expect_<-360)
 
   PID_Control2( (float)state_pack.GM6020.Speed,expected_vel,&PID_SET.GM6020_vel);
 
-  int16_t current_output = (int16_t)PID_SET.GM6020_vel.pid_out;  
+   current_output = (int16_t)PID_SET.GM6020_vel.pid_out;  
 
   if(current_output > 16384) current_output = 16384;
   if(current_output < -16384) current_output = -16384;

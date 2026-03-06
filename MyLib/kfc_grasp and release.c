@@ -8,8 +8,10 @@
 int Temp_Servo_Target[4]; 
 int32_t Servo_assignment[4] = {0,0,0,0};        //引脚：PE9 PE11 PE13 PE14
 int32_t Ramp_Value_Servo[4] = {50,50,50,50};
-int32_t Servo_offset[4] = {0, 2000, 0, 0}; 
+int32_t Servo_offset[4] = {0, 1430, 0, 0}; 
 
+
+//腕关节初始位置朝上当占空比给到1300时，转过180度
 
 int32_t RAMP_self( int32_t final, int32_t now, int32_t ramp )
 {
