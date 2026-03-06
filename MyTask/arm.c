@@ -1,5 +1,6 @@
 #include "arm.h"
 #include "math.h"
+float b = 0;
 
 
 //float up_test=0;
@@ -10,8 +11,9 @@ extern int Temp_Servo_Target[4];
 extern int32_t Servo_assignment[4];
 
 int16_t current_output;
-target_pack_t target_pack = {.pack_type = 0x01};
+
 state_pack_t state_pack = {.pack_type = 0x01};
+target_pack_t target_pack = {.pack_type = 0x01};
 QueueHandle_t cdc_recv_semp;
 
 RobStride_t robstride01
@@ -91,7 +93,7 @@ void stride_Serve(void *argument)
      for(;;)
      {
 
-        RobStrideMotionControl(&state_pack.robstride01,0x01,NULL,
+        RobStrideMotionControl(&state_pack.robstride01,0x02,NULL,
 			 target_pack.rob01.except_pos,target_pack.rob01.except_omega,
 			 target_pack.rob01.kp,target_pack.rob01.kd);
         vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(5));
@@ -119,16 +121,17 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
           if((int16_t)(now_cur - last_cur + 1e-5) > 4000) cur_round--;
           else if((int16_t)(now_cur - last_cur +1e-5) < -4000) cur_round++;
         }
-        
-        
     }
-   else if(hcan->Instance == CAN1)
+}
+
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
+{
+   if(hcan->Instance == CAN1)
    {
      CAN_Receive_DataFrame(&hcan1,CAN1_buff);
 		RobStrideRecv_Handle(&state_pack.robstride01, &hcan1, 0x02, CAN1_buff);
    }
 }
-
 TaskHandle_t GM6020_Serve_Handle;
 void GM6020_Serve(void *argument)
 {
