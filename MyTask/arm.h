@@ -1,6 +1,6 @@
 #ifndef __ARM_H_
 #define __ARM_H_
-#include "arm.h"
+//#include "arm.h"
 #include "can.h"
 #include "CANDrive.h"
 #include "main.h"
@@ -11,13 +11,16 @@
 #include "PID_old.h"
 #include "RobStride.h"
 #include "motor.h"
+#include "task_init.h"
 #include "kfc_grasp and release.h"
+
 #define PAI 3.14159265358979323846f
 extern TaskHandle_t servo_Serve_Handle;
 extern TaskHandle_t stride_Serve_Handle;
 extern TaskHandle_t GM6020_Serve_Handle;
 extern TaskHandle_t usb_cdc_Send_Handle;
 extern TaskHandle_t usb_cdc_Receive_Handle;
+
 typedef struct
 {
     float except_torque;
@@ -37,38 +40,41 @@ typedef struct
 	
 }Expect_GM6020;
 
-typedef struct
-{
-  PID2 GM6020_pos;
-  PID2 GM6020_vel;
-}GM6020_PID;
+
 
 //typedef struct
 //{}
 typedef struct
 {
-	int up;
-	int low;
+	float up;
+	float low;
 }servo;
 
 
-
+#pragma pack(1)
 typedef struct 
 {
  int pack_type;
  servo servo1;
  Expect_Robstride rob01;
  Expect_GM6020 rob02;
-}target_pack_t;  //������λ����������ǶȵĽṹ��
+}target_pack_t;  
+
+#pragma pack()
 
 typedef struct
 {
-	int pack_type;
-	servo servo2;
-	RobStride_t robstride01;
-	GM6020_TypeDef GM6020;
-	
-}state_pack_t;   //���͸���λ���Ľṹ��
+  PID2 GM6020_pos;
+  PID2 GM6020_vel;
+}GM6020_PID;
+//typedef struct
+//{
+//	int pack_type;
+//	servo servo2;
+//	RobStride_t robstride01;
+//	GM6020_TypeDef GM6020;
+//	
+//}state_pack_t;   //���͸���λ���Ľṹ��
 
 void servo_Serve(void *argument);
 void stride_Serve(void *argument);

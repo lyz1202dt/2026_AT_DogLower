@@ -71,7 +71,7 @@ void MX_FREERTOS_Init(void);
   * @retval int
   */
 int main(void)
-{
+  {
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -116,20 +116,27 @@ int main(void)
 	
   CanFilter_Init(&hcan2);
   
-  HAL_CAN_Start(&hcan1); 
+	HAL_CAN_Start(&hcan1); 
   HAL_CAN_Start(&hcan2);
 	HAL_CAN_ActivateNotification(&hcan1,CAN_IT_RX_FIFO0_MSG_PENDING);
   HAL_CAN_ActivateNotification(&hcan2,CAN_IT_RX_FIFO1_MSG_PENDING);
 	HAL_CAN_ActivateNotification(&hcan1,CAN_IT_TX_MAILBOX_EMPTY);
 	HAL_CAN_ActivateNotification(&hcan2,CAN_IT_TX_MAILBOX_EMPTY);
 	
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_ALL);
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_ALL);
+    HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_1);
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1,0);
+	  HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_2);
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2,0);
+    HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_3);
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3,0);
+    HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_4);
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4,0);  
+	
+ 
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in freertos.c) */
   MX_FREERTOS_Init();
-
   /* Start scheduler */
   osKernelStart();
 

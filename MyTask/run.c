@@ -140,7 +140,7 @@ void WheelControlTask(void* param)
 uint8_t allow_send=0;
 void MotorSendTask(void *param) // 将电机的数据发送到PC上
 {
-    USB_CDC_Init(CDC_Recv_Cb, NULL, NULL);
+    //USB_CDC_Init(CDC_Recv_Cb, NULL, NULL);
     TickType_t last_wake_time = xTaskGetTickCount();
     while (1)
     {
@@ -287,19 +287,19 @@ void MotorRecvTask(void *param) // 从PC接收电机的期望值
 }
 //******************************************************************************************
 
-//void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
-//{
+// void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
+// {
 //    uint8_t buf[8];
 //    if(hcan->Instance==CAN1)
 //    {
 //        uint32_t id=CAN_Receive_DataFrame(&hcan1,buf);
-//			
+			
 //        Motor3508Recv(&leg[0].wheel,hcan,id,buf);
 //        Motor3508Recv(&leg[1].wheel,hcan,id,buf);
 //        Motor3508Recv(&leg[2].wheel,hcan,id,buf);
 //        Motor3508Recv(&leg[3].wheel,hcan,id,buf);
 //    }
-//}
+// }
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {

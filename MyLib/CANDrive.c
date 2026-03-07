@@ -1,6 +1,6 @@
 #include "CANDrive.h"
 
-uint8_t CAN1_buff[8];
+
 
 #if defined(CAN2)
 uint8_t CAN2_buff[8];
