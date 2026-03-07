@@ -80,7 +80,7 @@ int main(void)
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
-
+  
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
@@ -111,7 +111,7 @@ int main(void)
 	
 	
 	HAL_TIM_Base_Start_IT(&htim10);
-  HAL_TIM_Base_Start(&htim1);
+//  HAL_TIM_Base_Start(&htim1);
   CanFilter_Init(&hcan1);
 	
   CanFilter_Init(&hcan2);
@@ -123,28 +123,31 @@ int main(void)
 	HAL_CAN_ActivateNotification(&hcan1,CAN_IT_TX_MAILBOX_EMPTY);
 	HAL_CAN_ActivateNotification(&hcan2,CAN_IT_TX_MAILBOX_EMPTY);
 	
-    HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_1);
+	  HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_1);
   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1,0);
 	  HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_2);
   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2,0);
     HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_3);
   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3,0);
     HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_4);
-  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4,0);  
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4,0);
 	
- 
+
+//  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_ALL);
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in freertos.c) */
   MX_FREERTOS_Init();
   /* Start scheduler */
-  osKernelStart();
+ osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+	
 		
     /* USER CODE END WHILE */
 

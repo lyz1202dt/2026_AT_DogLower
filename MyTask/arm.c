@@ -16,7 +16,7 @@ QueueHandle_t cdc_recv_semp;
 RobStride_t robstride01
 ={
 .hcan = &hcan1,
-.motor_id = 0x02,	
+.motor_id = 0x01,	
 }
 ;
 float arm_except;
@@ -174,6 +174,7 @@ if(expect_>360 || expect_<-360)
   PID_Control2( (float)GM6020_state.Speed,expected_vel,&PID_SET.GM6020_vel);//expected_vel
 
   current_output = (int16_t)PID_SET.GM6020_vel.pid_out;  
+   current_output = (int16_t)PID_SET.GM6020_vel.pid_out;  
 
   if(current_output > 16384) current_output = 16384;
   if(current_output < -16384) current_output = -16384;

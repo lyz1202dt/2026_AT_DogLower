@@ -119,7 +119,7 @@ void MX_FREERTOS_Init(void) {
   // xTaskCreate(MotorRecvTask,"MotorRecv",128,NULL,4,&usb_recv_task_handle);
 	//xTaskCreate(WheelControlTask,"WheelCtrl",128,NULL,6,&wheel_control_task_handle);
  // xTaskCreate(UART6_ServiceTask,"UART6Reset",256,NULL,7,&uart6_service_task_handle);
-  //RS485Init(&rs485bus, &huart6, GPIOA, GPIO_PIN_4);// 初始�?485总线管理�?
+  //RS485Init(&rs485bus, &huart6, GPIOA, GPIO_PIN_4);// 初始化485总线管理器
   /* USER CODE END RTOS_THREADS */
 
 }
@@ -135,6 +135,9 @@ void StartDefaultTask(void const * argument)
 {
   /* init code for USB_DEVICE */
   MX_USB_DEVICE_Init();
+	task_init();
+
+	
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
   for(;;)
