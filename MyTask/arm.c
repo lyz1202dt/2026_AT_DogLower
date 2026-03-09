@@ -13,6 +13,9 @@ float expect_;
 target_pack_t target_pack = {.pack_type = 0x01};
 QueueHandle_t cdc_recv_semp;
 
+ GM6020_TypeDef GM6020_state;
+ RobStride_t robstride_state;
+
 RobStride_t robstride01
 ={
 .hcan = &hcan1,
@@ -38,7 +41,7 @@ float current_cur = 0.0f;
 
 float MAX_VEL = 90.f;
 
-GM6020_PID PID_SET= {
+GM6020_PID G_PID_SET= {
     .GM6020_pos = {
         .Kp = 100.0f,
         .Ki = 0.0f,
@@ -55,31 +58,53 @@ GM6020_PID PID_SET= {
     }
 };
 
-
- GM6020_TypeDef GM6020_state;
- RobStride_t robstride_state;
-
+robstride_PID R_PID_SET={
+    .RobStride_pos = {
+        .Kp = 4.0f,
+        .Ki = 0,
+        .Kd = 0.1,
+        .limit = 0,
+        .output_limit = 100,
+    },
+     .RobStride_vel = {
+        .Kp = 3.2f,
+        .Ki = 0.05,
+        .Kd = 0.1f,
+        .limit = 0.0f,
+        .output_limit = 100,
+    }
+};
 
 TaskHandle_t servo_Serve_Handle;
 void servo_Serve(void *argument)
 {
 	for(;;){
     Servo_assignment[0] = (int)(target_pack.servo1.up*1300.0/PAI);
-
-
+    Servo_assignment[1]= (int)(target_pack.servo1.low*770.0/PAI*2.0);
 
 //		Servo_assignment[0] = (int)(target_pack.servo1.up/PAI*180.0f*200.0f/27.0f);
 //		 Servo_assignment[1] = (int)(target_pack.servo1.low/PAI*180.0f*200.0f/27.0f);
-		
-	  Servo_assignment[1]= (int)(target_pack.servo1.low*620.0/PAI*2.0);
-		if(Servo_assignment[0]>(2000.0f/270.0f*180.0f)){
-			Servo_assignment[0]=(2000.0f/270.0f*180.0f);
+	  
+//		if(Servo_assignment[0]>(2000.0f/270.0f*180.0f)){
+//			Servo_assignment[0]=(2000.0f/270.0f*180.0f);
+//		}
+//		if(Servo_assignment[0]<0){
+//			Servo_assignment[0]=0;
+//		} 
+//		if(Servo_assignment[1]>(2000.0f/270.0f*90.0f)){
+//			Servo_assignment[1]=(2000.0f/270.0f*90.0f); 
+//		}
+//		if(Servo_assignment[1]<0){
+//			Servo_assignment[1]=0;
+//		}
+		if(Servo_assignment[0]>2000){
+			Servo_assignment[0]=2000 ;
 		}
 		if(Servo_assignment[0]<0){
-			Servo_assignment[0]=0;
+			Servo_assignment[0]=0; 
 		} 
-		if(Servo_assignment[1]>(2000.0f/270.0f*90.0f)){
-			Servo_assignment[1]=(2000.0f/270.0f*90.0f); 
+		if(Servo_assignment[1]>980){
+			Servo_assignment[1]=980; 
 		}
 		if(Servo_assignment[1]<0){
 			Servo_assignment[1]=0;
@@ -93,27 +118,38 @@ TaskHandle_t stride_Serve_Handle;
 void stride_Serve(void *argument)
 {
 	
-	 vTaskDelay(3000);
+	vTaskDelay(5000);
     RobStrideInit(&robstride_state,&hcan1,0x02,RobStride_01);
-    RobStrideSetMode(&robstride_state, RobStride_MotionControl);
+    RobStrideSetMode(&robstride_state, RobStride_Torque);
     vTaskDelay(100);
     RobStrideEnable(&robstride_state);
-	  vTaskDelay(100);
-	  RobStrideResetAngle(&robstride_state);
+	vTaskDelay(100);
+	RobStrideResetAngle(&robstride_state);
     TickType_t last_wake = xTaskGetTickCount();
-	  target_pack.rob01.except_torque=0.5;
-	  target_pack.rob01.kp=7.0;
-	  target_pack.rob01.kd=0.3;
+//	  target_pack.rob01.except_torque=0.5;
+//	  target_pack.rob01.kp=7.0;
+//	  target_pack.rob01.kd=0.3;
      for(;;)
      {
+			 
       arm_except=  target_pack.rob01.except_pos*1.50;
-       RobStrideMotionControl(&robstride_state,0x02,target_pack.rob01.except_torque,
-			 arm_except,target_pack.rob01.except_omega*1.50,
-			 target_pack.rob01.kp,target_pack.rob01.kd);
-       vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(5));
+    //    RobStrideMotionControl(&robstride_state,0x02,target_pack.rob01.except_torque,
+	// 		 arm_except,target_pack.rob01.except_omega*1.50,
+	// 		 target_pack.rob01.kp,target_pack.rob01.kd);
+ PID_Control2(robstride_state.state.rad,
+             arm_except,
+             &R_PID_SET.RobStride_pos);
+if(R_PID_SET.RobStride_pos.pid_out > 20.0f)  R_PID_SET.RobStride_pos.pid_out = 20.0f;
+if(R_PID_SET.RobStride_pos.pid_out < -20.0f) R_PID_SET.RobStride_pos.pid_out = -20.0f;
+PID_Control2(robstride_state.state.omega,
+             R_PID_SET.RobStride_pos.pid_out,
+             &R_PID_SET.RobStride_vel);
+if(R_PID_SET.RobStride_vel.pid_out > 60.0f)  R_PID_SET.RobStride_vel.pid_out = 60.0f;
+if(R_PID_SET.RobStride_vel.pid_out < -60.0f) R_PID_SET.RobStride_vel.pid_out = -60.0f;
+RobStrideTorqueControl(&robstride_state, R_PID_SET.RobStride_vel.pid_out);
+vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(5));
      }
 }
-
 
 void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
@@ -158,23 +194,23 @@ void GM6020_Serve(void *argument)
 	 TickType_t last_wake = xTaskGetTickCount();
 	 for(;;)
 	{
- expect_=GM6020_forward_rad * 180.0f / PAI;
+   expect_=GM6020_forward_rad * 180.0f / PAI;
 if(expect_>360 || expect_<-360)
 {
     expect_ = fmod(expect_, 360.0f);
 }
 		current_cur = cur_round * 360.0f + now_cur * 360.0f / 8192.0f - cur_offset* 360.0f / 8192.0f; 
 
-  PID_Control2(current_cur,expect_,&PID_SET.GM6020_pos);
+  PID_Control2(current_cur,expect_,&G_PID_SET.GM6020_pos);
 		
-  expected_vel = PID_SET.GM6020_pos.pid_out;
+  expected_vel = G_PID_SET.GM6020_pos.pid_out;
   if(expected_vel > MAX_VEL) expected_vel = MAX_VEL;
   if(expected_vel < -MAX_VEL) expected_vel = -MAX_VEL;
 
-  PID_Control2( (float)GM6020_state.Speed,expected_vel,&PID_SET.GM6020_vel);//expected_vel
+  PID_Control2( (float)GM6020_state.Speed,expected_vel,&G_PID_SET.GM6020_vel);//expected_vel
 
-  current_output = (int16_t)PID_SET.GM6020_vel.pid_out;  
-   current_output = (int16_t)PID_SET.GM6020_vel.pid_out;  
+  current_output = (int16_t)G_PID_SET.GM6020_vel.pid_out;  
+//    current_output = (int16_t)G_PID_SET.GM6020_vel.pid_out;  
 
   if(current_output > 16384) current_output = 16384;
   if(current_output < -16384) current_output = -16384;
@@ -182,7 +218,7 @@ if(expect_>360 || expect_<-360)
   can_out[1] = current_output;     // ��8λ
  
    MotorSend(&hcan2,0x1FE,(int16_t*)can_out);
-	 vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(5));
+   vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(5));
 	}
 }
 

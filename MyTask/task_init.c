@@ -10,7 +10,7 @@ void task_init()
 
 	xTaskCreate(servo_Serve,
         "servo_task",
-         128,
+         256,
          NULL,
          4,
          &servo_Serve_Handle);

@@ -67,6 +67,13 @@ typedef struct
   PID2 GM6020_pos;
   PID2 GM6020_vel;
 }GM6020_PID;
+
+typedef struct 
+{
+	PID2 RobStride_pos;
+	PID2 RobStride_vel;
+}robstride_PID;
+
 //typedef struct
 //{
 //	int pack_type;
