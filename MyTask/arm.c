@@ -8,7 +8,7 @@ int16_t current_output;
 int allow=0;
 extern int Temp_Servo_Target[4];
 extern int32_t Servo_assignment[4];
-float expect_;
+float expect_ = 0;
 //state_pack_t state_pack = {.pack_type = 0x01};
 target_pack_t target_pack = {.pack_type = 0x01};
 QueueHandle_t cdc_recv_semp;
@@ -43,18 +43,18 @@ float MAX_VEL = 90.f;
 
 GM6020_PID G_PID_SET= {
     .GM6020_pos = {
-        .Kp = 100.0f,
+        .Kp = 7.0f,
         .Ki = 0.0f,
-        .Kd = 50.0f,
+        .Kd = 0.0f,
         .limit = 0.0f,
-        .output_limit = 10000.0f,
+        .output_limit = 16000.0f,
     },
     .GM6020_vel = {
-        .Kp = 100.0f,
-        .Ki = 0.1f,
-        .Kd = 50.0f,
+        .Kp = 30.0f,
+        .Ki = 0.0f,
+        .Kd = 10.0f,
         .limit = 0.0f,
-        .output_limit = 10000.0f,
+        .output_limit = 16000.0f,
     }
 };
 
@@ -79,36 +79,36 @@ TaskHandle_t servo_Serve_Handle;
 void servo_Serve(void *argument)
 {
 	for(;;){
-    Servo_assignment[0] = (int)(target_pack.servo1.up*1300.0/PAI);
-    Servo_assignment[1]= (int)(target_pack.servo1.low*770.0/PAI*2.0);
+//    Servo_assignment[0] = (int)(target_pack.servo1.up*1300.0/PAI);
+//    Servo_assignment[1]= (int)(target_pack.servo1.low*770.0/PAI*2.0);
 
-//		Servo_assignment[0] = (int)(target_pack.servo1.up/PAI*180.0f*200.0f/27.0f);
-//		 Servo_assignment[1] = (int)(target_pack.servo1.low/PAI*180.0f*200.0f/27.0f);
-	  
-//		if(Servo_assignment[0]>(2000.0f/270.0f*180.0f)){
-//			Servo_assignment[0]=(2000.0f/270.0f*180.0f);
+////		Servo_assignment[0] = (int)(target_pack.servo1.up/PAI*180.0f*200.0f/27.0f);
+////		 Servo_assignment[1] = (int)(target_pack.servo1.low/PAI*180.0f*200.0f/27.0f);
+//	  
+////		if(Servo_assignment[0]>(2000.0f/270.0f*180.0f)){
+////			Servo_assignment[0]=(2000.0f/270.0f*180.0f);
+////		}
+////		if(Servo_assignment[0]<0){
+////			Servo_assignment[0]=0;
+////		} 
+////		if(Servo_assignment[1]>(2000.0f/270.0f*90.0f)){
+////			Servo_assignment[1]=(2000.0f/270.0f*90.0f); 
+////		}
+////		if(Servo_assignment[1]<0){
+////			Servo_assignment[1]=0;
+////		}
+//		if(Servo_assignment[0]>2000){
+//			Servo_assignment[0]=2000 ;
 //		}
 //		if(Servo_assignment[0]<0){
-//			Servo_assignment[0]=0;
+//			Servo_assignment[0]=0; 
 //		} 
-//		if(Servo_assignment[1]>(2000.0f/270.0f*90.0f)){
-//			Servo_assignment[1]=(2000.0f/270.0f*90.0f); 
+//		if(Servo_assignment[1]>980){
+//			Servo_assignment[1]=980; 
 //		}
 //		if(Servo_assignment[1]<0){
 //			Servo_assignment[1]=0;
 //		}
-		if(Servo_assignment[0]>2000){
-			Servo_assignment[0]=2000 ;
-		}
-		if(Servo_assignment[0]<0){
-			Servo_assignment[0]=0; 
-		} 
-		if(Servo_assignment[1]>980){
-			Servo_assignment[1]=980; 
-		}
-		if(Servo_assignment[1]<0){
-			Servo_assignment[1]=0;
-		}
 	  Servo_control();  
   	vTaskDelay (5);
 	}
@@ -194,12 +194,26 @@ void GM6020_Serve(void *argument)
 	 TickType_t last_wake = xTaskGetTickCount();
 	 for(;;)
 	{
-   expect_=GM6020_forward_rad * 180.0f / PAI;
-if(expect_>360 || expect_<-360)
+   //expect_=GM6020_forward_rad * 180.0f / PAI;
+	 
+ if(expect_>360 || expect_<-360)
 {
     expect_ = fmod(expect_, 360.0f);
+	
 }
-		current_cur = cur_round * 360.0f + now_cur * 360.0f / 8192.0f - cur_offset* 360.0f / 8192.0f; 
+
+  if(expect_>70.0)
+  {
+    expect_ = 70.0;
+	
+  }
+  if(expect_<-70.0)
+	{
+	   expect_ = -70.0;
+	}
+
+
+		current_cur =  now_cur * 360.0f / 8192.0f - cur_offset* 360.0f / 8192.0f; 
 
   PID_Control2(current_cur,expect_,&G_PID_SET.GM6020_pos);
 		
@@ -210,7 +224,7 @@ if(expect_>360 || expect_<-360)
   PID_Control2( (float)GM6020_state.Speed,expected_vel,&G_PID_SET.GM6020_vel);//expected_vel
 
   current_output = (int16_t)G_PID_SET.GM6020_vel.pid_out;  
-//    current_output = (int16_t)G_PID_SET.GM6020_vel.pid_out;  
+ 
 
   if(current_output > 16384) current_output = 16384;
   if(current_output < -16384) current_output = -16384;
