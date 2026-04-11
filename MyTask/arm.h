@@ -20,6 +20,7 @@ extern TaskHandle_t stride_Serve_Handle;
 extern TaskHandle_t GM6020_Serve_Handle;
 extern TaskHandle_t usb_cdc_Send_Handle;
 extern TaskHandle_t usb_cdc_Receive_Handle;
+extern TaskHandle_t air_pump_Handle;
 
 typedef struct
 {
@@ -55,6 +56,7 @@ typedef struct
 typedef struct 
 {
  int pack_type;
+ int arm_pump;
  servo servo1;
  Expect_Robstride rob01;
  Expect_GM6020 rob02;
@@ -89,6 +91,7 @@ void GM6020_Serve(void *argument);
 void usb_cdc_Send(void *argument);
 void usb_cdc_Receive(void *argument);
 void CDC_Recv_Cb(uint8_t *src, uint16_t size);
+void air_pump(void *argument);
 
 		
 #endif

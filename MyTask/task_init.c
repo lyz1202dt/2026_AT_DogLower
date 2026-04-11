@@ -18,7 +18,7 @@ void task_init()
          "stride_task",
           256,
           NULL,
-          4,
+          5,
           &stride_Serve_Handle);
 	xTaskCreate(GM6020_Serve,
         "GM6020_task",
@@ -38,18 +38,13 @@ void task_init()
          NULL,
          2,
          &usb_cdc_Receive_Handle);
+				 
+	xTaskCreate(air_pump,
+        "air_pump_task",
+         128,
+         NULL,
+         4,
+         &air_pump_Handle);
+				 
 	      vPortExitCritical();
 }
-//void RampToTarget(float *val, float target, float step)//??
-//{
-//    float diff = target - *val;
-
-//    if (fabsf(diff) < step)
-//    {
-//        *val = target;
-//    }
-//    else
-//    {
-//        *val += (diff > 0 ? step : -step);
-//    }
-//}

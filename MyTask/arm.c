@@ -3,6 +3,9 @@
 float b = 0;
 int a=0;
 
+GPIO_PinState gpio_pin_set;
+
+
 //void RampToTarget();
 int16_t current_output;
 int allow=0;
@@ -22,7 +25,7 @@ RobStride_t robstride01
 .motor_id = 0x01,	
 }
 ;
-float arm_except;
+float arm_except = 0.0f;
 
 float GM6020_forward_rad = 0.0f;
 uint16_t last_cur = 0;  
@@ -60,31 +63,64 @@ GM6020_PID G_PID_SET= {
 
 robstride_PID R_PID_SET={
     .RobStride_pos = {
-        .Kp = 4.0f,
-        .Ki = 0,
-        .Kd = 0.1,
+        .Kp = 10.3f,
+        .Ki = 0.0f,
+        .Kd = 0.0f,
         .limit = 0,
         .output_limit = 100,
     },
      .RobStride_vel = {
-        .Kp = 3.2f,
-        .Ki = 0.05,
-        .Kd = 0.1f,
+        .Kp = 3.8f,
+        .Ki = 1.0f,
+        .Kd = 0.0f,
         .limit = 0.0f,
         .output_limit = 100,
     }
 };
 
+TaskHandle_t air_pump_Handle;
+void air_pump(void *argument){
+	for(;;){
+//		gpio_pin_set = 1;
+		//HAL_GPIO_WritePin(GPIOA,GPIO_PIN_7, gpio_pin_set);
+		if(target_pack.arm_pump == 1){
+			 gpio_pin_set = 1;
+			HAL_GPIO_WritePin(GPIOA,GPIO_PIN_7, gpio_pin_set);
+		}else{
+			 gpio_pin_set = 0;
+			HAL_GPIO_WritePin(GPIOA,GPIO_PIN_7, gpio_pin_set);
+		}
+		
+		vTaskDelay (5);
+		
+	}
+}
+
+
+
+
+
+
 TaskHandle_t servo_Serve_Handle;
 void servo_Serve(void *argument)
 {
 	for(;;){
+		
+		if(target_pack.servo1.up>0 && target_pack.servo1.up<1.5708)
+		{
+			Servo_assignment[0] = (int)(target_pack.servo1.up*600.0/PAI);
+			
+		}else if(target_pack.servo1.up>1.5708 && target_pack.servo1.up<3.1415)
+		{
+			Servo_assignment[0] = (int)(target_pack.servo1.up*1300.0/PAI);
+			
+		}
+		
+		 Servo_assignment[1]= (int)(target_pack.servo1.low*1800.0/PAI);
+		
+		
 //    Servo_assignment[0] = (int)(target_pack.servo1.up*1300.0/PAI);
 //    Servo_assignment[1]= (int)(target_pack.servo1.low*770.0/PAI*2.0);
-
-////		Servo_assignment[0] = (int)(target_pack.servo1.up/PAI*180.0f*200.0f/27.0f);
-////		 Servo_assignment[1] = (int)(target_pack.servo1.low/PAI*180.0f*200.0f/27.0f);
-//	  
 ////		if(Servo_assignment[0]>(2000.0f/270.0f*180.0f)){
 ////			Servo_assignment[0]=(2000.0f/270.0f*180.0f);
 ////		}
@@ -126,28 +162,26 @@ void stride_Serve(void *argument)
 	vTaskDelay(100);
 	RobStrideResetAngle(&robstride_state);
     TickType_t last_wake = xTaskGetTickCount();
-//	  target_pack.rob01.except_torque=0.5;
-//	  target_pack.rob01.kp=7.0;
-//	  target_pack.rob01.kd=0.3;
      for(;;)
      {
 			 
-      arm_except=  target_pack.rob01.except_pos*1.50;
+     // arm_except=  target_pack.rob01.except_pos*1.50;
+		
     //    RobStrideMotionControl(&robstride_state,0x02,target_pack.rob01.except_torque,
 	// 		 arm_except,target_pack.rob01.except_omega*1.50,
 	// 		 target_pack.rob01.kp,target_pack.rob01.kd);
  PID_Control2(robstride_state.state.rad,
-             arm_except,
+             target_pack.rob01.except_pos,
              &R_PID_SET.RobStride_pos);
 if(R_PID_SET.RobStride_pos.pid_out > 20.0f)  R_PID_SET.RobStride_pos.pid_out = 20.0f;
 if(R_PID_SET.RobStride_pos.pid_out < -20.0f) R_PID_SET.RobStride_pos.pid_out = -20.0f;
 PID_Control2(robstride_state.state.omega,
-             R_PID_SET.RobStride_pos.pid_out,
+             R_PID_SET.RobStride_pos.pid_out, 
              &R_PID_SET.RobStride_vel);
 if(R_PID_SET.RobStride_vel.pid_out > 60.0f)  R_PID_SET.RobStride_vel.pid_out = 60.0f;
 if(R_PID_SET.RobStride_vel.pid_out < -60.0f) R_PID_SET.RobStride_vel.pid_out = -60.0f;
-RobStrideTorqueControl(&robstride_state, R_PID_SET.RobStride_vel.pid_out);
-vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(5));
+RobStrideTorqueControl(&robstride_state,R_PID_SET.RobStride_vel.pid_out);// R_PID_SET.RobStride_vel.pid_out
+vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(2));
      }
 }
 
@@ -188,13 +222,13 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 
 
 TaskHandle_t GM6020_Serve_Handle;
-void GM6020_Serve(void *argument)
+void GM6020_Serve(void *argument)//发给6020电机的角度要乘4.5
 {
 
 	 TickType_t last_wake = xTaskGetTickCount();
 	 for(;;)
 	{
-   //expect_=GM6020_forward_rad * 180.0f / PAI;
+   expect_=(GM6020_forward_rad * 180.0f / PAI)*4.5;
 	 
  if(expect_>360 || expect_<-360)
 {
@@ -278,7 +312,7 @@ void CDC_Receive_Cb(uint8_t *src, uint16_t size)
 		pack = (target_pack_t*)src;
     if(size==sizeof(target_pack_t)&&((target_pack_t*)src)->pack_type==0x01)
     {
-        HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+        
         memcpy(&target_pack, src, sizeof(target_pack_t));
         xSemaphoreGive(cdc_recv_semp);
     }
