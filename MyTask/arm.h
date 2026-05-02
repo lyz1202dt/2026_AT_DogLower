@@ -50,6 +50,7 @@ typedef struct
 {
 	float up;
 	float low;
+	float down;
 }servo;
 
 

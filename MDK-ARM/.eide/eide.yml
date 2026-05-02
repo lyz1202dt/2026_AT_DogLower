@@ -70,10 +70,10 @@ virtualFolder:
         - path: ../MyLib/motorEx.c
         - path: ../MyLib/motorEx.h
         - path: ../MyLib/CANDrive.h
-        - path: ../../Dog_robotic_arm/Mylib/kfc_grasp and release.c
-        - path: ../../Dog_robotic_arm/Mylib/kfc_grasp and release.h
-        - path: ../../Dog_robotic_arm/Mylib/RobStride.c
-        - path: ../../Dog_robotic_arm/Mylib/RobStride.h
+        - path: ../MyLib/kfc_grasp and release.c
+        - path: ../MyLib/kfc_grasp and release.h
+        - path: ../MyLib/RobStride.c
+        - path: ../MyLib/RobStride.h
       folders: []
     - name: MyTask
       files:
@@ -180,6 +180,7 @@ targets:
         - RTE/_rubbish
       libList: []
     excludeList: []
+    settings: {}
     toolchain: AC6
     toolchainConfigMap:
       AC5:

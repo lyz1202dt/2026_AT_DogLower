@@ -516,22 +516,22 @@
             <File>
               <FileName>kfc_grasp and release.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\Dog_robotic_arm\Mylib\kfc_grasp and release.c</FilePath>
+              <FilePath>..\MyLib\kfc_grasp and release.c</FilePath>
             </File>
             <File>
               <FileName>kfc_grasp and release.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\..\Dog_robotic_arm\Mylib\kfc_grasp and release.h</FilePath>
+              <FilePath>..\MyLib\kfc_grasp and release.h</FilePath>
             </File>
             <File>
               <FileName>RobStride.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\Dog_robotic_arm\Mylib\RobStride.c</FilePath>
+              <FilePath>..\MyLib\RobStride.c</FilePath>
             </File>
             <File>
               <FileName>RobStride.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\..\Dog_robotic_arm\Mylib\RobStride.h</FilePath>
+              <FilePath>..\MyLib\RobStride.h</FilePath>
             </File>
           </Files>
         </Group>
