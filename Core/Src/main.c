@@ -108,7 +108,7 @@ int main(void)
   MX_TIM10_Init();
   /* USER CODE BEGIN 2 */
 	MX_USB_DEVICE_Init();
-	GPIO_PinState gpio7_t;
+
 	
 	HAL_TIM_Base_Start_IT(&htim10);
 //  HAL_TIM_Base_Start(&htim1);

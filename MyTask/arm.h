@@ -21,6 +21,7 @@ extern TaskHandle_t GM6020_Serve_Handle;
 extern TaskHandle_t usb_cdc_Send_Handle;
 extern TaskHandle_t usb_cdc_Receive_Handle;
 extern TaskHandle_t air_pump_Handle;
+extern TaskHandle_t watch_dog_Handle;
 
 typedef struct
 {
@@ -92,6 +93,7 @@ void usb_cdc_Send(void *argument);
 void usb_cdc_Receive(void *argument);
 void CDC_Recv_Cb(uint8_t *src, uint16_t size);
 void air_pump(void *argument);
+void watch_dog(void *argument);
 
 		
 #endif

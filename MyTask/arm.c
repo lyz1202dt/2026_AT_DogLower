@@ -1,10 +1,16 @@
 #include "arm.h"
 #include "math.h"
+#include <stdbool.h>
 float b = 0;
 int a=0;
 
+TickType_t last_recv_tick =0;
+bool first_packet_received = false;
+
 GPIO_PinState gpio_pin_set;
 
+volatile uint32_t robstride_last_rx_time = 0;//watchdog
+volatile uint8_t watchdog_enable = 0;
 
 //void RampToTarget();
 int16_t current_output;
@@ -46,14 +52,14 @@ float MAX_VEL = 90.f;
 
 GM6020_PID G_PID_SET= {
     .GM6020_pos = {
-        .Kp = 7.0f,
+        .Kp = 10.0f,
         .Ki = 0.0f,
         .Kd = 0.0f,
         .limit = 0.0f,
         .output_limit = 16000.0f,
     },
     .GM6020_vel = {
-        .Kp = 30.0f,
+        .Kp = 42.0f,
         .Ki = 0.0f,
         .Kd = 10.0f,
         .limit = 0.0f,
@@ -82,11 +88,11 @@ TaskHandle_t air_pump_Handle;
 void air_pump(void *argument){
 	for(;;){
 //		gpio_pin_set = 1;
-		//HAL_GPIO_WritePin(GPIOA,GPIO_PIN_7, gpio_pin_set);
+//		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_7, gpio_pin_set);
 		if(target_pack.arm_pump == 1){
 			 gpio_pin_set = 1;
 			HAL_GPIO_WritePin(GPIOA,GPIO_PIN_7, gpio_pin_set);
-		}else{
+		}else if(target_pack.arm_pump == 0){
 			 gpio_pin_set = 0;
 			HAL_GPIO_WritePin(GPIOA,GPIO_PIN_7, gpio_pin_set);
 		}
@@ -106,17 +112,22 @@ void servo_Serve(void *argument)
 {
 	for(;;){
 		
-		if(target_pack.servo1.up>0 && target_pack.servo1.up<1.5708)
-		{
-			Servo_assignment[0] = (int)(target_pack.servo1.up*600.0/PAI);
-			
-		}else if(target_pack.servo1.up>1.5708 && target_pack.servo1.up<3.1415)
-		{
-			Servo_assignment[0] = (int)(target_pack.servo1.up*1300.0/PAI);
-			
-		}
+//		if(target_pack.servo1.up>0 && target_pack.servo1.up<1.5708)
+//		{
+//			Servo_assignment[0] = (int)(target_pack.servo1.up*700.0/PAI);
+//			
+//		}else if(target_pack.servo1.up>=1.5708 && target_pack.servo1.up<3.1415)
+//		{
+//			Servo_assignment[0] = (int)(target_pack.servo1.up*1400.0/PAI);
+//			
+//		}
 		
-		 Servo_assignment[1]= (int)(target_pack.servo1.low*1800.0/PAI);
+		 Servo_assignment[0] = (int)(target_pack.servo1.up*1400.0/PAI);
+		 Servo_assignment[1] = (int)(target_pack.servo1.low*1300.0/PAI);
+		
+		if(target_pack.servo1.low>1.8){
+			Servo_assignment[1] = Servo_assignment[1] + 50;
+		}
 		
 		
 //    Servo_assignment[0] = (int)(target_pack.servo1.up*1300.0/PAI);
@@ -217,6 +228,8 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
    {
     uint32_t ID = CAN_Receive_DataFrame(&hcan1,CAN1_buffer);
 		RobStrideRecv_Handle(&robstride_state, &hcan1, ID, CAN1_buffer);
+		 
+		  //robstride_last_rx_time = xTaskGetTickCount();
    }
 }
 
@@ -294,6 +307,24 @@ void usb_cdc_Receive(void *argument)
 		vTaskDelay(1000);
 	for(;;){
 		
+
+		taskENTER_CRITICAL();
+		bool has_received = first_packet_received;
+		TickType_t last_tick = last_recv_tick;
+		taskEXIT_CRITICAL();
+
+		if(has_received)
+		{
+			TickType_t now_recv_tick =  xTaskGetTickCount();
+			if(now_recv_tick - last_tick >20)
+			{
+				R_PID_SET.RobStride_pos.Kp = 0;
+//				R_PID_SET.RobStride_pos.Kd = 0;
+				
+			}
+				
+		}
+		
     if(xSemaphoreTake(cdc_recv_semp, portMAX_DELAY) == pdTRUE)
     {
     GM6020_forward_rad = target_pack.rob02.target_pos;
@@ -314,8 +345,40 @@ void CDC_Receive_Cb(uint8_t *src, uint16_t size)
     {
         
         memcpy(&target_pack, src, sizeof(target_pack_t));
+				last_recv_tick = xTaskGetTickCount();
+				first_packet_received = true;
         xSemaphoreGive(cdc_recv_semp);
     }
         count++;
         cur_size=size;
 }
+
+
+//TaskHandle_t watch_dog_Handle;
+//void watch_dog(void *argument)
+//{
+//    TickType_t last_wake = xTaskGetTickCount();
+
+//    // 上电延时5秒
+//    vTaskDelay(pdMS_TO_TICKS(5000));
+
+//    watchdog_enable = 1;  // 开启看门狗
+
+//    for(;;)
+//    {
+//        uint32_t now = xTaskGetTickCount();
+
+//        if(watchdog_enable && (TickType_t)(now - robstride_last_rx_time) > pdMS_TO_TICKS(20))
+//        {
+//            // 先断力
+//            RobStrideTorqueControl(&robstride_state, 0);
+
+//            // 锁死系统
+//            taskDISABLE_INTERRUPTS();
+//            while(1);
+//        }
+
+//        vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(2));
+//    }
+//}
+

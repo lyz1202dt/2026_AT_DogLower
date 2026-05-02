@@ -45,6 +45,6 @@ void Servo_control()
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1,500+Servo_offset[0]+Temp_Servo_Target[0]);
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2,500+Servo_offset[1]+Temp_Servo_Target[1]);
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3,500+Servo_offset[2]+Temp_Servo_Target[2]);
-	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4,500+Servo_offset[3]+Temp_Servo_Target[3]);
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4,500+Servo_offset[3]+Temp_Servo_Target[3]); 
 
 }

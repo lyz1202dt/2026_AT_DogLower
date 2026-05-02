@@ -46,5 +46,12 @@ void task_init()
          4,
          &air_pump_Handle);
 				 
+//	xTaskCreate(watch_dog,
+//        "watch_dog_task",
+//         128,
+//         NULL,
+//         4,
+//         &watch_dog_Handle);
+				 
 	      vPortExitCritical();
 }
