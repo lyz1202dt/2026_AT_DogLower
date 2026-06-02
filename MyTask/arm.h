@@ -33,15 +33,6 @@ typedef struct
 }Expect_Robstride;
 
 
-typedef struct
-{
-	float target_pos;
-	float target_vel;
-	float kp;
-	float kd;
-	
-}Expect_GM6020;
-
 
 
 //typedef struct
@@ -61,7 +52,6 @@ typedef struct
  int arm_pump;
  servo servo1;
  Expect_Robstride rob01;
- Expect_GM6020 rob02;
 }target_pack_t;  
 
 #pragma pack()

@@ -5,9 +5,9 @@ float b = 0;
 int a=0;
 
 TickType_t last_recv_tick =0;
-bool first_packet_received = false;
+bool first_packet_received = false;//是否第一次接收上位机传来的数据的判断标志
 
-GPIO_PinState gpio_pin_set;
+GPIO_PinState gpio_pin_set;//高电平和低电平的宏定义
 
 //volatile uint32_t robstride_last_rx_time = 0;//watchdog
 //volatile uint8_t watchdog_enable = 0;
@@ -15,22 +15,23 @@ GPIO_PinState gpio_pin_set;
 //void RampToTarget();
 int16_t current_output;
 int allow=0;
-extern int Temp_Servo_Target[4];
-extern int32_t Servo_assignment[4];
+extern int Temp_Servo_Target[4];//舵机的期望占空比，应该用来接收上位机的期望
+extern int32_t Servo_assignment[4];//舵机的预设置
 float expect_ = 0;
 //state_pack_t state_pack = {.pack_type = 0x01};
-target_pack_t target_pack = {.pack_type = 0x01};
+target_pack_t target_pack = {.pack_type = 0x01};//用来接收上位机发来的数据包
 
 
-
- RobStride_t robstride_state;
+//灵足电机的相关代码
+RobStride_t robstride_state;
 
 RobStride_t robstride01
 ={
 .hcan = &hcan1,
 .motor_id = 0x01,	
-}
-;
+};
+
+
 float arm_except = 0.0f;
 
 
@@ -51,21 +52,21 @@ float current_cur = 0.0f;
 float MAX_VEL = 90.f;
 
 
-
+//灵足电机pid
 robstride_PID R_PID_SET={
     .RobStride_pos = {
-        .Kp = 29.0f,
+        .Kp = 39.0f,
         .Ki = 0.0f,
-        .Kd = 2.0f,
+        .Kd = 0.0f,
         .limit = 0,
-        .output_limit = 100,
+        .output_limit = 40,
     },
      .RobStride_vel = {
-        .Kp = 4.2f,
+        .Kp = 3.1f,
         .Ki = 0.06f,
         .Kd = 0.0f,
         .limit = 0.0f,
-        .output_limit = 100,
+        .output_limit = 60,
     }
 };
 
@@ -99,17 +100,15 @@ void servo_Serve(void *argument)
 		
 
 		
-		Servo_assignment[0] = (int)(target_pack.servo1.up*1900.0/PAI);
+		Servo_assignment[0] = (int)(target_pack.servo1.up*1360.0/PAI);
 	  Servo_assignment[1] = (int)(target_pack.servo1.low*2000.0/PAI);
-		Servo_assignment[2] = (int)(target_pack.servo1.down*2000.0/PAI);
-		
-		
-		
+		Servo_assignment[3] = (int)(target_pack.servo1.down*2000.0/PAI);
 
 	  Servo_control();  
   	vTaskDelay (5);
 	}
 }
+
 
 TaskHandle_t stride_Serve_Handle;
 void stride_Serve(void *argument)
@@ -122,6 +121,7 @@ void stride_Serve(void *argument)
     vTaskDelay(100);
     RobStrideEnable(&robstride_state);
 	vTaskDelay(100);
+	
 	RobStrideResetAngle(&robstride_state);
 	
 	
@@ -139,7 +139,7 @@ void stride_Serve(void *argument)
              &R_PID_SET.RobStride_pos);
 if(R_PID_SET.RobStride_pos.pid_out > 20.0f)  R_PID_SET.RobStride_pos.pid_out = 20.0f;
 if(R_PID_SET.RobStride_pos.pid_out < -20.0f) R_PID_SET.RobStride_pos.pid_out = -20.0f;
-PID_Control2(robstride_state.state.omega,
+PID_Control2(robstride_state.state.omega,//0,
              R_PID_SET.RobStride_pos.pid_out, 
              &R_PID_SET.RobStride_vel);
 if(R_PID_SET.RobStride_vel.pid_out > 60.0f)  R_PID_SET.RobStride_vel.pid_out = 60.0f;
@@ -186,8 +186,8 @@ void usb_cdc_Receive(void *argument)
 			TickType_t now_recv_tick =  xTaskGetTickCount();
 			if(now_recv_tick - last_tick >20)
 			{
-				R_PID_SET.RobStride_pos.Kp = 0;
-				R_PID_SET.RobStride_pos.Kd = 0;
+				//R_PID_SET.RobStride_pos.Kp = 0;
+				//R_PID_SET.RobStride_pos.Kd = 0;
 				
 			}
 				

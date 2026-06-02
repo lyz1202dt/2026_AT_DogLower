@@ -180,7 +180,8 @@ targets:
         - RTE/_rubbish
       libList: []
     excludeList: []
-    settings: {}
+    settings:
+      debugger: cortex-debug
     toolchain: AC6
     toolchainConfigMap:
       AC5:
