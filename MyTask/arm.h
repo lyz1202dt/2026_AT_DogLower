@@ -39,9 +39,12 @@ typedef struct
 //{}
 typedef struct
 {
-	float up;
-	float low;
-	float down;
+	float left_up;
+	float left_low;
+	float left_down;
+	float right_up;
+	float right_low;
+	float right_down;
 }servo;
 
 
@@ -49,7 +52,8 @@ typedef struct
 typedef struct 
 {
  int pack_type;
- int arm_pump;
+ int arm_pump_left;
+ int arm_pump_right;
  servo servo1;
  Expect_Robstride rob01;
 }target_pack_t;  

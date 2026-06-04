@@ -15,8 +15,8 @@ GPIO_PinState gpio_pin_set;//高电平和低电平的宏定义
 //void RampToTarget();
 int16_t current_output;
 int allow=0;
-extern int Temp_Servo_Target[4];//舵机的期望占空比，应该用来接收上位机的期望
-extern int32_t Servo_assignment[4];//舵机的预设置
+//extern int Temp_Servo_Target[4];//舵机的期望占空比，应该用来接收上位机的期望
+extern int32_t Servo_assignment[7];//舵机的预设置
 float expect_ = 0;
 //state_pack_t state_pack = {.pack_type = 0x01};
 target_pack_t target_pack = {.pack_type = 0x01};//用来接收上位机发来的数据包
@@ -77,13 +77,21 @@ void air_pump(void *argument){
 	for(;;){
 //		gpio_pin_set = 1;
 //		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_7, gpio_pin_set);
-		if(target_pack.arm_pump == 1){
+		if(target_pack.arm_pump_left == 1){
+			 gpio_pin_set = 1;
+			HAL_GPIO_WritePin(GPIOA,GPIO_PIN_7, GPIO_PIN_SET);
+		}else if(target_pack.arm_pump_left == 0){
+			 gpio_pin_set = 0;
+			HAL_GPIO_WritePin(GPIOA,GPIO_PIN_7, GPIO_PIN_RESET);
+		}
+		if(target_pack.arm_pump_right == 1){
 			 gpio_pin_set = 1;
 			HAL_GPIO_WritePin(GPIOA,GPIO_PIN_7, gpio_pin_set);
-		}else if(target_pack.arm_pump == 0){
+		}else if(target_pack.arm_pump_right == 0){
 			 gpio_pin_set = 0;
 			HAL_GPIO_WritePin(GPIOA,GPIO_PIN_7, gpio_pin_set);
 		}
+		
 		
 		vTaskDelay (5);
 		
@@ -99,10 +107,12 @@ void servo_Serve(void *argument)
 	for(;;){
 		
 
-		
-		Servo_assignment[0] = (int)(target_pack.servo1.up*1360.0/PAI);
-	  Servo_assignment[1] = (int)(target_pack.servo1.low*2000.0/PAI);
-		Servo_assignment[3] = (int)(target_pack.servo1.down*2000.0/PAI);
+		Servo_assignment[0] = (int)(target_pack.servo1.left_up*1360.0/PAI);
+		Servo_assignment[1] = (int)(target_pack.servo1.left_low*1360.0/PAI);
+		Servo_assignment[3] = (int)(target_pack.servo1.left_low*1360.0/PAI);
+		Servo_assignment[4] = (int)(target_pack.servo1.right_up*1360.0/PAI);
+	  Servo_assignment[5] = (int)(target_pack.servo1.right_low*2000.0/PAI);
+		Servo_assignment[6] = (int)(target_pack.servo1.right_down*2000.0/PAI);
 
 	  Servo_control();  
   	vTaskDelay (5);

@@ -71,7 +71,7 @@ void MX_FREERTOS_Init(void);
   * @retval int
   */
 int main(void)
-  {
+{
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -80,7 +80,7 @@ int main(void)
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
-  
+
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
@@ -106,6 +106,8 @@ int main(void)
   MX_USART6_UART_Init();
   MX_USART1_UART_Init();
   MX_TIM10_Init();
+  MX_TIM2_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 	MX_USB_DEVICE_Init();
 
@@ -131,6 +133,12 @@ int main(void)
   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3,0);
     HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_4);
   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4,0);
+    HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_1);
+  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1,0);
+    HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_3);
+  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3,0);
+    HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_4);
+  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_4,0);
 	
 
 //  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_ALL);
@@ -138,8 +146,9 @@ int main(void)
 
   /* Call init function for freertos objects (in freertos.c) */
   MX_FREERTOS_Init();
+
   /* Start scheduler */
- osKernelStart();
+  osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
@@ -209,7 +218,7 @@ void SystemClock_Config(void)
 
 /**
   * @brief  Period elapsed callback in non blocking mode
-  * @note   This function is called  when TIM2 interrupt took place, inside
+  * @note   This function is called  when TIM5 interrupt took place, inside
   * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
   * a global variable "uwTick" used as application time base.
   * @param  htim : TIM handle
@@ -220,7 +229,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 0 */
 	
   /* USER CODE END Callback 0 */
-  if (htim->Instance == TIM2) {
+  if (htim->Instance == TIM5) {
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
