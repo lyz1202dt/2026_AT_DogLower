@@ -22,6 +22,8 @@ extern TaskHandle_t usb_cdc_Send_Handle;
 extern TaskHandle_t usb_cdc_Receive_Handle;
 extern TaskHandle_t air_pump_Handle;
 extern TaskHandle_t watch_dog_Handle;
+extern TaskHandle_t radiation_distance_Handle;
+
 
 typedef struct
 {
@@ -68,14 +70,14 @@ typedef struct
 	PID2 RobStride_vel;
 }robstride_PID;
 
-//typedef struct
-//{
-//	int pack_type;
-//	servo servo2;
-//	RobStride_t robstride01;
-//	GM6020_TypeDef GM6020;
-//	
-//}state_pack_t;   //���͸���λ���Ľṹ��
+#pragma pack(1)
+typedef struct
+{
+	int pack_type;
+	int red_distance;
+	
+}state_pack_t;   //���͸���λ���Ľṹ��
+#pragma pack()
 
 void servo_Serve(void *argument);
 void stride_Serve(void *argument);
@@ -85,6 +87,8 @@ void usb_cdc_Receive(void *argument);
 void CDC_Recv_Cb(uint8_t *src, uint16_t size);
 void air_pump(void *argument);
 void watch_dog(void *argument);
+void radiation_distance(void *argument);
+void parse_vl53_data(char *buf, uint16_t len);
 
 		
 #endif

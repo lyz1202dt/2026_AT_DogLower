@@ -1,6 +1,8 @@
 #include "arm.h"
 #include "math.h"
 #include <stdbool.h>
+
+#define VL53_RX_SIZE 128
 float b = 0;
 int a=0;
 
@@ -9,17 +11,21 @@ bool first_packet_received = false;//是否第一次接收上位机传来的数�
 
 GPIO_PinState gpio_pin_set;//高电平和低电平的宏定义
 
-//volatile uint32_t robstride_last_rx_time = 0;//watchdog
-//volatile uint8_t watchdog_enable = 0;
-
 //void RampToTarget();
 int16_t current_output;
-int allow=0;
+int allow=0;//只有接收到了一次上位机发来的数据才允许给上位机发送数据
+extern UART_HandleTypeDef huart2;
+extern UART_HandleTypeDef huart3;
 extern int Temp_Servo_Target[4];//舵机的期望占空比，应该用来接收上位机的期望
 extern int32_t Servo_assignment[4];//舵机的预设置
 float expect_ = 0;
-//state_pack_t state_pack = {.pack_type = 0x01};
+state_pack_t state_pack = {.pack_type = 0x01};
 target_pack_t target_pack = {.pack_type = 0x01};//用来接收上位机发来的数据包
+
+uint8_t receiving_number = 0;
+
+extern uint8_t vl53_rx_buf[VL53_RX_SIZE];
+extern volatile uint16_t vl53_distance;
 
 
 //灵足电机的相关代码
@@ -70,13 +76,29 @@ robstride_PID R_PID_SET={
     }
 };
 
+TaskHandle_t radiation_distance_Handle;
+void radiation_distance(void *argument)
+{
+    for(;;)
+    {
+        if(allow)
+        {
+            state_pack.red_distance = (int)vl53_distance;
+
+            CDC_Transmit_FS(
+                (uint8_t *)&state_pack,
+                sizeof(state_pack));
+        }
+
+        vTaskDelay(5);
+    }
+}
 
 
 TaskHandle_t air_pump_Handle;
 void air_pump(void *argument){
 	for(;;){
-//		gpio_pin_set = 1;
-//		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_7, gpio_pin_set);
+
 		if(target_pack.arm_pump == 1){
 			 gpio_pin_set = 1;
 			HAL_GPIO_WritePin(GPIOA,GPIO_PIN_7, gpio_pin_set);
@@ -160,7 +182,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
     uint32_t ID = CAN_Receive_DataFrame(&hcan1,CAN1_buffer);
 		RobStrideRecv_Handle(&robstride_state, &hcan1, ID, CAN1_buffer);
 		 
-		  //robstride_last_rx_time = xTaskGetTickCount();
+		 
    }
 }
 
@@ -196,12 +218,11 @@ void usb_cdc_Receive(void *argument)
    
 		
 		vTaskDelay(5);
-		allow=1;
+		
 	}
 }
 
 uint32_t cur_size=0;
-uint32_t count = 0;
 target_pack_t* pack = NULL;
 void CDC_Receive_Cb(uint8_t *src, uint16_t size)
 {
@@ -212,38 +233,39 @@ void CDC_Receive_Cb(uint8_t *src, uint16_t size)
         memcpy(&target_pack, src, sizeof(target_pack_t));
 				last_recv_tick = xTaskGetTickCount();
 				first_packet_received = true;
-       
+        allow=1;
     }
-        count++;
+        
         cur_size=size;
 }
 
 
-//TaskHandle_t watch_dog_Handle;
-//void watch_dog(void *argument)
-//{
-//    TickType_t last_wake = xTaskGetTickCount();
 
-//    // 上电延时5秒
-//    vTaskDelay(pdMS_TO_TICKS(5000));
+void HAL_UARTEx_RxEventCallback(
+    UART_HandleTypeDef *huart,
+    uint16_t Size)
+{
+    if(huart->Instance == USART3)
+    {
+			
+        vl53_rx_buf[Size] = '\0';
 
-//    watchdog_enable = 1;  // 开启看门狗
+        char *p = strstr((char *)vl53_rx_buf, "d:");
 
-//    for(;;)
-//    {
-//        uint32_t now = xTaskGetTickCount();
+        if(p != NULL)
+        {
+            int dist;
 
-//        if(watchdog_enable && (TickType_t)(now - robstride_last_rx_time) > pdMS_TO_TICKS(20))
-//        {
-//            // 先断力
-//            RobStrideTorqueControl(&robstride_state, 0);
+            if(sscanf(p, "d: %d", &dist) == 1)
+            {
+                vl53_distance = (uint16_t)dist;
+            }
+        }
 
-//            // 锁死系统
-//            taskDISABLE_INTERRUPTS();
-//            while(1);
-//        }
+        HAL_UARTEx_ReceiveToIdle_DMA( &huart3,vl53_rx_buf,VL53_RX_SIZE);
+				__HAL_DMA_DISABLE_IT(huart3.hdmarx,DMA_IT_HT);
+    }
+}
 
-//        vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(2));
-//    }
-//}
+
 

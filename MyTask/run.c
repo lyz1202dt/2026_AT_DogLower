@@ -137,7 +137,7 @@ void WheelControlTask(void* param)
     }
 }
 //*************************************************************************
-uint8_t allow_send=0;
+//uint8_t allow_send=0;
 void MotorSendTask(void *param) // 将电机的数据发送到PC上
 {
     //USB_CDC_Init(CDC_Recv_Cb, NULL, NULL);
@@ -155,8 +155,8 @@ void MotorSendTask(void *param) // 将电机的数据发送到PC上
             legs_state.leg[i].wheel.omega=leg[i].wheel.motor.Speed*3.14159265f*2.0f/60.0f/19.0f;
             legs_state.leg[i].wheel.torque=0.0f;    //TODO:根据反馈计算真实力矩
         }
-				if(allow_send)    //电机数据准备好再发
-					CDC_Transmit_FS((uint8_t*)&legs_state, sizeof(legs_state));
+//				if(allow_send)    //电机数据准备好再发
+//					CDC_Transmit_FS((uint8_t*)&legs_state, sizeof(legs_state));
         vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(5));
     }
 }
@@ -247,7 +247,7 @@ void MotorRecvTask(void *param) // 从PC接收电机的期望值
         setup_offset[i][1]=leg[i].joint[1].motor.state.rad;
         setup_offset[i][2]=leg[i].joint[2].motor.state.rad;
     }
-		allow_send=1;		//允许发送数据
+		//allow_send=1;		//允许发送数据
        
     while (1)
     {
@@ -309,14 +309,14 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
     }
 }
 
-void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t size)
-{
-    if (huart->Instance == USART6)
-    {
-        RS485RecvIRQ_Handler(&rs485bus, huart, size);
-        err_timer_cnt=0;    //每接收一次，就清零
-    }
-}
+//void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t size)
+//{
+//    if (huart->Instance == USART6)
+//    {
+//        RS485RecvIRQ_Handler(&rs485bus, huart, size);
+//        err_timer_cnt=0;    //每接收一次，就清零
+//    }
+//}
 
 
 

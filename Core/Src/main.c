@@ -44,6 +44,11 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+#define VL53_RX_SIZE 128
+
+uint8_t vl53_rx_buf[VL53_RX_SIZE];
+volatile uint16_t vl53_distance = 0;
+HAL_StatusTypeDef ret;
 
 /* USER CODE END PM */
 
@@ -71,7 +76,7 @@ void MX_FREERTOS_Init(void);
   * @retval int
   */
 int main(void)
-  {
+{
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -80,7 +85,7 @@ int main(void)
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
-  
+
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
@@ -113,9 +118,26 @@ int main(void)
 	HAL_TIM_Base_Start_IT(&htim10);
 //  HAL_TIM_Base_Start(&htim1);
   CanFilter_Init(&hcan1);
-	
   CanFilter_Init(&hcan2);
-  
+	
+//  HAL_UARTEx_ReceiveToIdle_DMA(
+//    &huart2,
+//    vl53_rx_buf,
+//    VL53_RX_SIZE
+//);
+
+ret = HAL_UARTEx_ReceiveToIdle_DMA(
+          &huart3,
+          vl53_rx_buf,
+          VL53_RX_SIZE);
+
+volatile int test = ret;
+
+__HAL_DMA_DISABLE_IT(
+    huart3.hdmarx,
+    DMA_IT_HT
+);
+	
 	HAL_CAN_Start(&hcan1); 
   HAL_CAN_Start(&hcan2);
 	HAL_CAN_ActivateNotification(&hcan1,CAN_IT_RX_FIFO0_MSG_PENDING);
@@ -138,8 +160,9 @@ int main(void)
 
   /* Call init function for freertos objects (in freertos.c) */
   MX_FREERTOS_Init();
+
   /* Start scheduler */
- osKernelStart();
+  osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */

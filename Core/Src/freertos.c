@@ -134,10 +134,8 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void const * argument)
 {
   /* init code for USB_DEVICE */
-  MX_USB_DEVICE_Init();//enable usb
-	task_init();//Initialize and create a task初始化
-
-	
+  MX_USB_DEVICE_Init();
+	task_init();
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
   for(;;)
