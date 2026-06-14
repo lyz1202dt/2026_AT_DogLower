@@ -31,7 +31,7 @@ typedef struct
     float except_pos;
     float except_omega;
     float kp;
-	float kd; 
+		float kd; 
 }Expect_Robstride;
 
 

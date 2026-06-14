@@ -26,7 +26,7 @@ uint8_t receiving_number = 0;
 
 extern uint8_t vl53_rx_buf[VL53_RX_SIZE];
 extern volatile uint16_t vl53_distance;
-
+volatile uint8_t ret;
 
 //灵足电机的相关代码
 RobStride_t robstride_state;
@@ -79,18 +79,18 @@ robstride_PID R_PID_SET={
 TaskHandle_t radiation_distance_Handle;
 void radiation_distance(void *argument)
 {
+	 vTaskDelay(pdMS_TO_TICKS(5000));
     for(;;)
     {
-        if(allow)
-        {
-            state_pack.red_distance = (int)vl53_distance;
+       
+     state_pack.red_distance = (int)vl53_distance;     
 
-            CDC_Transmit_FS(
-                (uint8_t *)&state_pack,
-                sizeof(state_pack));
-        }
+    ret = CDC_Transmit_FS(
+    (uint8_t *)&state_pack,
+    sizeof(state_pack));
+        
 
-        vTaskDelay(5);
+       vTaskDelay(pdMS_TO_TICKS(500));
     }
 }
 
@@ -98,13 +98,15 @@ void radiation_distance(void *argument)
 TaskHandle_t air_pump_Handle;
 void air_pump(void *argument){
 	for(;;){
+		
+		
 
 		if(target_pack.arm_pump == 1){
 			 gpio_pin_set = 1;
-			HAL_GPIO_WritePin(GPIOA,GPIO_PIN_7, gpio_pin_set);
+			HAL_GPIO_WritePin(GPIOB,GPIO_PIN_0, gpio_pin_set);
 		}else if(target_pack.arm_pump == 0){
 			 gpio_pin_set = 0;
-			HAL_GPIO_WritePin(GPIOA,GPIO_PIN_7, gpio_pin_set);
+			HAL_GPIO_WritePin(GPIOB,GPIO_PIN_0, gpio_pin_set);
 		}
 		
 		vTaskDelay (5);
@@ -137,7 +139,7 @@ void stride_Serve(void *argument)
 {
 	
 	vTaskDelay(5000);
-    RobStrideInit(&robstride_state,&hcan1,0x02,RobStride_01);
+    RobStrideInit(&robstride_state,&hcan1,0x03,RobStride_01);
 	vTaskDelay(100);
     RobStrideSetMode(&robstride_state, RobStride_Torque);
     vTaskDelay(100);

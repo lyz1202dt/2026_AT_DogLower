@@ -48,7 +48,7 @@
 
 uint8_t vl53_rx_buf[VL53_RX_SIZE];
 volatile uint16_t vl53_distance = 0;
-HAL_StatusTypeDef ret;
+
 
 /* USER CODE END PM */
 
@@ -116,22 +116,17 @@ int main(void)
 
 	
 	HAL_TIM_Base_Start_IT(&htim10);
-//  HAL_TIM_Base_Start(&htim1);
+
   CanFilter_Init(&hcan1);
   CanFilter_Init(&hcan2);
 	
-//  HAL_UARTEx_ReceiveToIdle_DMA(
-//    &huart2,
-//    vl53_rx_buf,
-//    VL53_RX_SIZE
-//);
 
-ret = HAL_UARTEx_ReceiveToIdle_DMA(
+ HAL_UARTEx_ReceiveToIdle_DMA(
           &huart3,
           vl53_rx_buf,
           VL53_RX_SIZE);
 
-volatile int test = ret;
+
 
 __HAL_DMA_DISABLE_IT(
     huart3.hdmarx,
