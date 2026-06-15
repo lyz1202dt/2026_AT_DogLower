@@ -40,8 +40,8 @@ typedef enum
     RobStride_02,
     RobStride_03,
     RobStride_04,
-		RobStride_EL05,
-		RobStride_06
+	RobStride_EL05,
+	RobStride_06
 }RobStrideType;
 
 typedef enum

@@ -14,11 +14,12 @@
 #include "task_init.h"
 #include "kfc_grasp and release.h"
 
-#define PAI 3.14159265358979323846f
+#define PI 3.14159265358979323846f
+#define ANGLE_270_RAD (270.0f * PI / 180.0f)
 #define PUMP_START 	HAL_GPIO_WritePin(GPIOB,GPIO_PIN_0, 1)
 #define PUMP_OFF 	HAL_GPIO_WritePin(GPIOB,GPIO_PIN_0, 0)
 #define AIR_VALUE_START 	HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1, 1)
-#define AIR_VALUE_OFF 	HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1, 0)
+#define AIR_VALUE_OFF 		HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1, 0)
 extern TaskHandle_t servo_Serve_Handle;
 extern TaskHandle_t stride_Serve_Handle;
 extern TaskHandle_t GM6020_Serve_Handle;
@@ -38,15 +39,10 @@ typedef struct
 	float kd; 
 }Expect_Robstride;
 
-
-
-
-//typedef struct
-//{}
 typedef struct
 {
 	float up;
-	float low;
+	float middle;
 	float down;
 }servo;
 
@@ -79,7 +75,6 @@ typedef struct
 {
 	int pack_type;
 	int red_distance;
-	
 }state_pack_t;   //���͸���λ���Ľṹ��
 #pragma pack()
 

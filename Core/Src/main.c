@@ -119,19 +119,9 @@ int main(void)
 
   CanFilter_Init(&hcan1);
   CanFilter_Init(&hcan2);
-	
 
- HAL_UARTEx_ReceiveToIdle_DMA(
-          &huart3,
-          vl53_rx_buf,
-          VL53_RX_SIZE);
-
-
-
-__HAL_DMA_DISABLE_IT(
-    huart3.hdmarx,
-    DMA_IT_HT
-);
+  HAL_UARTEx_ReceiveToIdle_DMA(&huart3,vl53_rx_buf,VL53_RX_SIZE);
+__HAL_DMA_DISABLE_IT(huart3.hdmarx,DMA_IT_HT);
 	
 	HAL_CAN_Start(&hcan1); 
   HAL_CAN_Start(&hcan2);

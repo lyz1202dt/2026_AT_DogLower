@@ -72,8 +72,8 @@ virtualFolder:
         - path: ../MyLib/CANDrive.h
         - path: ../MyLib/kfc_grasp and release.c
         - path: ../MyLib/kfc_grasp and release.h
-        - path: ../MyLib/RobStride.c
-        - path: ../MyLib/RobStride.h
+        - path: ../MyLib/RobStride2.c
+        - path: ../MyLib/RobStride2.h
       folders: []
     - name: MyTask
       files:

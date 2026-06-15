@@ -61,18 +61,18 @@ float MAX_VEL = 90.f;
 //灵足电机pid
 robstride_PID R_PID_SET={
     .RobStride_pos = {
-        .Kp = 39.0f,
+        .Kp = 0.0f,
         .Ki = 0.0f,
         .Kd = 0.0f,
         .limit = 0,
         .output_limit = 40,
     },
      .RobStride_vel = {
-        .Kp = 3.1f,
-        .Ki = 0.06f,
+        .Kp = 0.1f,
+        .Ki = 0.0f,
         .Kd = 0.0f,
         .limit = 0.0f,
-        .output_limit = 60,
+        .output_limit = 5,
     }
 };
 
@@ -96,12 +96,12 @@ void air_pump(void *argument){
 		if(target_pack.arm_pump == 1)
         {	
 			PUMP_START;
-            AIR_VALUE_START;
+            AIR_VALUE_OFF;
 		}
         else if(target_pack.arm_pump == 0)
         {
-			PUMP_OFF;
-            AIR_VALUE_OFF;
+			PUMP_OFF;   
+            AIR_VALUE_START;
 		}
 		
 		vTaskDelay(5);
@@ -116,10 +116,13 @@ void servo_Serve(void *argument)
 {
 	for(;;)
     {	
-		Servo_assignment[0] = (int)(target_pack.servo1.up*1360.0/PAI);
-	    Servo_assignment[1] = (int)(target_pack.servo1.low*2000.0/PAI);
-		Servo_assignment[3] = (int)(target_pack.servo1.down*2000.0/PAI);
-	    Servo_control();  
+			// Servo_assignment[0] = (int)(target_pack.servo1.up*2000.0/ANGLE_270_RAD);	//PE9_TIM1_CH1_UP
+			// Servo_assignment[1] = (int)(target_pack.servo1.middle*2000.0/ANGLE_270_RAD);	//PE11_TIM1_CH2_MIDDLE
+			// Servo_assignment[3] = (int)(target_pack.servo1.down*2000.0/ANGLE_270_RAD);	//PE14_TIM1_CH4_DOWN
+            Servo_assignment[0] = (int)(target_pack.servo1.up*2000.0/270);	    //PE9
+			Servo_assignment[1] = (int)(target_pack.servo1.middle*2000.0/270);	//PE11
+			Servo_assignment[3] = (int)(target_pack.servo1.down*2000.0/270);	//PE14
+	        Servo_control();  
 
   	    vTaskDelay (5);
 	}
@@ -139,8 +142,8 @@ void stride_Serve(void *argument)
 	RobStrideResetAngle(&robstride_state);
 	
     TickType_t last_wake_time = xTaskGetTickCount();
-     for(;;)
-     {	 
+    for(;;)
+    {	 
      // arm_except=  target_pack.rob01.except_pos*1.50;
 		
     //    RobStrideMotionControl(&robstride_state,0x02,target_pack.rob01.except_torque,
