@@ -9,12 +9,16 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "PID_old.h"
-#include "RobStride.h"
+#include "RobStride2.h"
 #include "motor.h"
 #include "task_init.h"
 #include "kfc_grasp and release.h"
 
 #define PAI 3.14159265358979323846f
+#define PUMP_START 	HAL_GPIO_WritePin(GPIOB,GPIO_PIN_0, 1)
+#define PUMP_OFF 	HAL_GPIO_WritePin(GPIOB,GPIO_PIN_0, 0)
+#define AIR_VALUE_START 	HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1, 1)
+#define AIR_VALUE_OFF 	HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1, 0)
 extern TaskHandle_t servo_Serve_Handle;
 extern TaskHandle_t stride_Serve_Handle;
 extern TaskHandle_t GM6020_Serve_Handle;
@@ -31,7 +35,7 @@ typedef struct
     float except_pos;
     float except_omega;
     float kp;
-		float kd; 
+	float kd; 
 }Expect_Robstride;
 
 

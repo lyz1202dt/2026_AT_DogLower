@@ -26,7 +26,7 @@ uint8_t receiving_number = 0;
 
 extern uint8_t vl53_rx_buf[VL53_RX_SIZE];
 extern volatile uint16_t vl53_distance;
-volatile uint8_t ret;
+// volatile uint8_t ret;
 
 //灵足电机的相关代码
 RobStride_t robstride_state;
@@ -79,38 +79,32 @@ robstride_PID R_PID_SET={
 TaskHandle_t radiation_distance_Handle;
 void radiation_distance(void *argument)
 {
-	 vTaskDelay(pdMS_TO_TICKS(5000));
+	vTaskDelay(pdMS_TO_TICKS(5000));
     for(;;)
     {
-       
-     state_pack.red_distance = (int)vl53_distance;     
-
-    ret = CDC_Transmit_FS(
-    (uint8_t *)&state_pack,
-    sizeof(state_pack));
-        
-
-       vTaskDelay(pdMS_TO_TICKS(500));
+        state_pack.red_distance = (int)vl53_distance;     
+        CDC_Transmit_FS((uint8_t *)&state_pack,sizeof(state_pack));  
+        vTaskDelay(pdMS_TO_TICKS(500));
     }
 }
 
 
 TaskHandle_t air_pump_Handle;
 void air_pump(void *argument){
-	for(;;){
-		
-		
-
-		if(target_pack.arm_pump == 1){
-			 gpio_pin_set = 1;
-			HAL_GPIO_WritePin(GPIOB,GPIO_PIN_0, gpio_pin_set);
-		}else if(target_pack.arm_pump == 0){
-			 gpio_pin_set = 0;
-			HAL_GPIO_WritePin(GPIOB,GPIO_PIN_0, gpio_pin_set);
+	for(;;)
+    {
+		if(target_pack.arm_pump == 1)
+        {	
+			PUMP_START;
+            AIR_VALUE_START;
+		}
+        else if(target_pack.arm_pump == 0)
+        {
+			PUMP_OFF;
+            AIR_VALUE_OFF;
 		}
 		
-		vTaskDelay (5);
-		
+		vTaskDelay(5);
 	}
 }
 
@@ -120,16 +114,14 @@ void air_pump(void *argument){
 TaskHandle_t servo_Serve_Handle;
 void servo_Serve(void *argument)
 {
-	for(;;){
-		
-
-		
+	for(;;)
+    {	
 		Servo_assignment[0] = (int)(target_pack.servo1.up*1360.0/PAI);
-	  Servo_assignment[1] = (int)(target_pack.servo1.low*2000.0/PAI);
+	    Servo_assignment[1] = (int)(target_pack.servo1.low*2000.0/PAI);
 		Servo_assignment[3] = (int)(target_pack.servo1.down*2000.0/PAI);
+	    Servo_control();  
 
-	  Servo_control();  
-  	vTaskDelay (5);
+  	    vTaskDelay (5);
 	}
 }
 
@@ -137,40 +129,36 @@ void servo_Serve(void *argument)
 TaskHandle_t stride_Serve_Handle;
 void stride_Serve(void *argument)
 {
-	
 	vTaskDelay(5000);
-    RobStrideInit(&robstride_state,&hcan1,0x03,RobStride_01);
+    RobStrideInit(&robstride_state,&hcan1,0x01,RobStride_EL05);
 	vTaskDelay(100);
     RobStrideSetMode(&robstride_state, RobStride_Torque);
     vTaskDelay(100);
     RobStrideEnable(&robstride_state);
 	vTaskDelay(100);
-	
 	RobStrideResetAngle(&robstride_state);
 	
-	
-    TickType_t last_wake = xTaskGetTickCount();
+    TickType_t last_wake_time = xTaskGetTickCount();
      for(;;)
-     {
-			 
+     {	 
      // arm_except=  target_pack.rob01.except_pos*1.50;
 		
     //    RobStrideMotionControl(&robstride_state,0x02,target_pack.rob01.except_torque,
 	// 		 arm_except,target_pack.rob01.except_omega*1.50,
 	// 		 target_pack.rob01.kp,target_pack.rob01.kd);
- PID_Control2(robstride_state.state.rad,
-             target_pack.rob01.except_pos,
-             &R_PID_SET.RobStride_pos);
-if(R_PID_SET.RobStride_pos.pid_out > 20.0f)  R_PID_SET.RobStride_pos.pid_out = 20.0f;
-if(R_PID_SET.RobStride_pos.pid_out < -20.0f) R_PID_SET.RobStride_pos.pid_out = -20.0f;
-PID_Control2(robstride_state.state.omega,//0,
-             R_PID_SET.RobStride_pos.pid_out, 
-             &R_PID_SET.RobStride_vel);
-if(R_PID_SET.RobStride_vel.pid_out > 60.0f)  R_PID_SET.RobStride_vel.pid_out = 60.0f;
-if(R_PID_SET.RobStride_vel.pid_out < -60.0f) R_PID_SET.RobStride_vel.pid_out = -60.0f;
-RobStrideTorqueControl(&robstride_state,R_PID_SET.RobStride_vel.pid_out);// R_PID_SET.RobStride_vel.pid_out
-vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(2));
-     }
+        PID_Control2(robstride_state.state.rad,
+                    target_pack.rob01.except_pos,
+                    &R_PID_SET.RobStride_pos);
+        if(R_PID_SET.RobStride_pos.pid_out > 20.0f)  R_PID_SET.RobStride_pos.pid_out = 20.0f;
+        if(R_PID_SET.RobStride_pos.pid_out < -20.0f) R_PID_SET.RobStride_pos.pid_out = -20.0f;
+        PID_Control2(robstride_state.state.omega,//0,
+                    R_PID_SET.RobStride_pos.pid_out, 
+                    &R_PID_SET.RobStride_vel);
+        if(R_PID_SET.RobStride_vel.pid_out > 60.0f)  R_PID_SET.RobStride_vel.pid_out = 60.0f;
+        if(R_PID_SET.RobStride_vel.pid_out < -60.0f) R_PID_SET.RobStride_vel.pid_out = -60.0f;
+        RobStrideTorqueControl(&robstride_state,R_PID_SET.RobStride_vel.pid_out);// R_PID_SET.RobStride_vel.pid_out
+        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(4));
+    }
 }
 
 
@@ -194,12 +182,11 @@ void CDC_Receive_Cb(uint8_t *src, uint16_t size);
 TaskHandle_t usb_cdc_Receive_Handle;
 void usb_cdc_Receive(void *argument)
 {
-	  USB_CDC_Init(CDC_Receive_Cb, NULL, NULL);
-    
-		vTaskDelay(1000);
-	for(;;){
-		
+	USB_CDC_Init(CDC_Receive_Cb, NULL, NULL);   
+	vTaskDelay(1000);
 
+	for(;;)
+    {
 		taskENTER_CRITICAL();
 		bool has_received = first_packet_received;
 		TickType_t last_tick = last_recv_tick;
@@ -213,32 +200,26 @@ void usb_cdc_Receive(void *argument)
 				//R_PID_SET.RobStride_pos.Kp = 0;
 				//R_PID_SET.RobStride_pos.Kd = 0;
 				
-			}
-				
-		}
-		
-   
-		
-		vTaskDelay(5);
-		
+			}	
+		}	  
+		vTaskDelay(5);	
 	}
 }
 
 uint32_t cur_size=0;
-target_pack_t* pack = NULL;
+
 void CDC_Receive_Cb(uint8_t *src, uint16_t size)
 {
-		pack = (target_pack_t*)src;
     if(size==sizeof(target_pack_t)&&((target_pack_t*)src)->pack_type==0x01)
     {
-        
         memcpy(&target_pack, src, sizeof(target_pack_t));
-				last_recv_tick = xTaskGetTickCount();
-				first_packet_received = true;
+
+		last_recv_tick = xTaskGetTickCount();
+		first_packet_received = true;
         allow=1;
     }
-        
-        cur_size=size;
+
+    cur_size=size;
 }
 
 

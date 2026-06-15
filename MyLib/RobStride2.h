@@ -1,5 +1,5 @@
-#ifndef __ROBSTRIDE_H__
-#define __ROBSTRIDE_H__
+#ifndef __ROBSTRIDE2_H__
+#define __ROBSTRIDE2_H__
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -39,7 +39,9 @@ typedef enum
     RobStride_01,
     RobStride_02,
     RobStride_03,
-    RobStride_04
+    RobStride_04,
+		RobStride_EL05,
+		RobStride_06
 }RobStrideType;
 
 typedef enum
@@ -79,14 +81,14 @@ typedef struct
 
 typedef struct
 {
-    //Ê¹ÓÃµÄCAN¿Ú
+    //ä½¿ç”¨çš„CANå£
     CAN_HandleTypeDef *hcan;
-    uint32_t motor_id;              //µç»ú8Î»ID
-    uint32_t host_id;                //Ö÷»úID
+    uint32_t motor_id;              //ç”µæœº8ä½ID
+    uint32_t host_id;                //ä¸»æœºID
 
-    RobStrideType type;             //µç»úÀàĞÍ
-    RobStrideState_t state;           //µç»úÔËĞĞÊ±ĞÅÏ¢
-    RobStrideParam_t param;           //µç»ú²ÎÊıÉèÖÃ
+    RobStrideType type;             //ç”µæœºç±»å‹
+    RobStrideState_t state;           //ç”µæœºè¿è¡Œæ—¶ä¿¡æ¯
+    RobStrideParam_t param;           //ç”µæœºå‚æ•°è®¾ç½®
 }RobStride_t;
 
 uint32_t RobStrideSend(RobStride_t *device,uint32_t ExtID,uint8_t* buf);

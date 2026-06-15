@@ -14,6 +14,7 @@ void task_init()
          NULL,
          4,
          &radiation_distance_Handle);
+
 	xTaskCreate(servo_Serve,
         "servo_task",
          256,
@@ -48,5 +49,5 @@ void task_init()
 //         4,
 //         &watch_dog_Handle);
 				 
-	      vPortExitCritical();
+	vPortExitCritical();
 }

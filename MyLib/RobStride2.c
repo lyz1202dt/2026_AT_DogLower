@@ -1,4 +1,4 @@
-#include "RobStride.h"
+#include "RobStride2.h"
 
 static inline uint16_t float_to_uint16(float x, float x_min, float x_max)
 {
@@ -22,19 +22,19 @@ void RobStrideInit(RobStride_t *device, CAN_HandleTypeDef *hcan, uint32_t id, Ro
 uint32_t RobStrideEnable(RobStride_t *device)
 {
     uint8_t buf[8] = {0};
-    return RobStrideSend(device, (3 << 24) | (device->host_id << 8) | (device->motor_id), buf); // ·¢ËÍÊ¹ÄÜÃüÁî
+    return RobStrideSend(device, (3 << 24) | (device->host_id << 8) | (device->motor_id), buf); // å‘é€ä½¿èƒ½å‘½ä»¤
 }
 
 uint32_t RobStrideDisable(RobStride_t *device, uint8_t clear_error)
 {
     uint8_t buf[8] = {clear_error};
-    return RobStrideSend(device, (4 << 24) | (device->host_id << 8) | (device->motor_id), buf); // ·¢ËÍÊ¹ÄÜÃüÁî
+    return RobStrideSend(device, (4 << 24) | (device->host_id << 8) | (device->motor_id), buf); // å‘é€ä½¿èƒ½å‘½ä»¤
 }
 
 uint32_t RobStrideResetAngle(RobStride_t *device)
 {
     uint8_t buf[8] = {1};
-    return RobStrideSend(device, (6 << 24) | (device->host_id << 8) | (device->motor_id), buf); // ·¢ËÍÊ¹ÄÜÃüÁî
+    return RobStrideSend(device, (6 << 24) | (device->host_id << 8) | (device->motor_id), buf); // å‘é€ä½¿èƒ½å‘½ä»¤
 }
 
 uint32_t RobStrideGet(RobStride_t *device, uint16_t cmd)
@@ -42,7 +42,7 @@ uint32_t RobStrideGet(RobStride_t *device, uint16_t cmd)
     uint8_t buf[8] = {0};
     *((uint16_t *)buf) = cmd;
     uint32_t Extid = (17 << 24) | (device->host_id << 8) | (device->motor_id);
-    return RobStrideSend(device, Extid, buf); // ·¢ËÍÊ¹ÄÜÃüÁî
+    return RobStrideSend(device, Extid, buf); // å‘é€ä½¿èƒ½å‘½ä»¤
 }
 
 uint32_t RobStrideSetMode(RobStride_t *device, RobStrideMode mode)
@@ -51,23 +51,23 @@ uint32_t RobStrideSetMode(RobStride_t *device, RobStrideMode mode)
     buf[0] = (uint8_t)PARAM_RUN_MODE;
     buf[1] = (uint8_t)(PARAM_RUN_MODE >> 8);
     buf[4] = (uint8_t)mode;
-    return RobStrideSend(device, (18 << 24) | (device->host_id << 8) | (device->motor_id), buf); // ·¢ËÍÊ¹ÄÜÃüÁî
+    return RobStrideSend(device, (18 << 24) | (device->host_id << 8) | (device->motor_id), buf); // å‘é€ä½¿èƒ½å‘½ä»¤
 }
 
 uint32_t RobStrideMotionControl(RobStride_t *device, uint8_t motor_id, float torque, float angle, float omega, float kp, float kd)
 {
     if (device == NULL)
     {
-        return 1; // ÎŞĞ§Éè±¸£¬·µ»Ø´íÎóÂë
+        return 1; // æ— æ•ˆè®¾å¤‡ï¼Œè¿”å›é”™è¯¯ç 
     }
 
     uint8_t buf[8] = {0};
-    float tq_min, tq_max;       // Å¤¾Ø·¶Î§
-    float omega_min, omega_max; // ½ÇËÙ¶È·¶Î§
-    float kp_min, kp_max;       // Kp·¶Î§
-    float kd_min, kd_max;       // Kd·¶Î§
+    float tq_min, tq_max;       // æ‰­çŸ©èŒƒå›´
+    float omega_min, omega_max; // è§’é€Ÿåº¦èŒƒå›´
+    float kp_min, kp_max;       // KpèŒƒå›´
+    float kd_min, kd_max;       // KdèŒƒå›´
 
-    // ¸ù¾İµç»úĞÍºÅÉèÖÃ²ÎÊıÁ¿³Ì
+    // æ ¹æ®ç”µæœºå‹å·è®¾ç½®å‚æ•°é‡ç¨‹
     switch (device->type)
     {
     case RobStride_01:
@@ -81,14 +81,14 @@ uint32_t RobStrideMotionControl(RobStride_t *device, uint8_t motor_id, float tor
         kd_max = 5.0f;
         break;
     case RobStride_02:
-        tq_min = -60.0f;
-        tq_max = 60.0f;
+        tq_min = -17.0f;
+        tq_max = 17.0f;
         omega_min = -44.0f;
         omega_max = 44.0f;
         kp_min = 0.0f;
         kp_max = 5000.0f;
         kd_min = 0.0f;
-        kd_max = 100.0f;
+        kd_max = 5.0f;
         break;
     case RobStride_03:
         tq_min = -60.0f;
@@ -110,18 +110,38 @@ uint32_t RobStrideMotionControl(RobStride_t *device, uint8_t motor_id, float tor
         kd_min = 0.0f;
         kd_max = 100.0f;
         break;
+		case RobStride_EL05:
+				tq_min = -6.0f;
+        tq_max = 6.0f;
+				omega_min = -50.0f;
+        omega_max = 50.0f;
+				kp_min = 0.0f;
+        kp_max = 500.0f;
+        kd_min = 0.0f;
+        kd_max = 5.0f;
+				break;
+		case RobStride_06:
+				tq_min = -36.0f;
+        tq_max = 36.0f;
+				omega_min = -50.0f;
+        omega_max = 50.0f;
+				kp_min = 0.0f;
+        kp_max = 5000.0f;
+        kd_min = 0.0f;
+        kd_max = 100.0f;
+				break;
     default:
-        return 2; // ÎŞĞ§ĞÍºÅ£¬·µ»Ø´íÎóÂë
+        return 2; // æ— æ•ˆå‹å·ï¼Œè¿”å›é”™è¯¯ç 
     }
 
-    // Á¿»¯²ÎÊı£¨½Ç¶È·¶Î§¹Ì¶¨Îª-4¦Ğ~4¦Ğ£©
+    // é‡åŒ–å‚æ•°ï¼ˆè§’åº¦èŒƒå›´å›ºå®šä¸º-4Ï€~4Ï€ï¼‰
     uint16_t pos_u = float_to_uint16(angle, -4.0f * M_PI, 4.0f * M_PI);
     uint16_t vel_u = float_to_uint16(omega, omega_min, omega_max);
     uint16_t kp_u = float_to_uint16(kp, kp_min, kp_max);
     uint16_t kd_u = float_to_uint16(kd, kd_min, kd_max);
     uint16_t tq_u = float_to_uint16(torque, tq_min, tq_max);
 
-    // Ìî³äÊı¾İÇø£¨¸ß×Ö½ÚÔÚÇ°£¬´ó¶ËĞò£©
+    // å¡«å……æ•°æ®åŒºï¼ˆé«˜å­—èŠ‚åœ¨å‰ï¼Œå¤§ç«¯åºï¼‰
     buf[0] = (pos_u >> 8) & 0xFF;
     buf[1] = pos_u & 0xFF;
     buf[2] = (vel_u >> 8) & 0xFF;
@@ -131,10 +151,10 @@ uint32_t RobStrideMotionControl(RobStride_t *device, uint8_t motor_id, float tor
     buf[6] = (kd_u >> 8) & 0xFF;
     buf[7] = kd_u & 0xFF;
 
-    // ¹¹Ôì29Î»À©Õ¹ID£ºBit28~24=0x1£¬Bit23~8=Å¤¾ØÁ¿»¯Öµ£¬Bit7~0=µç»úID
+    // æ„é€ 29ä½æ‰©å±•IDï¼šBit28~24=0x1ï¼ŒBit23~8=æ‰­çŸ©é‡åŒ–å€¼ï¼ŒBit7~0=ç”µæœºID
     uint32_t ExtID = (0x1 << 24) | ((uint32_t)tq_u << 8) | (motor_id & 0xFF);
 
-    // ·¢ËÍCANÖ¡£¨¼ÙÉèRobStrideSend·µ»Ø0Îª³É¹¦£¬ÆäËûÎª´íÎó£©
+    // å‘é€CANå¸§ï¼ˆå‡è®¾RobStrideSendè¿”å›0ä¸ºæˆåŠŸï¼Œå…¶ä»–ä¸ºé”™è¯¯ï¼‰
     return RobStrideSend(device, ExtID, buf);
 }
 
@@ -185,7 +205,7 @@ uint32_t RobStrideSetLocPID(RobStride_t *device, float kp)
 
 uint32_t RobStrideSetCurPID(RobStride_t *device, float kp, float ki)
 {
-    // TODO:ÉèÖÃµçÁ÷»·PID£¨Ò»°ã²»ĞèÒª£¬ËùÒÔ¾Í²»Ğ´ÁË£©
+    // TODO:è®¾ç½®ç”µæµç¯PIDï¼ˆä¸€èˆ¬ä¸éœ€è¦ï¼Œæ‰€ä»¥å°±ä¸å†™äº†ï¼‰
     return 0;
 }
 
@@ -222,60 +242,68 @@ uint32_t RobStrideRecv_Handle(RobStride_t *device, CAN_HandleTypeDef *hcan, uint
     uint32_t type = ID >> 24;
     if (type == 0)
     {
-        // TODO:³¢ÊÔ»ñÈ¡Éè±¸ĞÅÏ¢ÒÔ¼ì²éÍ¨ĞÅ
+        // TODO:å°è¯•è·å–è®¾å¤‡ä¿¡æ¯ä»¥æ£€æŸ¥é€šä¿¡
     }
-    else if (type == 2) // ´æ´¢·´À¡µÄÊı¾İ
+    else if (type == 2) // å­˜å‚¨åé¦ˆçš„æ•°æ®
     {
         float omega_scale, torque_scale;
 
-        // ÌáÈ¡¹«¹²²¿·Ö£º·´À¡IDºÍ½Ç¶È£¨ËùÓĞĞÍºÅ½Ç¶È·¶Î§Ò»ÖÂ£©
+        // æå–å…¬å…±éƒ¨åˆ†ï¼šåé¦ˆIDå’Œè§’åº¦ï¼ˆæ‰€æœ‰å‹å·è§’åº¦èŒƒå›´ä¸€è‡´ï¼‰
         device->state.feedback = ID >> 16;
         device->state.rad = (float)(((DEPACK_U8_TO_U16_FLIP(buf[0], buf[1])) - 32767.0f) * 4.0f * M_PI / 32767.0f);
 
-        // ¸ù¾İÉè±¸ÀàĞÍÉèÖÃ½ÇËÙ¶ÈºÍÅ¤¾ØµÄËõ·ÅÏµÊı
+        // æ ¹æ®è®¾å¤‡ç±»å‹è®¾ç½®è§’é€Ÿåº¦å’Œæ‰­çŸ©çš„ç¼©æ”¾ç³»æ•°
         switch (device->type)
         {
         case RobStride_01:
-            omega_scale = 44.0f;  // ½ÇËÙ¶È·¶Î§ ¡À44
-            torque_scale = 17.0f; // Å¤¾Ø·¶Î§ ¡À17
+            omega_scale = 44.0f;  // è§’é€Ÿåº¦èŒƒå›´ Â±44
+            torque_scale = 17.0f; // æ‰­çŸ©èŒƒå›´ Â±17
             break;
         case RobStride_02:
-            omega_scale = 44.0f;  // ½ÇËÙ¶È·¶Î§ ¡À44
-            torque_scale = 60.0f; // Å¤¾Ø·¶Î§ ¡À60
+            omega_scale = 44.0f;  // è§’é€Ÿåº¦èŒƒå›´ Â±44
+            torque_scale = 17.0f; // æ‰­çŸ©èŒƒå›´ Â±17
             break;
         case RobStride_03:
-            omega_scale = 20.0f;  // ½ÇËÙ¶È·¶Î§ ¡À20
-            torque_scale = 60.0f; // Å¤¾Ø·¶Î§ ¡À60
+            omega_scale = 20.0f;  // è§’é€Ÿåº¦èŒƒå›´ Â±20
+            torque_scale = 60.0f; // æ‰­çŸ©èŒƒå›´ Â±60
             break;
         case RobStride_04:
-            omega_scale = 15.0f;   // ½ÇËÙ¶È·¶Î§ ¡À15
-            torque_scale = 120.0f; // Å¤¾Ø·¶Î§ ¡À120
+            omega_scale = 15.0f;   // è§’é€Ÿåº¦èŒƒå›´ Â±15
+            torque_scale = 120.0f; // æ‰­çŸ©èŒƒå›´ Â±120
             break;
+				case RobStride_EL05:
+						omega_scale = 50.0f;   // è§’é€Ÿåº¦èŒƒå›´ Â±50
+            torque_scale = 6.0f; // æ‰­çŸ©èŒƒå›´ Â±6
+						break;
+				case RobStride_06:
+						omega_scale = 50.0f;   // è§’é€Ÿåº¦èŒƒå›´ Â±50
+            torque_scale = 36.0f; // æ‰­çŸ©èŒƒå›´ Â±36
+						break;
         default:
-            // ´¦ÀíÎ´ÖªĞÍºÅ£¨¿ÉÑ¡£ºÉèÖÃÄ¬ÈÏÖµ»ò±¨´í£©
+            // å¤„ç†æœªçŸ¥å‹å·ï¼ˆå¯é€‰ï¼šè®¾ç½®é»˜è®¤å€¼æˆ–æŠ¥é”™ï¼‰
             omega_scale = 0.0f;
             torque_scale = 0.0f;
-            return 1; // ·µ»Ø´íÎóÂë
+            return 1; // è¿”å›é”™è¯¯ç 
         }
 
-        // Í³Ò»¼ÆËã½ÇËÙ¶È¡¢Å¤¾ØºÍÎÂ¶È£¨ËùÓĞĞÍºÅÎÂ¶È¼ÆËã·½Ê½Ò»ÖÂ£©
+        // ç»Ÿä¸€è®¡ç®—è§’é€Ÿåº¦ã€æ‰­çŸ©å’Œæ¸©åº¦ï¼ˆæ‰€æœ‰å‹å·æ¸©åº¦è®¡ç®—æ–¹å¼ä¸€è‡´ï¼‰
         device->state.omega = (float)(((DEPACK_U8_TO_U16_FLIP(buf[2], buf[3])) - 32767) * omega_scale / 32767);
         device->state.torque = (float)(((DEPACK_U8_TO_U16_FLIP(buf[4], buf[5])) - 32767) * torque_scale / 32767);
         device->state.temperature = DEPACK_U8_TO_U16_FLIP(buf[6], buf[7]) * 0.1f;
     }
-    else if (type == 21) // ¸´ÖÆ´íÎóĞÅÏ¢µ½µç»ú×´Ì¬½á¹¹Ìå
+    else if (type == 21) // å¤åˆ¶é”™è¯¯ä¿¡æ¯åˆ°ç”µæœºçŠ¶æ€ç»“æ„ä½“
     {
         device->state.error = *((uint64_t *)buf);
     }
-    else if (type == 17) // ÇëÇó¶ÁÈ¡µ¥¸ö²ÎÊıÊ±µÄ´¦Àí
+    else if (type == 17) // è¯·æ±‚è¯»å–å•ä¸ªå‚æ•°æ—¶çš„å¤„ç†
     {
         uint16_t cmd = DEPACK_U8_TO_U16(buf[0], buf[1]);
         switch (cmd)
         {
-        case PARAM_RUN_MODE: // µ±Ç°¿ØÖÆÄ£Ê½
+        case PARAM_RUN_MODE: // å½“å‰æ§åˆ¶æ¨¡å¼
             device->param.run_mode = buf[4];
             break;
-        case PARAM_LIMIT_TORQUE: // Á¦¾ØÏŞÖÆ
+        case PARAM_LIMIT_TORQUE: // åŠ›çŸ©é™åˆ¶
             device->param.torque_limit = *((float *)&buf[4]);
             break;
         case PARAM_CUR_KP:
@@ -325,5 +353,5 @@ uint32_t RobStrideSend(RobStride_t *device, uint32_t ExtID, uint8_t *buf)
     head.RTR = CAN_RTR_DATA;
     head.DLC = 8;
     head.TransmitGlobalTime = DISABLE;
-     return HAL_CAN_AddTxMessage(device->hcan, &head, buf, &mailbox);
+    return HAL_CAN_AddTxMessage(device->hcan, &head, buf, &mailbox);
 }

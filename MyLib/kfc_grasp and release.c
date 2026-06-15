@@ -36,15 +36,13 @@ int32_t RAMP_self( int32_t final, int32_t now, int32_t ramp )
 
 void Servo_control()    
 {
-	
-	Temp_Servo_Target[0]=RAMP_self(Servo_assignment[0],Temp_Servo_Target[0],Ramp_Value_Servo[0]);
+        Temp_Servo_Target[0]=RAMP_self(Servo_assignment[0],Temp_Servo_Target[0],Ramp_Value_Servo[0]);
 	Temp_Servo_Target[1]=RAMP_self(Servo_assignment[1],Temp_Servo_Target[1],Ramp_Value_Servo[1]);
 	Temp_Servo_Target[2]=RAMP_self(Servo_assignment[2],Temp_Servo_Target[2],Ramp_Value_Servo[2]);
 	Temp_Servo_Target[3]=RAMP_self(Servo_assignment[3],Temp_Servo_Target[3],Ramp_Value_Servo[3]);
 
-	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1,500+Servo_offset[0]+Temp_Servo_Target[0]);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1,500+Servo_offset[0]+Temp_Servo_Target[0]);
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2,500+Servo_offset[1]+Temp_Servo_Target[1]);
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3,500+Servo_offset[2]+Temp_Servo_Target[2]);
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4,500+Servo_offset[3]+Temp_Servo_Target[3]); 
-
 }
