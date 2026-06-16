@@ -114,9 +114,6 @@ int main(void)
   /* USER CODE BEGIN 2 */
 	MX_USB_DEVICE_Init();
 
-	
-	HAL_TIM_Base_Start_IT(&htim10);
-
   CanFilter_Init(&hcan1);
   CanFilter_Init(&hcan2);
 
@@ -129,18 +126,6 @@ __HAL_DMA_DISABLE_IT(huart3.hdmarx,DMA_IT_HT);
   HAL_CAN_ActivateNotification(&hcan2,CAN_IT_RX_FIFO1_MSG_PENDING);
 	HAL_CAN_ActivateNotification(&hcan1,CAN_IT_TX_MAILBOX_EMPTY);
 	HAL_CAN_ActivateNotification(&hcan2,CAN_IT_TX_MAILBOX_EMPTY);
-	
-	  HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_1);
-  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1,0);
-	  HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_2);
-  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2,0);
-    HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_3);
-  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3,0);
-    HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_4);
-  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4,0);
-	
-
-//  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_ALL);
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in freertos.c) */
@@ -154,9 +139,6 @@ __HAL_DMA_DISABLE_IT(huart3.hdmarx,DMA_IT_HT);
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
-	
-		
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

@@ -21,6 +21,7 @@ void task_init()
          NULL,
          4,
          &servo_Serve_Handle);
+
 	xTaskCreate(stride_Serve,
          "stride_task",
           256,
@@ -41,13 +42,6 @@ void task_init()
          NULL,
          4,
          &air_pump_Handle);
-				 
-//	xTaskCreate(watch_dog,
-//        "watch_dog_task",
-//         128,
-//         NULL,
-//         4,
-//         &watch_dog_Handle);
 				 
 	vPortExitCritical();
 }

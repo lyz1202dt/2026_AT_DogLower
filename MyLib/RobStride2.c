@@ -111,25 +111,25 @@ uint32_t RobStrideMotionControl(RobStride_t *device, uint8_t motor_id, float tor
         kd_max = 100.0f;
         break;
 		case RobStride_EL05:
-				tq_min = -6.0f;
+		tq_min = -6.0f;
         tq_max = 6.0f;
-				omega_min = -50.0f;
+		omega_min = -50.0f;
         omega_max = 50.0f;
-				kp_min = 0.0f;
+		kp_min = 0.0f;
         kp_max = 500.0f;
         kd_min = 0.0f;
         kd_max = 5.0f;
-				break;
-		case RobStride_06:
-				tq_min = -36.0f;
+		break;
+	case RobStride_06:
+		tq_min = -36.0f;
         tq_max = 36.0f;
-				omega_min = -50.0f;
+		omega_min = -50.0f;
         omega_max = 50.0f;
-				kp_min = 0.0f;
+		kp_min = 0.0f;
         kp_max = 5000.0f;
         kd_min = 0.0f;
         kd_max = 100.0f;
-				break;
+		break;
     default:
         return 2; // 无效型号，返回错误码
     }
@@ -271,12 +271,12 @@ uint32_t RobStrideRecv_Handle(RobStride_t *device, CAN_HandleTypeDef *hcan, uint
             omega_scale = 15.0f;   // 角速度范围 ±15
             torque_scale = 120.0f; // 扭矩范围 ±120
             break;
-				case RobStride_EL05:
-						omega_scale = 50.0f;   // 角速度范围 ±50
+		case RobStride_EL05:
+			omega_scale = 50.0f;   // 角速度范围 ±50
             torque_scale = 6.0f; // 扭矩范围 ±6
 						break;
-				case RobStride_06:
-						omega_scale = 50.0f;   // 角速度范围 ±50
+		case RobStride_06:
+			omega_scale = 50.0f;   // 角速度范围 ±50
             torque_scale = 36.0f; // 扭矩范围 ±36
 						break;
         default:

@@ -16,8 +16,8 @@ int16_t current_output;
 int allow=0;//只有接收到了一次上位机发来的数据才允许给上位机发送数据
 extern UART_HandleTypeDef huart2;
 extern UART_HandleTypeDef huart3;
-extern int Temp_Servo_Target[4];//舵机的期望占空比，应该用来接收上位机的期望
-extern int32_t Servo_assignment[4];//舵机的预设置
+extern int Temp_Servo_Target[3];//舵机的期望占空比，应该用来接收上位机的期望
+extern int32_t Servo_assignment[3];//舵机的预设置
 float expect_ = 0;
 state_pack_t state_pack = {.pack_type = 0x01};
 target_pack_t target_pack = {.pack_type = 0x01};//用来接收上位机发来的数据包
@@ -61,18 +61,18 @@ float MAX_VEL = 90.f;
 //灵足电机pid
 robstride_PID R_PID_SET={
     .RobStride_pos = {
-        .Kp = 0.0f,
-        .Ki = 0.0f,
-        .Kd = 0.0f,
-        .limit = 0,
-        .output_limit = 40,
-    },
-     .RobStride_vel = {
-        .Kp = 0.1f,
+        .Kp = 18.0f,//18
         .Ki = 0.0f,
         .Kd = 0.0f,
         .limit = 0.0f,
-        .output_limit = 5,
+        .output_limit = 20,//20
+    },
+     .RobStride_vel = {
+        .Kp = 2.2f,//2.2
+        .Ki = 0.1f,//0.1
+        .Kd = 0.0f,
+        .limit = 7.0f,//7
+        .output_limit = 50,//50
     }
 };
 
@@ -114,17 +114,33 @@ void air_pump(void *argument){
 TaskHandle_t servo_Serve_Handle;
 void servo_Serve(void *argument)
 {
+    int32_t Servo_offset[3] = {0, 177, 1852}; 
+    int32_t Servo_assignment[3] = {0,0,0,0}; 
+
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1,500+Servo_offset[0]);
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2,500+Servo_offset[1]);
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4,500+Servo_offset[2]); 
+    HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_1);
+    HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_2);
+    HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_4);
+
 	for(;;)
     {	
-			// Servo_assignment[0] = (int)(target_pack.servo1.up*2000.0/ANGLE_270_RAD);	//PE9_TIM1_CH1_UP
-			// Servo_assignment[1] = (int)(target_pack.servo1.middle*2000.0/ANGLE_270_RAD);	//PE11_TIM1_CH2_MIDDLE
-			// Servo_assignment[3] = (int)(target_pack.servo1.down*2000.0/ANGLE_270_RAD);	//PE14_TIM1_CH4_DOWN
-            Servo_assignment[0] = (int)(target_pack.servo1.up*2000.0/270);	    //PE9
-			Servo_assignment[1] = (int)(target_pack.servo1.middle*2000.0/270);	//PE11
-			Servo_assignment[3] = (int)(target_pack.servo1.down*2000.0/270);	//PE14
-	        Servo_control();  
+		// Servo_assignment[0] = (int)(target_pack.servo1.up*2000.0/ANGLE_270_RAD);	    //PE9_TIM1_CH1_UP
+		// Servo_assignment[1] = (int)(target_pack.servo1.middle*2000.0/ANGLE_270_RAD);	//PE11_TIM1_CH2_MIDDLE
+		// Servo_assignment[2] = (int)(target_pack.servo1.down*2000.0/ANGLE_270_RAD);	//PE14_TIM1_CH4_DOWN
 
-  	    vTaskDelay (5);
+        /*------以上为弧度控制，以下为角度控制------*/
+
+        Servo_assignment[0] = (int32_t)(target_pack.servo1.up*2000.0/270);	   
+		Servo_assignment[1] = (int32_t)(target_pack.servo1.middle*2000.0/270);
+		Servo_assignment[2] = (int32_t)(target_pack.servo1.down*2000.0/270);	
+
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1,500+Servo_offset[0]+Servo_assignment[0]);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2,500+Servo_offset[1]+Servo_assignment[1]);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4,500+Servo_offset[2]-Servo_assignment[2]); 
+
+  	    vTaskDelay(5);
 	}
 }
 
@@ -132,11 +148,8 @@ void servo_Serve(void *argument)
 TaskHandle_t stride_Serve_Handle;
 void stride_Serve(void *argument)
 {
-	vTaskDelay(5000);
     RobStrideInit(&robstride_state,&hcan1,0x01,RobStride_EL05);
-	vTaskDelay(100);
     RobStrideSetMode(&robstride_state, RobStride_Torque);
-    vTaskDelay(100);
     RobStrideEnable(&robstride_state);
 	vTaskDelay(100);
 	RobStrideResetAngle(&robstride_state);
@@ -154,12 +167,14 @@ void stride_Serve(void *argument)
                     &R_PID_SET.RobStride_pos);
         if(R_PID_SET.RobStride_pos.pid_out > 20.0f)  R_PID_SET.RobStride_pos.pid_out = 20.0f;
         if(R_PID_SET.RobStride_pos.pid_out < -20.0f) R_PID_SET.RobStride_pos.pid_out = -20.0f;
-        PID_Control2(robstride_state.state.omega,//0,
+
+        PID_Control2(robstride_state.state.omega,
                     R_PID_SET.RobStride_pos.pid_out, 
                     &R_PID_SET.RobStride_vel);
         if(R_PID_SET.RobStride_vel.pid_out > 60.0f)  R_PID_SET.RobStride_vel.pid_out = 60.0f;
         if(R_PID_SET.RobStride_vel.pid_out < -60.0f) R_PID_SET.RobStride_vel.pid_out = -60.0f;
-        RobStrideTorqueControl(&robstride_state,R_PID_SET.RobStride_vel.pid_out);// R_PID_SET.RobStride_vel.pid_out
+
+        RobStrideTorqueControl(&robstride_state,R_PID_SET.RobStride_vel.pid_out);
         vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(4));
     }
 }
@@ -168,15 +183,13 @@ void stride_Serve(void *argument)
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
-
 	uint8_t CAN1_buffer[8];
-     if(hcan->Instance == CAN1)
-   {
-    uint32_t ID = CAN_Receive_DataFrame(&hcan1,CAN1_buffer);
-		RobStrideRecv_Handle(&robstride_state, &hcan1, ID, CAN1_buffer);
-		 
-		 
-   }
+    
+    if(hcan->Instance == CAN1)
+    {
+        uint32_t ID = CAN_Receive_DataFrame(&hcan1,CAN1_buffer);
+		RobStrideRecv_Handle(&robstride_state, &hcan1, ID, CAN1_buffer); 
+    }
 }
 
 
