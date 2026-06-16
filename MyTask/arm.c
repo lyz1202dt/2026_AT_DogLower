@@ -114,8 +114,9 @@ void air_pump(void *argument){
 TaskHandle_t servo_Serve_Handle;
 void servo_Serve(void *argument)
 {
-    int32_t Servo_offset[3] = {0, 177, 1852}; 
-    int32_t Servo_assignment[3] = {0,0,0,0}; 
+    //int32_t Servo_offset[3] = {0, 177, 1852}; 
+    int32_t Servo_offset[3] = {352, 177, 1894};
+    int32_t Servo_assignment[3] = {0,0,0}; 
 
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1,500+Servo_offset[0]);
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2,500+Servo_offset[1]);
@@ -123,18 +124,20 @@ void servo_Serve(void *argument)
     HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_1);
     HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_2);
     HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_4);
-
+    target_pack.servo1.up = -0.83f;
+    target_pack.servo1.middle = 0.0f;
+    target_pack.servo1.down = 0.1f;
 	for(;;)
     {	
-		// Servo_assignment[0] = (int)(target_pack.servo1.up*2000.0/ANGLE_270_RAD);	    //PE9_TIM1_CH1_UP
-		// Servo_assignment[1] = (int)(target_pack.servo1.middle*2000.0/ANGLE_270_RAD);	//PE11_TIM1_CH2_MIDDLE
-		// Servo_assignment[2] = (int)(target_pack.servo1.down*2000.0/ANGLE_270_RAD);	//PE14_TIM1_CH4_DOWN
+		Servo_assignment[0] = (int)(target_pack.servo1.up*2000.0/ANGLE_270_RAD);	    //PE9_TIM1_CH1_UP
+		Servo_assignment[1] = (int)(target_pack.servo1.middle*2000.0/ANGLE_270_RAD);	//PE11_TIM1_CH2_MIDDLE
+		Servo_assignment[2] = (int)(target_pack.servo1.down*2000.0/ANGLE_270_RAD);	//PE14_TIM1_CH4_DOWN
 
         /*------以上为弧度控制，以下为角度控制------*/
 
-        Servo_assignment[0] = (int32_t)(target_pack.servo1.up*2000.0/270);	   
-		Servo_assignment[1] = (int32_t)(target_pack.servo1.middle*2000.0/270);
-		Servo_assignment[2] = (int32_t)(target_pack.servo1.down*2000.0/270);	
+        // Servo_assignment[0] = (int32_t)(target_pack.servo1.up*2000.0/270);	   
+		// Servo_assignment[1] = (int32_t)(target_pack.servo1.middle*2000.0/270);
+		// Servo_assignment[2] = (int32_t)(target_pack.servo1.down*2000.0/270);	
 
         __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1,500+Servo_offset[0]+Servo_assignment[0]);
         __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2,500+Servo_offset[1]+Servo_assignment[1]);
@@ -144,15 +147,15 @@ void servo_Serve(void *argument)
 	}
 }
 
-
+float offset = 5.834f;  //机械臂灵足电机认为的零位对应的弧度
 TaskHandle_t stride_Serve_Handle;
 void stride_Serve(void *argument)
 {
     RobStrideInit(&robstride_state,&hcan1,0x01,RobStride_EL05);
     RobStrideSetMode(&robstride_state, RobStride_Torque);
     RobStrideEnable(&robstride_state);
-	vTaskDelay(100);
-	RobStrideResetAngle(&robstride_state);
+	vTaskDelay(5);
+	//RobStrideResetAngle(&robstride_state);
 	
     TickType_t last_wake_time = xTaskGetTickCount();
     for(;;)
@@ -162,8 +165,9 @@ void stride_Serve(void *argument)
     //    RobStrideMotionControl(&robstride_state,0x02,target_pack.rob01.except_torque,
 	// 		 arm_except,target_pack.rob01.except_omega*1.50,
 	// 		 target_pack.rob01.kp,target_pack.rob01.kd);
+
         PID_Control2(robstride_state.state.rad,
-                    target_pack.rob01.except_pos,
+                    target_pack.rob01.except_pos+offset,
                     &R_PID_SET.RobStride_pos);
         if(R_PID_SET.RobStride_pos.pid_out > 20.0f)  R_PID_SET.RobStride_pos.pid_out = 20.0f;
         if(R_PID_SET.RobStride_pos.pid_out < -20.0f) R_PID_SET.RobStride_pos.pid_out = -20.0f;
@@ -180,7 +184,6 @@ void stride_Serve(void *argument)
 }
 
 
-
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
 	uint8_t CAN1_buffer[8];
@@ -188,7 +191,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
     if(hcan->Instance == CAN1)
     {
         uint32_t ID = CAN_Receive_DataFrame(&hcan1,CAN1_buffer);
-		RobStrideRecv_Handle(&robstride_state, &hcan1, ID, CAN1_buffer); 
+		RobStrideRecv_Handle(&robstride_state, &hcan1, ID, CAN1_buffer);             
     }
 }
 
