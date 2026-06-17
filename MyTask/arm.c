@@ -151,9 +151,19 @@ float offset = 5.834f;  //机械臂灵足电机认为的零位对应的弧度
 TaskHandle_t stride_Serve_Handle;
 void stride_Serve(void *argument)
 {
+	vTaskDelay(5000);
     RobStrideInit(&robstride_state,&hcan1,0x01,RobStride_EL05);
     RobStrideSetMode(&robstride_state, RobStride_Torque);
+	vTaskDelay(5);
+	RobStrideSetMode(&robstride_state, RobStride_Torque);
+	vTaskDelay(5);
+	RobStrideSetMode(&robstride_state, RobStride_Torque);
+	vTaskDelay(5);
     RobStrideEnable(&robstride_state);
+	vTaskDelay(5);
+	RobStrideEnable(&robstride_state);
+	vTaskDelay(5);
+	RobStrideEnable(&robstride_state);
 	vTaskDelay(5);
 	//RobStrideResetAngle(&robstride_state);
 	
