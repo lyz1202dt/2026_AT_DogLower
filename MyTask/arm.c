@@ -112,11 +112,11 @@ void air_pump(void *argument){
 
 
 TaskHandle_t servo_Serve_Handle;
-int32_t Servo_offset[3] = {352, 177, 1894};
+int32_t Servo_offset[3] = {352, 206, 1894};
 void servo_Serve(void *argument)
 {
    
-//    int32_t Servo_offset[3] = {352, 177, 1894};
+//    int32_t Servo_offset[3] = {352, 236, 1894};
     int32_t Servo_assignment[3] = {0,0,0}; 
 
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1,500+Servo_offset[0]);
@@ -126,7 +126,7 @@ void servo_Serve(void *argument)
     HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_2);
     HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_4);
     target_pack.servo1.up = -0.83f;
-    target_pack.servo1.middle = 0.15f;
+    target_pack.servo1.middle = 0.1f;
     target_pack.servo1.down = 0.1f;
 //		target_pack.servo1.up = 0.0f;
 //    target_pack.servo1.middle = 0.0f;
