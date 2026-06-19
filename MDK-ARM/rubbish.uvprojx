@@ -514,16 +514,6 @@
               <FilePath>..\MyLib\CANDrive.h</FilePath>
             </File>
             <File>
-              <FileName>kfc_grasp and release.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\MyLib\kfc_grasp and release.c</FilePath>
-            </File>
-            <File>
-              <FileName>kfc_grasp and release.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\MyLib\kfc_grasp and release.h</FilePath>
-            </File>
-            <File>
               <FileName>RobStride2.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\MyLib\RobStride2.c</FilePath>
