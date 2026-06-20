@@ -54,7 +54,7 @@ uint32_t RobStrideSetMode(RobStride_t *device, RobStrideMode mode)
     return RobStrideSend(device, (18 << 24) | (device->host_id << 8) | (device->motor_id), buf); // 发送使能命令
 }
 
-uint32_t RobStrideMotionControl(RobStride_t *device, uint8_t motor_id, float torque, float angle, float omega, float kp, float kd)
+uint32_t RobStrideMotionControl(RobStride_t *device,float torque, float angle, float omega, float kp, float kd)
 {
     if (device == NULL)
     {
@@ -152,7 +152,7 @@ uint32_t RobStrideMotionControl(RobStride_t *device, uint8_t motor_id, float tor
     buf[7] = kd_u & 0xFF;
 
     // 构造29位扩展ID：Bit28~24=0x1，Bit23~8=扭矩量化值，Bit7~0=电机ID
-    uint32_t ExtID = (0x1 << 24) | ((uint32_t)tq_u << 8) | (motor_id & 0xFF);
+    uint32_t ExtID = (0x1 << 24) | ((uint32_t)tq_u << 8) | (device->motor_id & 0xFF);
 
     // 发送CAN帧（假设RobStrideSend返回0为成功，其他为错误）
     return RobStrideSend(device, ExtID, buf);

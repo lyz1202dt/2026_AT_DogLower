@@ -100,7 +100,7 @@ uint32_t RobStrideDisable(RobStride_t *device,uint8_t clear_error);
 uint32_t RobStrideResetAngle(RobStride_t *device);
 uint32_t RobStrideGet(RobStride_t *device,uint16_t cmd);
 
-uint32_t RobStrideMotionControl(RobStride_t *device, uint8_t motor_id, float torque, float angle, float omega, float kp, float kd);
+uint32_t RobStrideMotionControl(RobStride_t *device,  float torque, float angle, float omega, float kp, float kd);
 uint32_t RobStrideTorqueControl(RobStride_t *device,float req);
 uint32_t RobStrideSpeedControl(RobStride_t *device,float vel);
 uint32_t RobStridePositionControl(RobStride_t *device,float pos);

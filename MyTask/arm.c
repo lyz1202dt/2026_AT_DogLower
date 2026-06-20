@@ -58,23 +58,24 @@ float current_cur = 0.0f;
 float MAX_VEL = 90.f;
 
 
-//灵足电机pid
-robstride_PID R_PID_SET={
-    .RobStride_pos = {
-        .Kp = 18.0f,//18
-        .Ki = 0.0f,
-        .Kd = 0.0f,
-        .limit = 0.0f,
-        .output_limit = 20,//20
-    },
-     .RobStride_vel = {
-        .Kp = 2.2f,//2.2
-        .Ki = 0.1f,//0.1
-        .Kd = 0.0f,
-        .limit = 7.0f,//7
-        .output_limit = 50,//50
-    }
-};
+// //灵足电机pid
+// robstride_PID R_PID_SET={
+//     .RobStride_pos = {
+//         .Kp = 18.0f,//18
+//         .Ki = 0.0f,
+//         .Kd = 0.0f,
+//         .limit = 0.0f,
+//         .output_limit = 20,//20
+//     },
+//      .RobStride_vel = {
+//         .Kp = 2.2f,//2.2
+//         .Ki = 0.1f,//0.1
+//         .Kd = 0.0f,
+//         .limit = 7.0f,//7
+//         .output_limit = 50,//50
+//     }
+// };
+
 
 TaskHandle_t radiation_distance_Handle;
 void radiation_distance(void *argument)
@@ -151,23 +152,28 @@ void servo_Serve(void *argument)
 	}
 }
 
-float offset = 5.834f;  //机械臂灵足电机认为的零位对应的弧度
+float offset = 5.834f; //机械臂灵足电机认为的零位对应的弧度
+float stride_kp = 130.0f; 
+float stride_kd = 8.0f; 
 TaskHandle_t stride_Serve_Handle;
 void stride_Serve(void *argument)
 {
 	vTaskDelay(5000);
+
     RobStrideInit(&robstride_state,&hcan1,0x01,RobStride_EL05);
-    RobStrideSetMode(&robstride_state, RobStride_Torque);
-	vTaskDelay(5);
-	RobStrideSetMode(&robstride_state, RobStride_Torque);
-	vTaskDelay(5);
-	RobStrideSetMode(&robstride_state, RobStride_Torque);
-	vTaskDelay(5);
+
     RobStrideEnable(&robstride_state);
 	vTaskDelay(5);
 	RobStrideEnable(&robstride_state);
 	vTaskDelay(5);
 	RobStrideEnable(&robstride_state);
+    vTaskDelay(5);
+
+    RobStrideSetMode(&robstride_state, RobStride_MotionControl);
+	vTaskDelay(5);
+	RobStrideSetMode(&robstride_state, RobStride_MotionControl);
+	vTaskDelay(5);
+	RobStrideSetMode(&robstride_state, RobStride_MotionControl);
 	vTaskDelay(5);
 	//RobStrideResetAngle(&robstride_state);
 	
@@ -180,19 +186,25 @@ void stride_Serve(void *argument)
 	// 		 arm_except,target_pack.rob01.except_omega*1.50,
 	// 		 target_pack.rob01.kp,target_pack.rob01.kd);
 
-        PID_Control2(robstride_state.state.rad,
-                    target_pack.rob01.except_pos+offset,
-                    &R_PID_SET.RobStride_pos);
-        if(R_PID_SET.RobStride_pos.pid_out > 20.0f)  R_PID_SET.RobStride_pos.pid_out = 20.0f;
-        if(R_PID_SET.RobStride_pos.pid_out < -20.0f) R_PID_SET.RobStride_pos.pid_out = -20.0f;
+        // PID_Control2(robstride_state.state.rad,
+        //             target_pack.rob01.except_pos+offset,
+        //             &R_PID_SET.RobStride_pos);
+        // if(R_PID_SET.RobStride_pos.pid_out > 20.0f)  R_PID_SET.RobStride_pos.pid_out = 20.0f;
+        // if(R_PID_SET.RobStride_pos.pid_out < -20.0f) R_PID_SET.RobStride_pos.pid_out = -20.0f;
 
-        PID_Control2(robstride_state.state.omega,
-                    R_PID_SET.RobStride_pos.pid_out, 
-                    &R_PID_SET.RobStride_vel);
-        if(R_PID_SET.RobStride_vel.pid_out > 60.0f)  R_PID_SET.RobStride_vel.pid_out = 60.0f;
-        if(R_PID_SET.RobStride_vel.pid_out < -60.0f) R_PID_SET.RobStride_vel.pid_out = -60.0f;
+        // PID_Control2(robstride_state.state.omega,
+        //             R_PID_SET.RobStride_pos.pid_out, 
+        //             &R_PID_SET.RobStride_vel);
+        // if(R_PID_SET.RobStride_vel.pid_out > 60.0f)  R_PID_SET.RobStride_vel.pid_out = 60.0f;
+        // if(R_PID_SET.RobStride_vel.pid_out < -60.0f) R_PID_SET.RobStride_vel.pid_out = -60.0f;
 
-        RobStrideTorqueControl(&robstride_state,R_PID_SET.RobStride_vel.pid_out);
+        // RobStrideTorqueControl(&robstride_state,R_PID_SET.RobStride_vel.pid_out);
+        RobStrideMotionControl(&robstride_state,target_pack.rob01.except_torque,
+            target_pack.rob01.except_pos+offset,
+            target_pack.rob01.except_omega,
+            stride_kp,
+            stride_kd
+        );
         vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(4));
     }
 }
