@@ -114,15 +114,15 @@ void air_pump(void *argument){
 
 TaskHandle_t servo_Serve_Handle;
 
-float Servo_offset_angle[3] = {59, 0, 0};
+float Servo_offset_angle[3] = {59, 0, 42};
 int32_t Servo_offset[3] = {0, 0, 0};
 void servo_Serve(void *argument)
 {
     int32_t Servo_assignment[3] = {0,0,0}; 
     uint8_t pwm_start = 0;
     target_pack.servo1.up = -1.03f;
-    target_pack.servo1.middle = 0.0f;
-    target_pack.servo1.down = 0.0f;
+    target_pack.servo1.middle = 0.2f;
+    target_pack.servo1.down = 0.2f;
 
     // for(int i = 0;i < 3;i++)    //调试时使用,不调试时放到for循环之前只执行一次即可
     // {
