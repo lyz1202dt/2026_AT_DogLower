@@ -17,7 +17,7 @@ int allow=0;//只有接收到了一次上位机发来的数据才允许给上位
 extern UART_HandleTypeDef huart2;
 extern UART_HandleTypeDef huart3;
 extern int Temp_Servo_Target[3];//舵机的期望占空比，应该用来接收上位机的期望
-extern int32_t Servo_assignment[3];//舵机的预设置
+int32_t Servo_assignment[3];//舵机的预设置
 float expect_ = 0;
 state_pack_t state_pack = {.pack_type = 0x01};
 target_pack_t target_pack = {.pack_type = 0x01};//用来接收上位机发来的数据包
@@ -113,12 +113,13 @@ void air_pump(void *argument){
 
 
 TaskHandle_t servo_Serve_Handle;
-int32_t Servo_offset[3] = {352, 206, 1894};
+//int32_t Servo_offset[3] = {352, 206, 1894};
+int32_t Servo_offset[3] = {446, 206, 1894};
 void servo_Serve(void *argument)
 {
    
 //    int32_t Servo_offset[3] = {352, 236, 1894};
-    int32_t Servo_assignment[3] = {0,0,0}; 
+    
 
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1,500+Servo_offset[0]);
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2,500+Servo_offset[1]);
@@ -126,10 +127,22 @@ void servo_Serve(void *argument)
     HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_1);
     HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_2);
     HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_4);
-    target_pack.servo1.up = -0.83f;
+   // target_pack.servo1.up = -0.83f;
+		target_pack.servo1.up = -1.05f;
     target_pack.servo1.middle = 0.1f;
     target_pack.servo1.down = 0.1f;
 //		target_pack.servo1.up = 0.0f;
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
 //    target_pack.servo1.middle = 0.0f;
 //    target_pack.servo1.down = 0.0f;
 	for(;;)
@@ -162,7 +175,7 @@ void stride_Serve(void *argument)
 
     RobStrideInit(&robstride_state,&hcan1,0x01,RobStride_EL05);
 
-    RobStrideEnable(&robstride_state);
+   RobStrideEnable(&robstride_state);
 	vTaskDelay(5);
 	RobStrideEnable(&robstride_state);
 	vTaskDelay(5);
