@@ -166,7 +166,7 @@ void servo_Serve(void *argument)
 	}
 }
 
-float offset = -0.95f; //机械臂灵足电机认为的零位对应的弧度
+float offset = -0.889f; //机械臂灵足电机认为的零位对应的弧度
 float stride_kp = 700.0f; 
 float stride_kd = 4.0f; 
 TaskHandle_t stride_Serve_Handle;
