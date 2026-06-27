@@ -88,24 +88,48 @@ void radiation_distance(void *argument)
 
 
 TaskHandle_t air_pump_Handle;
-void air_pump(void *argument){
-	for(;;)
-    {
-		if(target_pack.arm_pump == 1)
-        {	
-			PUMP_START;
-            AIR_VALUE_OFF;
-		}
-        else if(target_pack.arm_pump == 0)
-        {
-			PUMP_OFF;   
-            AIR_VALUE_START;
-		}
-		
-		vTaskDelay(5);
-	}
-}
+void air_pump(void *argument)
+{
+    uint8_t last_state = 0;
+    TickType_t valve_time = 0;
+    uint8_t valve_on = 0;
 
+    for (;;)
+    {
+        if(target_pack.arm_pump == 1)
+        {
+            PUMP_START;
+
+            // 如果电磁阀正在放气，立即关闭
+            AIR_VALUE_OFF;
+            valve_on = 0;
+        }
+        else
+        {
+            PUMP_OFF;
+
+            // 只有1->0时触发一次
+            if(last_state == 1 && !valve_on)
+            {
+                AIR_VALUE_START;
+                valve_on = 1;
+                valve_time = xTaskGetTickCount();
+            }
+        }
+
+        // 电磁阀保持5秒
+        if(valve_on &&
+           (xTaskGetTickCount() - valve_time >= pdMS_TO_TICKS(2000)))
+        {
+            AIR_VALUE_OFF;
+            valve_on = 0;
+        }
+
+        last_state = target_pack.arm_pump;
+
+        vTaskDelay(pdMS_TO_TICKS(5));
+    }
+}
 
 
 
