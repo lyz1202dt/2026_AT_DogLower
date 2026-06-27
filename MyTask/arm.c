@@ -113,61 +113,60 @@ void air_pump(void *argument){
 
 
 TaskHandle_t servo_Serve_Handle;
-//int32_t Servo_offset[3] = {352, 206, 1894};
-int32_t Servo_offset[3] = {446, 206, 1894};
+
+float Servo_offset_angle[3] = {60, 55.4, 0};
+int32_t Servo_offset[3] = {0, 0, 0};
 void servo_Serve(void *argument)
 {
-   
-//    int32_t Servo_offset[3] = {352, 236, 1894};
-    
+    int32_t Servo_assignment[3] = {0,0,0}; 
+    uint8_t pwm_start = 0;
+    target_pack.servo1.up = -1.03f;
+    target_pack.servo1.middle = 0.2f;
+    target_pack.servo1.down = 0.2f;
 
-    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1,500+Servo_offset[0]);
-    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2,500+Servo_offset[1]);
-    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4,500+Servo_offset[2]); 
-    HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_1);
-    HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_2);
-    HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_4);
-   // target_pack.servo1.up = -0.83f;
-		target_pack.servo1.up = -1.05f;
-    target_pack.servo1.middle = 0.1f;
-    target_pack.servo1.down = 0.1f;
-//		target_pack.servo1.up = 0.0f;
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-//    target_pack.servo1.middle = 0.0f;
-//    target_pack.servo1.down = 0.0f;
+    // for(int i = 0;i < 3;i++)    //调试时使用,不调试时放到for循环之前只执行一次即可
+    // {
+    //     if(i == 1)
+    //         Servo_offset[i] = Servo_offset_angle[i]*2000/180;
+    //     else
+    //         Servo_offset[i] = Servo_offset_angle[i]*2000/270;
+    // }
+
 	for(;;)
     {	
+        for(int i = 0;i < 3;i++)    //调试时使用,不调试时放到for循环之前只执行一次即可
+        {
+            Servo_offset[i] =  Servo_offset_angle[i]*2000/270;
+        }
+
 		Servo_assignment[0] = (int)(target_pack.servo1.up*2000.0/ANGLE_270_RAD);	    //PE9_TIM1_CH1_UP
 		Servo_assignment[1] = (int)(target_pack.servo1.middle*2000.0/ANGLE_270_RAD);	//PE11_TIM1_CH2_MIDDLE
-		Servo_assignment[2] = (int)(target_pack.servo1.down*2000.0/ANGLE_270_RAD);	//PE14_TIM1_CH4_DOWN
+		Servo_assignment[2] = (int)(target_pack.servo1.down*2000.0/ANGLE_270_RAD);	    //PE14_TIM1_CH4_DOWN
 
         /*------以上为弧度控制，以下为角度控制------*/
 
         // Servo_assignment[0] = (int32_t)(target_pack.servo1.up*2000.0/270);	   
-		// Servo_assignment[1] = (int32_t)(target_pack.servo1.middle*2000.0/270);
+		// Servo_assignment[1] = (int32_t)(target_pack.servo1.middle*2000.0/180);
 		// Servo_assignment[2] = (int32_t)(target_pack.servo1.down*2000.0/270);	
 
         __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1,500+Servo_offset[0]+Servo_assignment[0]);
         __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2,500+Servo_offset[1]+Servo_assignment[1]);
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4,500+Servo_offset[2]-Servo_assignment[2]); 
-
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4,500+Servo_offset[2]+Servo_assignment[2]); 
+        if(!pwm_start)
+       { 
+            HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_1);
+            HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_2);
+            HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_4);
+            pwm_start = 1;
+       }
   	    vTaskDelay(5);
 	}
 }
 
-float offset = 5.834f; //机械臂灵足电机认为的零位对应的弧度
+float offset = 1.2778f; //机械臂灵足电机认为的零位对应的弧度
 float stride_kp = 130.0f; 
 float stride_kd = 8.0f; 
+
 TaskHandle_t stride_Serve_Handle;
 void stride_Serve(void *argument)
 {
