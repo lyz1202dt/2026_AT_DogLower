@@ -9,9 +9,6 @@ int a=0;
 TickType_t last_recv_tick =0;
 bool first_packet_received = false;//是否第一次接收上位机传来的数据的判断标志
 
-GPIO_PinState gpio_pin_set;//高电平和低电平的宏定义
-
-//void RampToTarget();
 int16_t current_output;
 int allow=0;//只有接收到了一次上位机发来的数据才允许给上位机发送数据
 extern UART_HandleTypeDef huart2;
@@ -114,7 +111,7 @@ void air_pump(void *argument){
 
 TaskHandle_t servo_Serve_Handle;
 
-float Servo_offset_angle[3] = {60, 55.4, 0};
+float Servo_offset_angle[3] = {60, 40, 0};
 int32_t Servo_offset[3] = {0, 0, 0};
 void servo_Serve(void *argument)
 {
