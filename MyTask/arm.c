@@ -92,8 +92,6 @@ void radiation_distance(void *argument)
 
 TaskHandle_t air_pump_Handle;
 
-TaskHandle_t air_pump_Handle;
-
 void air_pump(void *argument)
 {
     uint8_t last_state = 0;
@@ -141,13 +139,13 @@ void air_pump(void *argument)
 
 TaskHandle_t servo_Serve_Handle;
 
-float Servo_offset_angle[3] = {59, 0, 42};
+float Servo_offset_angle[3] = {228, 0, 42};
 int32_t Servo_offset[3] = {0, 0, 0};
 void servo_Serve(void *argument)
 {
     int32_t Servo_assignment[3] = {0,0,0}; 
     uint8_t pwm_start = 0;
-    target_pack.servo1.up = -1.03f;
+    target_pack.servo1.up = -0.3f;
     target_pack.servo1.middle = 0.2f;
     target_pack.servo1.down = 0.2f;
 
@@ -179,7 +177,7 @@ void servo_Serve(void *argument)
 		// Servo_assignment[1] = (int32_t)(target_pack.servo1.middle*2000.0/180);
 		// Servo_assignment[2] = (int32_t)(target_pack.servo1.down*2000.0/270);	
 
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1,500+Servo_offset[0]+Servo_assignment[0]);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1,500+Servo_offset[0]-Servo_assignment[0]);
         __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2,500+Servo_offset[1]+Servo_assignment[1]);
         __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4,500+Servo_offset[2]+Servo_assignment[2]); 
         if(!pwm_start)
