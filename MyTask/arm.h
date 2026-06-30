@@ -75,7 +75,7 @@ typedef struct
 typedef struct
 {
 	int pack_type;
-	int red_distance;
+	float red_distance;
 }state_pack_t;   //���͸���λ���Ľṹ��
 #pragma pack()
 
