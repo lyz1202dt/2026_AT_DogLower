@@ -312,6 +312,8 @@ void CDC_Receive_Cb(uint8_t *src, uint16_t size)
 
 
 
+int state = 0;
+int dist;
 void HAL_UARTEx_RxEventCallback(
     UART_HandleTypeDef *huart,
     uint16_t Size)
@@ -324,8 +326,6 @@ void HAL_UARTEx_RxEventCallback(
         char *p2 = strstr((char *)vl53_rx_buf, "State;");
         if(p1 != NULL && p2 != NULL)
         {
-            int state = 0;
-            int dist;
             sscanf(p2, "State; %d", &state);
             if(sscanf(p1, "d: %d", &dist) == 1)
             {
