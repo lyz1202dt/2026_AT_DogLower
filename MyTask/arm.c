@@ -14,7 +14,7 @@ extern UART_HandleTypeDef huart3;
 extern int Temp_Servo_Target[3];//舵机的期望占空比，应该用来接收上位机的期望
 int32_t Servo_assignment[3];//舵机的预设置
 
-state_pack_t state_pack = {.pack_type = 0x01};
+state_pack_t state_pack = {.pack_type = 0x10};
 target_pack_t target_pack = {.pack_type = 0x01};//用来接收上位机发来的数据包
 
 uint32_t error;
@@ -77,6 +77,7 @@ void radiation_distance(void *argument)
 	vTaskDelay(pdMS_TO_TICKS(5000));
     for(;;)
     {
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         state_pack.red_distance = vl53_distance;     
         CDC_Transmit_FS((uint8_t *)&state_pack,sizeof(state_pack));  
         vTaskDelay(pdMS_TO_TICKS(500));
@@ -327,9 +328,12 @@ void HAL_UARTEx_RxEventCallback(
                 {
                     vl53_distance = 1.0f;
                 }
+                BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+                vTaskNotifyGiveFromISR(radiation_distance_Handle, &xHigherPriorityTaskWoken);
+                portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
             }
         }
-        HAL_UART_DMAStop(&huart3);
+        //HAL_UART_DMAStop(&huart3);
         HAL_UARTEx_ReceiveToIdle_DMA( &huart3,vl53_rx_buf,VL53_RX_SIZE);
         __HAL_DMA_DISABLE_IT(huart3.hdmarx,DMA_IT_HT);
     }
@@ -340,7 +344,7 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
     if (huart->Instance == USART3)
     {
         error ++;
-        HAL_UART_DMAStop(&huart3);
+        // HAL_UART_DMAStop(&huart3);
         HAL_UARTEx_ReceiveToIdle_DMA( &huart3,vl53_rx_buf,VL53_RX_SIZE);
         __HAL_DMA_DISABLE_IT(huart3.hdmarx,DMA_IT_HT);
     }
