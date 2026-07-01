@@ -9,20 +9,17 @@ int a=0;
 TickType_t last_recv_tick =0;
 bool first_packet_received = false;//是否第一次接收上位机传来的数据的判断标志
 
-int16_t current_output;
-int allow=0;//只有接收到了一次上位机发来的数据才允许给上位机发送数据
 extern UART_HandleTypeDef huart2;
 extern UART_HandleTypeDef huart3;
 extern int Temp_Servo_Target[3];//舵机的期望占空比，应该用来接收上位机的期望
 int32_t Servo_assignment[3];//舵机的预设置
-float expect_ = 0;
+
 state_pack_t state_pack = {.pack_type = 0x01};
 target_pack_t target_pack = {.pack_type = 0x01};//用来接收上位机发来的数据包
 
-uint8_t receiving_number = 0;
-
+uint32_t error;
 extern uint8_t vl53_rx_buf[VL53_RX_SIZE];
-extern volatile uint16_t vl53_distance;
+extern volatile float vl53_distance;
 // volatile uint8_t ret;
 
 //灵足电机的相关代码
@@ -80,7 +77,7 @@ void radiation_distance(void *argument)
 	vTaskDelay(pdMS_TO_TICKS(5000));
     for(;;)
     {
-        state_pack.red_distance = (int)vl53_distance;     
+        state_pack.red_distance = vl53_distance;     
         CDC_Transmit_FS((uint8_t *)&state_pack,sizeof(state_pack));  
         vTaskDelay(pdMS_TO_TICKS(500));
     }
@@ -294,7 +291,6 @@ void CDC_Receive_Cb(uint8_t *src, uint16_t size)
 
 		last_recv_tick = xTaskGetTickCount();
 		first_packet_received = true;
-        allow=1;
     }
 
     cur_size=size;
@@ -302,29 +298,51 @@ void CDC_Receive_Cb(uint8_t *src, uint16_t size)
 
 
 
+int state = 0;
+int dist;
 void HAL_UARTEx_RxEventCallback(
     UART_HandleTypeDef *huart,
     uint16_t Size)
 {
     if(huart->Instance == USART3)
     {
-			
         vl53_rx_buf[Size] = '\0';
 
-        char *p = strstr((char *)vl53_rx_buf, "d:");
-
-        if(p != NULL)
+        char *p1 = strstr((char *)vl53_rx_buf, "d:");
+        char *p2 = strstr((char *)vl53_rx_buf, "State;");
+        if(p1 != NULL && p2 != NULL)
         {
-            int dist;
-
-            if(sscanf(p, "d: %d", &dist) == 1)
+            sscanf(p2, "State; %d", &state);
+            if(sscanf(p1, "d: %d", &dist) == 1)
             {
-                vl53_distance = (uint16_t)dist;
+                if(state == 0)
+                {
+                    vl53_distance = dist*0.001f;
+                }
+                else if(state == 3)
+                {
+                    vl53_distance = 0.0f;
+                }
+                else if(state == 4)
+                {
+                    vl53_distance = 1.0f;
+                }
             }
         }
-
+        HAL_UART_DMAStop(&huart3);
         HAL_UARTEx_ReceiveToIdle_DMA( &huart3,vl53_rx_buf,VL53_RX_SIZE);
-				__HAL_DMA_DISABLE_IT(huart3.hdmarx,DMA_IT_HT);
+        __HAL_DMA_DISABLE_IT(huart3.hdmarx,DMA_IT_HT);
+    }
+}
+
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART3)
+    {
+        error ++;
+        HAL_UART_DMAStop(&huart3);
+        HAL_UARTEx_ReceiveToIdle_DMA( &huart3,vl53_rx_buf,VL53_RX_SIZE);
+        __HAL_DMA_DISABLE_IT(huart3.hdmarx,DMA_IT_HT);
     }
 }
 

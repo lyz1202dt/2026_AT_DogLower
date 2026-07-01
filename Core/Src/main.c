@@ -47,7 +47,7 @@
 #define VL53_RX_SIZE 128
 
 uint8_t vl53_rx_buf[VL53_RX_SIZE];
-volatile uint16_t vl53_distance = 0;
+volatile float vl53_distance = 0;
 
 
 /* USER CODE END PM */
