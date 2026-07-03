@@ -72,6 +72,7 @@ float MAX_VEL = 90.f;
 
 
 TaskHandle_t radiation_distance_Handle;
+uint8_t USB_state;
 void radiation_distance(void *argument)
 {
 	vTaskDelay(pdMS_TO_TICKS(5000));
@@ -79,7 +80,7 @@ void radiation_distance(void *argument)
     {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         state_pack.red_distance = vl53_distance;     
-        CDC_Transmit_FS((uint8_t *)&state_pack,sizeof(state_pack));  
+        USB_state = CDC_Transmit_FS((uint8_t *)&state_pack,sizeof(state_pack));  
         vTaskDelay(pdMS_TO_TICKS(500));
     }
 }
