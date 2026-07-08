@@ -70,8 +70,6 @@ virtualFolder:
         - path: ../MyLib/motorEx.c
         - path: ../MyLib/motorEx.h
         - path: ../MyLib/CANDrive.h
-        - path: ../MyLib/kfc_grasp and release.c
-        - path: ../MyLib/kfc_grasp and release.h
         - path: ../MyLib/RobStride2.c
         - path: ../MyLib/RobStride2.h
       folders: []

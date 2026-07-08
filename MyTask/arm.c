@@ -134,7 +134,7 @@ void air_pump(void *argument)
 
 TaskHandle_t servo_Serve_Handle;
 
-float Servo_offset_angle[3] = {60, 40, 0};
+float Servo_offset_angle[3] = {66, 45, 0};
 int32_t Servo_offset[3] = {0, 0, 0};
 void servo_Serve(void *argument)
 {
