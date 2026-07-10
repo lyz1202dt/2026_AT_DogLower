@@ -78,14 +78,18 @@ float MAX_VEL = 90.f;
 
 
 TaskHandle_t radiation_distance_Handle;
+
 void radiation_distance(void *argument)
 {
-	vTaskDelay(pdMS_TO_TICKS(5000));
     for(;;)
     {
-        state_pack.red_distance = vl53_distance;     
+        if(READ_DISTANCE_PIN != GPIO_PIN_RESET)
+            state_pack.red_distance = 1.0;    
+        else
+            state_pack.red_distance = 0.05;    
+
         CDC_Transmit_FS((uint8_t *)&state_pack,sizeof(state_pack));  
-        vTaskDelay(pdMS_TO_TICKS(500));
+        vTaskDelay(pdMS_TO_TICKS(50));
     }
 }
 
@@ -308,56 +312,6 @@ void CDC_Receive_Cb(uint8_t *src, uint16_t size)
     }
 
     cur_size=size;
-}
-
-
-
-int state = 0;
-int dist;
-void HAL_UARTEx_RxEventCallback(
-    UART_HandleTypeDef *huart,
-    uint16_t Size)
-{
-    if(huart->Instance == USART3)
-    {
-        vl53_rx_buf[Size] = '\0';
-
-        char *p1 = strstr((char *)vl53_rx_buf, "d:");
-        char *p2 = strstr((char *)vl53_rx_buf, "State;");
-        if(p1 != NULL && p2 != NULL)
-        {
-            sscanf(p2, "State; %d", &state);
-            if(sscanf(p1, "d: %d", &dist) == 1)
-            {
-                if(state == 0)
-                {
-                    vl53_distance = dist*0.001f;
-                }
-                else if(state == 3)
-                {
-                    vl53_distance = 0.0f;
-                }
-                else if(state == 4)
-                {
-                    vl53_distance = 1.0f;
-                }
-            }
-        }
-        // HAL_UART_DMAStop(&huart3);
-        HAL_UARTEx_ReceiveToIdle_DMA( &huart3,vl53_rx_buf,VL53_RX_SIZE);
-		__HAL_DMA_DISABLE_IT(huart3.hdmarx,DMA_IT_HT);
-    }
-}
-
-void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
-{
-    if (huart->Instance == USART3)
-    {
-        error ++;
-        // HAL_UART_DMAStop(&huart3);
-        HAL_UARTEx_ReceiveToIdle_DMA( &huart3,vl53_rx_buf,VL53_RX_SIZE);
-		__HAL_DMA_DISABLE_IT(huart3.hdmarx,DMA_IT_HT);
-    }
 }
 
 

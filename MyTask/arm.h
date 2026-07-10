@@ -21,6 +21,8 @@
 #define PUMP_OFF 	HAL_GPIO_WritePin(GPIOB,GPIO_PIN_0, 0)
 #define AIR_VALUE_START 	HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1, 1)
 #define AIR_VALUE_OFF 		HAL_GPIO_WritePin(GPIOB,GPIO_PIN_1, 0)
+#define READ_DISTANCE_PIN 	HAL_GPIO_ReadPin(GPIOE,GPIO_PIN_13)
+
 extern TaskHandle_t servo_Serve_Handle;
 extern TaskHandle_t stride_Serve_Handle;
 extern TaskHandle_t GM6020_Serve_Handle;
