@@ -161,6 +161,16 @@ void servo_Serve(void *argument)
             Servo_offset[i] =  Servo_offset_angle[i]*2000/270;
         }
 
+        if(target_pack.servo1.down < 0.2)
+        {
+            target_pack.servo1.down = 0.2;
+        }
+
+        if(target_pack.servo1.middle < 0.2)
+        {
+            target_pack.servo1.middle = 0.2;
+        }
+
 		Servo_assignment[0] = (int)(target_pack.servo1.up*2000.0/ANGLE_270_RAD);	    //PE9_TIM1_CH1_UP
 		Servo_assignment[1] = (int)(target_pack.servo1.middle*2000.0/ANGLE_270_RAD);	//PE11_TIM1_CH2_MIDDLE
 		Servo_assignment[2] = (int)(target_pack.servo1.down*2000.0/ANGLE_270_RAD);	    //PE14_TIM1_CH4_DOWN
