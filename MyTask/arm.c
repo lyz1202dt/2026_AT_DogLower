@@ -3,8 +3,7 @@
 #include <stdbool.h>
 
 #define VL53_RX_SIZE 128
-float b = 0;
-int a=0;
+
 
 TickType_t last_recv_tick =0;
 bool first_packet_received = false;//是否第一次接收上位机传来的数据的判断标志
@@ -19,9 +18,6 @@ target_pack_t target_pack = {.pack_type = 0x01};//用来接收上位机发来的
 
 uint32_t error;
 
-
-// volatile uint8_t ret;
-
 //灵足电机的相关代码
 RobStride_t robstride_state;
 
@@ -33,7 +29,6 @@ RobStride_t robstride01
 
 
 float arm_except = 0.0f;
-
 
 uint16_t last_cur = 0;  
 uint16_t now_cur = 0;   
